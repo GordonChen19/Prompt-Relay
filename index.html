@@ -76,7 +76,7 @@
 
                   <!-- Github link -->
                   <span class="link-block">
-                    <a href="https://github.com/GordonChen19/STENCIL" target="_blank"
+                    <a href="https://github.com/GordonChen19/STENCIL/" target="_blank"
                     class="external-link button is-normal is-rounded is-dark">
                     <span class="icon">
                       <i class="fab fa-github"></i>
@@ -113,14 +113,7 @@
         <source src="static/videos/Presentation.mp4"
         type="video/mp4">
       </video>
-      <h2 class="subtitle has-text-centered">
-       (a) Cross-Attention Guided Loss. We fine-tune a lightweight text-to-image diffusion model
-on the reference image(s) of the subject. The Cross-Attention Guided Loss is applied so that gradients are computed only in
-regions influenced by the subject token (e.g. “toy robot”). (b) Context Guidance. At inference, given a user prompt, we draft an image with
-a large frozen text-to-image model. The draft is inverted into the latent space of the lightweight fine-tuned model and refined
-via null-text optimisation, producing the final image that preserves both the prompt context and the personalized subject. This allows us to generate images with
-rich contextual priors injected from a large diffusion model, without the computational cost of fine-tuning on the same large-scale models that are capable of producing them. 
-
+       
     </div>
   </div>
 </section>
@@ -142,6 +135,36 @@ rich contextual priors injected from a large diffusion model, without the comput
   </div>
 </section>
 <!-- End paper abstract -->
+
+<!-- Pipeline section -->
+
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3" style="padding-top: 2rem;">Pipeline</h2>
+        <div class="content has-text-justified">
+
+          <figure style="display: flex; justify-content: center;">
+            <img
+              src="static/images/pipeline.jpg"
+              alt="STENCIL Pipeline"
+              style="width: 150%; max-width: 150%; height: auto;"
+            />
+          </figure>
+                    <p>
+            The STENCIL pipeline consists of two main stages, (a) Cross-Attention Guided Loss. We fine-tune a lightweight text-to-image diffusion model
+on the reference image(s) of the subject. The Cross-Attention Guided Loss is applied so that gradients are computed only in
+regions influenced by the subject token (e.g. “toy robot”). (b) Context Guidance. At inference, given a user prompt, we draft an image with
+a large frozen text-to-image model. The draft is inverted into the latent space of the lightweight fine-tuned model and refined
+via null-text optimisation, producing the final image that preserves both the prompt context and the personalized subject. This allows us to generate images with
+rich contextual priors injected from a large diffusion model, without the computational cost of fine-tuning on the same large-scale models that are capable of producing them. 
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- End Pipeline section -->
 
  <div class="has-text-centered" style="margin-top: 1rem; ">
         <span class="author-block" style="font-size: 0.9em;">(All images are generated with Stable Diffusion 1.5)</span>
