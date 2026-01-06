@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <link rel="icon" type="image/png" href="static/images/S.png">
 
-  <title>Academic Project Page</title>
+  <title>TempoCtrl</title>
   <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
   rel="stylesheet">
 
@@ -31,48 +31,29 @@
       <div class="container is-max-desktop">
         <div class="columns is-centered">
           <div class="column has-text-centered">
-            <h1 class="title is-1 publication-title">STENCIL: Subject-Driven Generation with Context Guidance</h1>
+            <h1 class="title is-1 publication-title">
+              <img src="static/images/application/TempoCtrl.png" alt="TempoCtrl logo" class="title-logo">
+              TempoCtrl: Inference-Time Temporal Cross-Attention Control
+            </h1>
             <div class="is-size-5 publication-authors">
               <!-- Paper authors -->
               <span class="author-block">
-                <a href="https://gordonchen19.github.io/" target="_blank">Gordon Chen</a><sup>1,2</sup>,</span>
+                <a href="https://gordonchen19.github.io/" target="_blank">Gordon Chen</a>,</span>
                 <span class="author-block">
-                  <a href="https://ziqihuangg.github.io" target="_blank">Ziqi Huang</a><sup>1</sup>,</span>
+                  <a href="https://ziqihuangg.github.io" target="_blank">Ziqi Huang</a>,</span>
                   <span class="author-block">
-                    <a href="https://www.a-star.edu.sg/cfar/about-cfar/our-team/dr-cheston-tan" target="_blank">Cheston Tan</a><sup>2</sup>,</span>
-                  </span>
-                  <span class="author-block">
-                    <a href="https://liuziwei7.github.io" target="_blank">Ziwei Liu</a><sup>1</sup>
+                    <a href="https://liuziwei7.github.io" target="_blank">Ziwei Liu</a>
                   </span>
                   </div>
 
+                  <br>
+
                   <div class="is-size-5 publication-authors">
-                 <span class="author-block"><sup>1</sup>S-Lab, Nanyang Technological University, <sup>2</sup>CFAR IHPC, A*STAR</span><br><span class="author-block" style="font-style: italic; text-decoration: underline;">IEEE ICIP 2025 (Spotlight)</span>
+                 <span class="author-block affiliation">S-Lab, Nanyang Technological University </span><br>
                   </div>
 
                   <div class="column has-text-centered">
                     <div class="publication-links">
-                         <!-- Arxiv PDF link -->
-                      <span class="link-block">
-                      <a href="static/pdfs/chen.pdf" target="_blank"
-                        class="external-link button is-normal is-rounded is-dark">
-                        <span class="icon">
-                          <i class="fas fa-file-pdf"></i>
-                        </span>
-                        <span>Paper</span>
-                      </a>
-                    </span>
-
-                    <!-- Supplementary PDF link -->
-                    <span class="link-block">
-                      <a href="static/pdfs/Stencil - Supplementary Materials.pdf" target="_blank"
-                      class="external-link button is-normal is-rounded is-dark">
-                      <span class="icon">
-                        <i class="fas fa-file-pdf"></i>
-                      </span>
-                      <span>Supplementary</span>
-                    </a>
-                  </span>
 
                   <!-- Github link -->
                   <span class="link-block">
@@ -85,14 +66,6 @@
                   </a>
                 </span>
 
-                <!-- ArXiv abstract Link -->
-                <span class="link-block">
-                  <a href="https://arxiv.org/abs/<ARXIV PAPER ID>" target="_blank"
-                  class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                    <i class="ai ai-arxiv"></i>
-                  </span>
-                  <span>arXiv</span>
                 </a>
               </span>
             </div>
@@ -103,32 +76,19 @@
   </div>
 </section>
 
-
-<!-- Teaser video-->
-<section class="hero teaser">
-  <div class="container is-max-desktop">
-    <div class="hero-body">
-      <video poster="" id="tree" autoplay controls muted loop height="100%">
-        <!-- Your video here -->
-        <source src="static/videos/Presentation.mp4"
-        type="video/mp4">
-      </video>
-       
-    </div>
-  </div>
-</section>
-<!-- End teaser video -->
-
 <!-- Paper abstract -->
-<section class="section hero is-light">
+<section class="section hero is-dark">
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
-        <h2 class="title is-3">Abstract</h2>
-        <div class="content has-text-justified">
+        <h2 class="title is-3">Temporal Cross-Attention Routing</h2>
+        <div class="content has-text-centered">
           <p>
-            Recent text-to-image diffusion models can produce impressive visuals from textual prompts, but they struggle to reproduce the same subject consistently across multiple generations or contexts. Existing fine-tuning based methods for subject-driven generation face a trade-off between quality and efficiency. Fine-tuning larger models yield higher-quality images but is computationally expensive, while fine-tuning smaller models is more efficient but compromises image quality. To this end, we present Stencil. Stencil resolves this trade-off by leveraging the superior contextual priors of large models and efficient fine-tuning of small models. Stencil uses a small model for fine-tuning while a large pre-trained model provides contextual guidance during inference,  injecting rich priors into the generation process with minimal overhead. Stencil excels at generating high-fidelity, novel renditions of the subject in less than a minute, delivering state-of-the-art performance and setting a new benchmark in subject-driven generation. 
+            A non-parametric method to support granular control over the temporal placement of each text prompt in video generation. 
           </p>
+          <figure class="teaser-gif">
+            <img src="static/images/Teaser.gif" alt="Temporal cross-attention teaser">
+          </figure>
         </div>
       </div>
     </div>
@@ -141,23 +101,26 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
-        <h2 class="title is-3" style="padding-top: 2rem;">Pipeline</h2>
+      
         <div class="content has-text-justified">
 
-          <figure style="display: flex; justify-content: center;">
+          <figure class="pipeline-figure">
             <img
-              src="static/images/pipeline.jpg"
-              alt="STENCIL Pipeline"
+              src="static/images/application/Grid.png"
               style="width: 150%; max-width: 150%; height: auto;"
             />
           </figure>
-                    <p>
-            The STENCIL pipeline consists of two main stages, (a) Cross-Attention Guided Loss. We fine-tune a lightweight text-to-image diffusion model
-on the reference image(s) of the subject. The Cross-Attention Guided Loss is applied so that gradients are computed only in
-regions influenced by the subject token (e.g. “toy robot”). (b) Context Guidance. At inference, given a user prompt, we draft an image with
-a large frozen text-to-image model. The draft is inverted into the latent space of the lightweight fine-tuned model and refined
-via null-text optimisation, producing the final image that preserves both the prompt context and the personalized subject. This allows us to generate images with
-rich contextual priors injected from a large diffusion model, without the computational cost of fine-tuning on the same large-scale models that are capable of producing them. 
+          <p>
+            We enforce temporal locality by injecting a distance-based penalty term, C, into the cross-attention mechanism:
+          </p>
+          <div class="equation">Attn(Q, K, V) = softmax(<span class="frac"><span class="num">QK<sup>T</sup></span><span class="den">&radic;d</span></span> - C(Q, K)) V</div>
+          <p>
+            We penalize how much a query i attends to the key j relative to how far the query is from the key’s assigned midpoint. Given a prompt P assigned to segment S of the video with midpoint m<sub>s</sub>, the penalty matrix for segment S is:
+          </p>
+          <div class="equation">C(i, j) = 1[j &isin; K<sub>s</sub>] &middot; <span class="frac"><span class="num">softplus(|f(i) - m<sub>s</sub>| - w)<sup>2</sup></span><span class="den">2&nbsp;&sigma;<sup>2</sup></span></span></div>
+          <p>
+            Here, f(i) is the latent frame index of the ith query token, w is a small window size proportional to the length of the segment, and &sigma; is derived so attention weights decay to a negligible factor &epsilon; at the segment boundaries. This keeps temporal prompts from interfering with neighboring prompts.
+
           </p>
         </div>
       </div>
@@ -166,96 +129,70 @@ rich contextual priors injected from a large diffusion model, without the comput
 
 <!-- End Pipeline section -->
 
- <div class="has-text-centered" style="margin-top: 1rem; ">
-        <span class="author-block" style="font-size: 0.9em;">(All images are generated with Stable Diffusion 1.5)</span>
+
+
+
+<!-- Video grid section -->
+<section class="section hero is-dark">
+  <div class="container is-max-desktop video-grid-section">
+    <h2 class="title is-3 has-text-centered">Video Gallery</h2>
+
+    <div class="video-row">
+      <h3 class="title is-4 row-title">Scene Transitions</h3>
+      <div class="video-grid">
+        <div class="video-card">
+          <img class="media-clip" src="static/videos/scene_transition_1.gif" alt="Scene transition 1">
+          <div class="video-caption">Flying Eagle &rarr; Cyberpunk City &rarr; 20th Century Living Room</div>
+        </div>
+        <div class="video-card">
+          <video class="no-controls media-clip" src="Teaser.mov" autoplay muted loop playsinline preload="metadata"></video>
+          <div class="video-caption">Transition 2</div>
+        </div>
+        <div class="video-card">
+          <video class="no-controls media-clip" src="Teaser.mov" autoplay muted loop playsinline preload="metadata"></video>
+          <div class="video-caption">Transition 3</div>
+        </div>
+      </div>
     </div>
-<!-- Image carousel -->
-<section class="hero is-small">
-  
-  <div class="hero-body">
-    
-    <div class="container">
 
-      
-      <div id="results-carousel" class="carousel results-carousel">
-       <div class="item">
-        <!-- Your image here -->
-        <img src="static/images/1.jpg" alt="MY ALT TEXT"  style="display: block; margin: 0 auto;"/>
-        <h2 class="subtitle has-text-centered">
-          "A dog in a crowded cyberpunk city on a rainy day."
-        </h2>
+    <div class="video-row">
+      <h3 class="title is-4 row-title">Event Composition</h3>
+      <div class="video-grid">
+        <div class="video-card">
+          <img class="media-clip" src="static/videos/event_composition_1.gif" alt="Scene transition 1">
+          <div class="video-caption">Pour Cereal &rarr; Pour Milk</div>
+        </div>
+        <div class="video-card">
+                    <img class="media-clip" src="static/videos/event_composition_2.gif" alt="Camera Trajectory 1">
+          <div class="video-caption">Approach Bowl &rarr; Lap Water &rarr; Raise Head</div>
+        </div>
+        <div class="video-card">
+          <video class="no-controls media-clip" src="Teaser.mov" autoplay muted loop playsinline preload="metadata"></video>
+          <div class="video-caption">Event Composition 3</div>
+        </div>
       </div>
-      <div class="item">
-        <!-- Your image here -->
-        <img src="static/images/2.jpg" alt="MY ALT TEXT"  style="display: block; margin: 0 auto;"/>
-        <h2 class="subtitle has-text-centered">
-          "A cat wearing a Superman costume, striking a heroic pose in a city."
-        </h2>
-      </div>
-      <div class="item">
-        <!-- Your image here -->
-        <img src="static/images/3.jpg" alt="MY ALT TEXT"  style="display: block; margin: 0 auto;"/>
-        <h2 class="subtitle has-text-centered">
-          "A dog in front of thousands of floating lanterns in the night sky."
-        </h2>
-        <br>
+    </div>
 
-      </div>
-  </div>
-
-       
-</div>
-</div>
-</section>
-<!-- End image carousel -->
-
-
-
-<!-- Video carousel -->
-<section class="hero is-small">
-  <div class="hero-body">
-    <div class="container">
-      <h2 class="title is-3">Applications</h2>
-            
-      <div class="content">
-        <h3 class="subtitle" style="text-align: center;">Age Progression/Regression</h3>
-        <img src="static/images/application/Age.png" width="100%">
-      
-        <h3 class="subtitle" style="text-align: center;">Accessorization</h3>
-        <img src="static/images/application/Costumes.png" width="100%">
-
-        <h3 class="subtitle" style="text-align: center;">Expression Editing</h3>
-        <img src="static/images/application/Expression.png" width="100%">
-
-        <h3 class="subtitle" style="text-align: center;">Perspective-Conditioned Generation</h3>
-        <img src="static/images/application/Perspective.png" width="100%">
-
-        <h3 class="subtitle" style="text-align: center;">Pose Editing</h3>
-        <img src="static/images/application/Pose.png" width="100%">
-
-        <h3 class="subtitle" style="text-align: center;">Style Transfer</h3>
-        <img src="static/images/application/Style.png" width="100%">
+    <div class="video-row">
+      <h3 class="title is-4 row-title">Event + Camera Trajectory Composition</h3>
+      <div class="video-grid">
+        <div class="video-card">
+          <img class="media-clip" src="static/videos/camera_trajectory_1.gif" alt="Camera Trajectory 1">
+          <div class="video-caption">Pan Right &rarr; Pan Left</div>
+        </div>
+        <div class="video-card">
+          <img class="media-clip" src="static/videos/camera_trajectory_1.gif" alt="Camera Trajectory 1">
+          <div class="video-caption">Approach Bowl &rarr; Lap Water &rarr; Raise Head</div>
+        </div>
+        <div class="video-card">
+          <video class="no-controls media-clip" src="Teaser.mov" autoplay muted loop playsinline preload="metadata"></video>
+          <div class="video-caption">Camera Trajectory 3</div>
+        </div>
       </div>
     </div>
   </div>
 </section>
-
-
-
-<!--BibTex citation -->
-  <section class="section" id="BibTeX">
-    <div class="container is-max-desktop content">
-      <h2 class="title">BibTeX</h2>
-      <pre><code>@inproceedings{chen2025stencil,
-  author    = {Gordon Chen and Ziqi Huang and Cheston Tan and Ziwei Liu},
-  title     = {STENCIL: Subject-Driven Generation with Context Guidance},
-  booktitle = {Proceedings of the IEEE International Conference on Image Processing (ICIP)},
-  year      = {2025},
-  note      = {Accepted as Spotlight paper},
-}</code></pre>
-    </div>
-</section>
-<!--End BibTex citation -->
+<!-- End video grid section -->
 
 
   <footer class="footer">

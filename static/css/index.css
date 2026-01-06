@@ -1,11 +1,42 @@
 body {
   font-family: 'Noto Sans', sans-serif;
+  background-color: #000;
+  color: #fff;
+}
+
+.hero, .section, .hero-body {
+  background-color: #000;
+  color: #fff;
+}
+
+.section.hero .content,
+.section.hero .column,
+.section.hero .container {
+  background-color: transparent;
+  color: #fff;
+}
+
+.hero.is-light,
+.section.hero.is-light {
+  background-color: #000;
+  color: #fff;
+}
+
+.hero.is-dark,
+.section.hero.is-dark {
+  background-color: #000;
+  color: #fff;
 }
 
 
 .footer .icon-link {
     font-size: 25px;
-    color: #000;
+    color: #fff;
+}
+
+.footer {
+  background-color: #000;
+  color: #fff;
 }
 
 .link-block a {
@@ -51,31 +82,174 @@ body {
     font-family: 'Google Sans', sans-serif;
 }
 
+.publication-authors .author-block:not(.affiliation) {
+  margin-right: 14px;
+  margin-bottom: 6px;
+}
+
+.publication-authors .author-block:not(.affiliation):last-child {
+  margin-right: 0;
+}
+
+.affiliation {
+  font-size: 0.9em;
+  margin-right: 0;
+  display: inline-block;
+}
+
+.math-block {
+  background: transparent;
+  color: #fff;
+  font-family: 'Menlo', monospace;
+  white-space: pre-wrap;
+  margin: 0.5rem 0;
+  padding: 0;
+}
+
+.equation {
+  text-align: center;
+  font-family: 'Menlo', monospace;
+  color: #fff;
+  margin: 0.75rem 0;
+  white-space: normal;
+  font-size: 1.05em;
+}
+
+.equation .frac {
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  margin: 0 4px;
+  white-space: nowrap;
+}
+
+.equation .frac .num,
+.equation .frac .den {
+  display: block;
+  padding: 0 2px;
+}
+
+.equation .frac .den {
+  border-top: 1px solid currentColor;
+  padding-top: 2px;
+}
+
+.equation sup,
+.equation sub {
+  font-size: 0.75em;
+}
+
+.teaser-gif {
+  display: flex;
+  justify-content: center;
+  margin: 1rem auto 0;
+}
+
+.teaser-gif img {
+  max-width: 130%;
+  width: 130%;
+  height: auto;
+}
+
+.pipeline-figure {
+  display: flex;
+  justify-content: center;
+}
+
+.pipeline-figure img {
+  transform: translateX(-10%);
+}
+
+.video-grid-section {
+  margin-top: 2rem;
+}
+
+.video-row {
+  margin-top: 1.5rem;
+}
+
+.video-row .row-title {
+  margin-bottom: 1rem;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.video-card {
+  background: #0f0f0f;
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.video-card .media-clip {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 6px;
+  background: #000;
+}
+
+.video-card video.media-clip {
+  pointer-events: none;
+}
+
+.video-caption {
+  margin-top: 0.5rem;
+  font-size: 0.9em;
+  color: #ccc;
+}
+
+.title,
+.subtitle,
+.content,
+.publication-title,
+.publication-authors,
+.publication-venue,
+.publication-awards {
+  color: #fff;
+}
+
+.publication-authors a,
+a {
+   color: #fff !important;
+}
+
+.publication-authors a:hover,
+a:hover {
+    text-decoration: underline;
+    color: #e0e0e0 !important;
+}
+
+a.button,
+a.button:hover {
+  text-decoration: none;
+}
+
+.title-logo {
+  height: 60px;
+  width: auto;
+  margin-right: 12px;
+  vertical-align: middle;
+}
+
 .publication-authors {
     font-family: 'Google Sans', sans-serif;
 }
 
 .publication-venue {
-    color: #555;
     width: fit-content;
     font-weight: bold;
 }
 
 .publication-awards {
-    color: #ff3860;
     width: fit-content;
     font-weight: bolder;
 }
 
 .publication-authors {
-}
-
-.publication-authors a {
-   color: hsl(204, 86%, 53%) !important;
-}
-
-.publication-authors a:hover {
-    text-decoration: underline;
 }
 
 .author-block {
@@ -126,10 +300,9 @@ body {
 }
 
 .slider-pagination .slider-page {
-  background: #000000;
+  background: #ffffff;
 }
 
 .eql-cntrb { 
   font-size: smaller;
 }
-

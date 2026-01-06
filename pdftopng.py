@@ -1,7 +1,7 @@
 from pdf2image import convert_from_path
 import os
 
-path = "static/images/application"
+path = "."
 
 for file in os.listdir(path):
     if file.endswith(".pdf"):
