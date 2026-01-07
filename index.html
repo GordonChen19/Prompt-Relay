@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <link rel="icon" type="image/png" href="static/images/S.png">
 
-  <title>TempoCtrl</title>
+  <title>Prompt Relay</title>
   <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
   rel="stylesheet">
 
@@ -33,7 +33,7 @@
           <div class="column has-text-centered">
             <h1 class="title is-1 publication-title">
               <img src="static/images/application/TempoCtrl.png" alt="TempoCtrl logo" class="title-logo">
-              TempoCtrl: Inference-Time Temporal Cross-Attention Control
+              Prompt Relay: Inference-Time Temporal-Semantic Control via Cross-Attention Routing
             </h1>
             <div class="is-size-5 publication-authors">
               <!-- Paper authors -->
@@ -141,16 +141,60 @@
       <h3 class="title is-4 row-title">Scene Transitions</h3>
       <div class="video-grid">
         <div class="video-card">
-          <img class="media-clip" src="static/videos/scene_transition_1.gif" alt="Scene transition 1">
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/scene_transition_1.gif" alt="Scene transition 1">
+            <button class="prompt-button" type="button">View Full Prompt</button>
+          </div>
+          <script class="prompt-data" type="application/json">
+              {
+                "global_prompt": [
+                  "A continuous cinematic shot that seamlessly transitions between various scenes."],
+                "scene_prompts": [
+                  " An open sky filled with soft blue tones white clouds and gentle sunlight.",
+                  " Cars move close to the camera in layered traffic lanes, neon reflections streak across rain-soaked streets and skyscrapers, and the atmosphere feels dark, crowded, and electric.",
+                  " A vintage TV displaying a man driving a car in a cyberpunk city playing in the living room."
+                ],
+                "local_prompts": [
+                  " An eagle flies high through the sky, flapping its wings.",
+                  " The camera quickly zooms toward the eagle’s eye as it flies. Inside the pupil, a cyberpunk city is already visible, distorted by the curved surface of the eye. As the zoom continues, the city within the pupil grows clearer.",
+                  " A cyberpunk city is visible. The camera approaches a car driving in the distance. Then the camera starts to track and lock onto a car moving through the neon-lit cyberpunk streets.",
+                  " The camera slowly pans to the side of the car, revealing a man sitting in the car, wearing sunglasses.",
+                  " The camera slowly zooms out and pulls back while the man continues driving. The camera pulls back revealing that the cyberpunk scene is playing on a television screen.",
+                  " The camera continues zooming out to reveal an old television set inside a cozy 20th century living room. Warm lamplight fills the space, with vintage furniture and people surrounding the TV while the cyberpunk movie continues playing on the screen."
+                ]
+              }
+          </script>
           <div class="video-caption">Flying Eagle &rarr; Cyberpunk City &rarr; 20th Century Living Room</div>
         </div>
-        <div class="video-card">
-          <video class="no-controls media-clip" src="Teaser.mov" autoplay muted loop playsinline preload="metadata"></video>
-          <div class="video-caption">Transition 2</div>
+        <div class="video-card" data-prompt="A caveman stands in a rugged landscape, transforms into a Spartan warrior, then into a medieval knight in full armor.">
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/scene_transition_2.gif" alt="Scene transition 2">
+            <button class="prompt-button" type="button">View Full Prompt</button>
+          </div>
+          <script class="prompt-data" type="application/json">
+              {
+                "global_prompt": [
+                  "A continuous cinematic shot that transitions across three distinct historical eras. Shot on 35mm film with anamorphic lens flares, volumetric lighting, and high contrast."],
+                "scene_prompts": [
+                  " A vast, wind-swept grassy landscape at golden hour, with dust motes dancing in the light."
+                ],
+                "local_prompts": [
+                  " A low-angle, handheld medium-close shot tracking a rugged caveman walking through tall, swaying grass. He is backlit by the setting sun, creating a rim-light effect on his furs.",
+                  " The camera whips rapidly downwards, tracking past the caveman's hairy legs. The frame fills with a motion-blurred close-up of the rushing green grass texture.",
+                  " The camera whips rapidly upwards from the grass, revealing the bronze greaves (shin armor) and red tunic of a Spartan. It continues tilting up to a medium-close shot of a Spartan soldier.",
+                  " The camera whips rapidly downwards, tracking past the Spartan's large round shield and legs. The frame fills with a motion-blurred close-up of the green grass texture.",
+                  " The camera whips rapidly upwards from the grass, revealing the metal-shod hooves of a horse. The camera tracks a majestic medieval knight in shining plate armor riding the horse through the grass."
+                ]
+              }
+          </script>
+          <div class="video-caption">Caveman &rarr; Spartan &rarr; Midieval Knight</div>
         </div>
-        <div class="video-card">
-          <video class="no-controls media-clip" src="Teaser.mov" autoplay muted loop playsinline preload="metadata"></video>
-          <div class="video-caption">Transition 3</div>
+        <div class="video-card" data-prompt="">
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/scene_transition_1.gif" alt="Scene transition 3">
+            <button class="prompt-button" type="button">View Full Prompt</button>
+          </div>
+          <div class="video-caption">Flying Eagle &rarr; Cyberpunk City &rarr; 20th Century Living Room</div>
         </div>
       </div>
     </div>
@@ -159,40 +203,79 @@
       <h3 class="title is-4 row-title">Event Composition</h3>
       <div class="video-grid">
         <div class="video-card">
-          <img class="media-clip" src="static/videos/event_composition_1.gif" alt="Scene transition 1">
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/event_composition_1.gif" alt="Event Composition 1">
+            <button class="prompt-button" type="button">View Full Prompt</button>
+          </div>
+          <script class="prompt-data" type="application/json">
+            {
+              "global_prompt": [
+              "A woman stands at a kitchen counter. In front of her on the counter is a ceramic bowl, a cardboard cereal box, and a clear glass filled with milk. She is preparing breakfast."],
+              
+              "local_prompts": [
+                  "The woman picks up the cereal box and pours cereal into the bowl and places the cereal box back down on the table.",
+                  "The woman picks up the glass of milk and pours it into the bowl of cereal and places the glass of milk back down on the table."
+              ]
+            }
+          </script>
           <div class="video-caption">Pour Cereal &rarr; Pour Milk</div>
         </div>
         <div class="video-card">
-                    <img class="media-clip" src="static/videos/event_composition_2.gif" alt="Camera Trajectory 1">
-          <div class="video-caption">Approach Bowl &rarr; Lap Water &rarr; Raise Head</div>
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/event_composition_2.gif" alt="Event Composition 2">
+            <button class="prompt-button" type="button">View Full Prompt</button>
+          </div>
+          <script class="prompt-data" type="application/json">
+            {
+              "global_prompt": [
+                "A modern apartment living room. Soft lighting. The atmosphere is intimate and serious. A man and a woman are chatting to each other at the table."
+              ],
+              "local_prompts": [
+                "The camera slowly pans to the right, focusing on the woman speaking.",
+                "The camera slowly pans to the left, focusing on the man speaking."
+              ]
+            }
+          </script>
+          <div class="video-caption">Pan Right &rarr; Pan Left</div>
         </div>
         <div class="video-card">
-          <video class="no-controls media-clip" src="Teaser.mov" autoplay muted loop playsinline preload="metadata"></video>
-          <div class="video-caption">Event Composition 3</div>
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/event_composition_3.gif" alt="Event Composition 3">
+            <button class="prompt-button" type="button">View Full Prompt</button>
+          </div>
+          <script class="prompt-data" type="application/json">
+            {
+              "global_prompt": [
+                "High contrast lighting, 35mm film grain, cinematic atmosphere, movie still, 8k resolution."],
+              "scene_prompts": [
+                " A man sitting at a table in a modern living room at night. The room is lit with cool, neutral lighting from overhead fixtures and window spill light, creating a sunny atmosphere."
+              ],
+              "local_prompts": [
+                " A tight close-up shot of the man's face, sharply lit with cool, directional light. His expression is confused. He stares across the table, then slowly removes his eyeglasses in disbelief.",
+                " The camera pans smoothly across the table to reveal that the man is looking at an anthropomorphic monkey wearing a t-shirt sitting opposite him. The monkey is messily eating food with its hands, crumbs and sauce scattered across the tabletop. The eating is careless and chaotic, sharply contrasting the clean, controlled environment.",
+                " The camera locks onto the monkey. The monkey abruptly stops eating mid-bite. It freezes for a moment, then slowly lowers the food and looks directly at the man. The camera zooms in on the monkey’s face as it gives a calm, innocent smile."
+              ]
+            }
+
+          </script>
+          <div class="video-caption">Man Removes Glasses &rarr; Reverse Shot &rarr; Monkey Stops Eating</div>
         </div>
       </div>
     </div>
 
-    <div class="video-row">
-      <h3 class="title is-4 row-title">Event + Camera Trajectory Composition</h3>
-      <div class="video-grid">
-        <div class="video-card">
-          <img class="media-clip" src="static/videos/camera_trajectory_1.gif" alt="Camera Trajectory 1">
-          <div class="video-caption">Pan Right &rarr; Pan Left</div>
-        </div>
-        <div class="video-card">
-          <img class="media-clip" src="static/videos/camera_trajectory_1.gif" alt="Camera Trajectory 1">
-          <div class="video-caption">Approach Bowl &rarr; Lap Water &rarr; Raise Head</div>
-        </div>
-        <div class="video-card">
-          <video class="no-controls media-clip" src="Teaser.mov" autoplay muted loop playsinline preload="metadata"></video>
-          <div class="video-caption">Camera Trajectory 3</div>
-        </div>
-      </div>
-    </div>
   </div>
 </section>
 <!-- End video grid section -->
+
+<div class="prompt-overlay" id="prompt-overlay" aria-hidden="true">
+  <div class="prompt-panel" role="dialog" aria-modal="true" aria-labelledby="prompt-title">
+    <div class="prompt-header">
+      <h3 id="prompt-title" class="title is-4">Full Prompt</h3>
+      <button class="prompt-close" type="button" aria-label="Close prompt">&times;</button>
+    </div>
+    <pre class="prompt-text" id="prompt-text"></pre>
+  </div>
+</div>
 
 
   <footer class="footer">

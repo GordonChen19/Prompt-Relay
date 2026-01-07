@@ -184,11 +184,16 @@ body {
   border-radius: 8px;
 }
 
+.media-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
 .video-card .media-clip {
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 6px;
   background: #000;
 }
 
@@ -196,10 +201,99 @@ body {
   pointer-events: none;
 }
 
+.prompt-button {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.video-card:hover .prompt-button,
+.video-card:focus-within .prompt-button {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(-2px);
+}
+
 .video-caption {
   margin-top: 0.5rem;
   font-size: 0.9em;
   color: #ccc;
+}
+
+.prompt-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: none;
+  z-index: 9999;
+  padding: 1.5rem;
+}
+
+.prompt-overlay.is-visible {
+  display: block;
+}
+
+.prompt-panel {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #101010;
+  border: 1px solid #2b2b2b;
+  border-radius: 12px;
+  padding: 1rem 1.25rem 1.25rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.prompt-close {
+  background: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.prompt-text {
+  margin-top: 0.75rem;
+  white-space: pre-wrap;
+  font-family: 'Menlo', monospace;
+  font-size: 0.95rem;
+  color: #f5f5f5;
+  background: #000;
+  border: 1px solid #2b2b2b;
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+body.is-prompt-open {
+  overflow: hidden;
+}
+
+@media (hover: none) {
+  .prompt-button {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .title,
