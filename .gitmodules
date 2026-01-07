@@ -1,0 +1,3 @@
+[submodule "src/Wan2.2"]
+  path = src/Wan2.2
+  url = https://github.com/GordonChen19/Wan2.2.git
