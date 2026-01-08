@@ -39,7 +39,8 @@ body {
   color: #fff;
 }
 
-.link-block a {
+.link-block a,
+.link-block .button {
     margin-top: 5px;
     margin-bottom: 5px;
 }
