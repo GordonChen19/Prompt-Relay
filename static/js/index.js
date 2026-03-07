@@ -72,6 +72,43 @@ $(document).ready(function() {
       return card.getAttribute(`data-model-${modelKey}`);
     };
 
+    const preloadedSources = new Set();
+
+    const preloadMediaSource = (src) => {
+      const normalizedSrc = String(src || '').trim();
+      if (!normalizedSrc || preloadedSources.has(normalizedSrc)) {
+        return;
+      }
+      preloadedSources.add(normalizedSrc);
+
+      if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(normalizedSrc)) {
+        const preloadVideo = document.createElement('video');
+        preloadVideo.preload = 'auto';
+        preloadVideo.muted = true;
+        preloadVideo.src = normalizedSrc;
+        preloadVideo.load();
+        return;
+      }
+
+      const preloadImage = new Image();
+      preloadImage.decoding = 'async';
+      preloadImage.src = normalizedSrc;
+    };
+
+    const warmSourcesWhenIdle = (sources) => {
+      const run = () => {
+        sources.forEach((source) => {
+          preloadMediaSource(source);
+        });
+      };
+
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(run, { timeout: 1500 });
+      } else {
+        setTimeout(run, 150);
+      }
+    };
+
     document.querySelectorAll('.video-card').forEach((card) => {
       const mediaClip = card.querySelector('.media-clip');
       if (!mediaClip) {
@@ -89,6 +126,14 @@ $(document).ready(function() {
         const modelSrc = getCardModelSource(card, model.key);
         modelSources[model.key] = modelSrc && modelSrc.trim() ? modelSrc.trim() : defaultSrc;
       });
+      const uniqueModelSources = Array.from(
+        new Set(
+          Object.values(modelSources)
+            .map((value) => String(value || '').trim())
+            .filter(Boolean)
+        )
+      );
+      warmSourcesWhenIdle(uniqueModelSources);
 
       const mediaWrap = card.querySelector('.media-wrap');
       if (!mediaWrap) {
@@ -126,7 +171,10 @@ $(document).ready(function() {
         }
 
         const nextSrc = modelSources[activeButton.dataset.model] || defaultSrc;
-        mediaClip.setAttribute('src', nextSrc);
+        preloadMediaSource(nextSrc);
+        if (mediaClip.getAttribute('src') !== nextSrc) {
+          mediaClip.setAttribute('src', nextSrc);
+        }
         if (mediaClip.tagName.toLowerCase() === 'video') {
           mediaClip.load();
         } else {
@@ -142,6 +190,12 @@ $(document).ready(function() {
         button.addEventListener('click', () => {
           setActiveModel(button.dataset.model);
         });
+        const warmButtonModel = () => {
+          const nextSrc = modelSources[button.dataset.model] || defaultSrc;
+          preloadMediaSource(nextSrc);
+        };
+        button.addEventListener('mouseenter', warmButtonModel);
+        button.addEventListener('focus', warmButtonModel);
       });
 
       const preferredModel = normalizeModelKey(card.dataset.defaultModel || '');
