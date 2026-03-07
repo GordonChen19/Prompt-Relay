@@ -66,4 +66,17 @@ Users can define their prompts in:
 Wan2.2/prompts.json
 ```
 
+and then run:
+
+```bash
+python dbl/Wan2.2/generate.py \
+  --task t2v-A14B \
+  --ckpt_dir ./Wan2.2-T2V-A14B \
+  --offload_model True \
+  --convert_model_dtype \
+ --frame_num 81 \
+  --size "832*480" \
+  --prompt_filepath dbl/Wan2.2/prompts.json\
+```
+
 The rest works the same as Wan's original repository.

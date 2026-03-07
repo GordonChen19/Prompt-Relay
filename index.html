@@ -163,7 +163,8 @@
   <div class="container is-max-desktop video-grid-section">
     <h2 class="title is-3 has-text-centered">Video Gallery</h2>
     <p class="video-gallery-note has-text-centered">
-      Prompt Relay consistently outperforms baseline approaches in temporal alignment and transition naturalness and rivals some most recent models such as Kling 3.0. Notably Wan 2.2 with Prompt Relay consistently exhibits stronger visual quality compared to the baseline Wan 2.2. This is likely because Prompt Relay's attention routing mechanism suppresses attention between queries in a particular temporal segment and prompts belonging to other segments. By reducing unnecessary competition in the cross-attention space, the model can allocate attention more effectively to the active semantic concepts, resulting in clearer visual structure, improved temporal alignment, and more stable generation.
+      When combined with Wan 2.2, Prompt Relay substantially strengthens multi-event generation and helps the model become far more competitive with several recent closed-source state-of-the-art systems, such as Kling 3.0 and Veo 3.1. We also observe that Prompt Relay enhances visual quality over baselines. A plausible reason is that Prompt Relay suppresses interference between prompts assigned to different temporal segments, reducing competition in the cross-attention space and allowing the model to focus more effectively on the currently active semantic concepts.
+      
     </p>
 
     <div class="video-row">
