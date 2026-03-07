@@ -4,7 +4,9 @@
 <h1 align="center">Prompt Relay: Fine-Grained Temporal Prompt Routing for Multi-Event Video Generation</h1>
 
 <p align="center">
-  <a href="https://gordonchen19.github.io">Gordon Chen</a>
+  <a href="https://gordonchen19.github.io">Gordon Chen</a>,
+   <a href="https://ziqihuangg.github.io">Ziqi Huang</a>,
+   <a href="https://liuziwei7.github.io/team.html">Ziwei Liu</a>
 </p>
 
 
@@ -51,4 +53,17 @@ Prompt Relay improves:
 - **transition naturalness**, by ensuring smooth event handoffs across time,
 - **visual quality**, by reducing unnecessary competition in cross-attention.
 
-On the examples shown in the project page, Prompt Relay consistently outperforms baseline prompting strategies and remains competitive with recent strong models such as **Kling 3.0**. In particular, **Wan 2.2 + Prompt Relay** often produces stronger visual structure and more stable multi-event generation than the base Wan 2.2 model.
+Prompt Relay consistently outperforms baseline prompting strategies and remains competitive with recent strong models such as **Kling 3.0**. In particular, **Wan 2.2 + Prompt Relay** often produces stronger visual structure and more stable multi-event generation than the base Wan 2.2 model.
+
+
+## Usage
+
+Prompt Relay takes as input a **global prompt**, a list of **local prompts**, and their corresponding **segment lengths**.
+
+Users can define their prompts in:
+
+```bash
+Wan2.2/prompts.json
+```
+
+The rest works the same as Wan's original repository.
