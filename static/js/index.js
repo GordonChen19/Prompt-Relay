@@ -177,6 +177,10 @@ $(document).ready(function() {
         }
         if (mediaClip.tagName.toLowerCase() === 'video') {
           mediaClip.load();
+          const playPromise = mediaClip.play();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+          }
         } else {
           mediaClip.setAttribute('alt', `${baseAlt} (${activeButton.textContent.trim()})`);
         }
