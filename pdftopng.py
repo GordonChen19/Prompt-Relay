@@ -11,3 +11,5 @@ for file in os.listdir(path):
         for i, page in enumerate(pages):
             output_file = os.path.join(path, f"{os.path.splitext(file)[0]}.png")
             page.save(output_file, "PNG")
+
+#ffmpeg -i kling3.mp4 -vf "fps=30" kling3.gif

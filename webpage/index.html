@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="static/images/S.png">
+
+  <title>Prompt Relay</title>
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+  rel="stylesheet">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script src="static/js/bulma-carousel.min.js"></script>
+  <script src="static/js/bulma-slider.min.js"></script>
+  <script src="static/js/index.js"></script>
+</head>
+<body>
+
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title">
+              <img src="static/images/application/Logo.png" alt="Logo" class="title-logo">
+              Prompt Relay: Inference-Time Temporal-Semantic Control via Cross-Attention Routing
+            </h1>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Paper abstract -->
+<section class="section hero is-dark">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Temporal Cross-Attention Routing</h2>
+        <div class="content has-text-centered">
+          <p>
+            A non-parametric method to support granular control over the temporal placement of each text prompt in video generation. 
+          </p>
+          <figure class="teaser-gif">
+            <img src="static/images/Teaser.gif" alt="Temporal cross-attention teaser">
+          </figure>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End paper abstract -->
+
+<!-- Pipeline section -->
+
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+      
+        <div class="content has-text-justified">
+
+          <figure class="pipeline-figure">
+            <img
+              src="static/images/application/Grid.png"
+              style="width: 150%; max-width: 150%; height: auto;"
+            />
+          </figure>
+          <p>
+            We enforce temporal locality by injecting a distance-based penalty term, C, into the cross-attention mechanism:
+          </p>
+          <div class="equation">Attn(Q, K, V) = softmax(<span class="frac"><span class="num">QK<sup>T</sup></span><span class="den">&radic;d</span></span> - C(Q, K)) V</div>
+          <p>
+            We penalize how much a query i attends to the key j relative to how far the query is from the key’s assigned midpoint. Given a prompt P assigned to segment S of the video with midpoint m<sub>s</sub>, the penalty matrix for segment S is:
+          </p>
+          <div class="equation">C(i, j) = 1[j &isin; K<sub>s</sub>] &middot; <span class="frac"><span class="num">ReLU(|f(i) - m<sub>s</sub>| - w)<sup>2</sup></span><span class="den">2&nbsp;&sigma;<sup>2</sup></span></span></div>
+          <p>
+            Here, f(i) is the latent frame index of the ith query token, w is a small window size proportional to the length of the segment, and &sigma; is derived so attention weights decay to a negligible factor &epsilon; at the segment boundaries. This keeps temporal prompts from interfering with neighboring prompts.
+
+          </p>
+          <div class="cost-visualizer" id="cost-visualizer">
+            <h3 class="title is-5 cost-visualizer-title">Interactive Penalty-to-Attention Curve</h3>
+            <p class="cost-visualizer-note">
+              The line plots retained attention for keys in K<sub>s</sub>: exp(-C(i, j)).
+              The x-axis is fixed to 0..100. Segment length L is the centered interval
+              [m<sub>s</sub>-L/2, m<sub>s</sub>+L/2], and &sigma; is computed from L using
+              &sigma; = L / (2 ln(1/&epsilon;)) with &epsilon; = 10<sup>-3</sup>. Window size is fixed as w = L/3.
+            </p>
+            <div class="cost-controls">
+              <label class="cost-control" for="cost-segment-length">
+                <span>Segment length L</span>
+                <input id="cost-segment-length" type="range" min="10" max="100" step="1" value="100">
+                <span class="cost-control-value" id="cost-segment-length-value">100</span>
+              </label>
+              <label class="cost-control" for="cost-midpoint">
+                <span>Segment midpoint m<sub>s</sub></span>
+                <input id="cost-midpoint" type="range" min="0" max="100" step="0.5" value="50">
+                <span class="cost-control-value" id="cost-midpoint-value">50</span>
+              </label>
+              <label class="cost-control" for="cost-query-frame">
+                <span>Selected query f(i)</span>
+                <input id="cost-query-frame" type="range" min="0" max="100" step="1" value="50">
+                <span class="cost-control-value" id="cost-query-frame-value">50</span>
+              </label>
+              <div class="cost-control cost-control-static">
+                <span>Window w = L/3</span>
+                <span class="cost-control-value" id="cost-window-derived">33.3</span>
+              </div>
+              <div class="cost-control cost-control-static">
+                <span>Computed &sigma; (&epsilon; = 10<sup>-3</sup>)</span>
+                <span class="cost-control-value" id="cost-sigma-derived">7.24</span>
+              </div>
+            </div>
+            <div class="cost-chart-shell">
+              <svg
+                id="cost-attention-chart"
+                class="cost-attention-chart"
+                viewBox="0 0 760 300"
+                role="img"
+                aria-label="Retained attention across query frame positions">
+                <g id="cost-grid-lines"></g>
+                <rect id="cost-segment-zone" class="cost-segment-zone"></rect>
+                <rect id="cost-no-penalty-zone" class="cost-no-penalty-zone"></rect>
+                <path id="cost-attention-path" class="cost-attention-path"></path>
+                <line id="cost-query-line" class="cost-query-line"></line>
+                <circle id="cost-query-point" class="cost-query-point" r="4"></circle>
+                <text id="cost-query-label" class="cost-query-label"></text>
+                <text class="cost-axis-title" x="380" y="286">Query frame f(i)</text>
+                <text class="cost-axis-title" x="18" y="150" transform="rotate(-90 18 150)">Retained attention</text>
+              </svg>
+            </div>
+            <div class="cost-readout">
+              <span>Segment interval: <strong id="cost-segment-interval">[0, 100]</strong></span>
+              <span>w = L/3: <strong id="cost-window-readout">33.3</strong></span>
+              <span>No-penalty interval (C=0): <strong id="cost-zero-interval">[38, 62]</strong></span>
+              <span>&sigma; from L: <strong id="cost-sigma-readout">7.24</strong></span>
+              <span>Selected C(i, j): <strong id="cost-selected-cost">0.000</strong></span>
+              <span>Retained attention: <strong id="cost-selected-attention">100.0%</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- End Pipeline section -->
+
+
+
+
+<!-- Video grid section -->
+<section class="section hero is-dark">
+  <div class="container is-max-desktop video-grid-section">
+    <h2 class="title is-3 has-text-centered">Video Gallery</h2>
+
+    <div class="video-row">
+      <h3 class="title is-4 row-title">Scene Transitions</h3>
+      <div class="video-grid">
+        <div class="video-card">
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/scene_transition_1.gif" alt="Scene transition 1">
+          </div>
+          <script class="prompt-data" type="application/json">
+              {
+                "global_prompt": [
+                  "A continuous cinematic shot that seamlessly transitions between various scenes."],
+                "scene_prompts": [
+                  " An open sky filled with soft blue tones white clouds and gentle sunlight.",
+                  " Cars move close to the camera in layered traffic lanes, neon reflections streak across rain-soaked streets and skyscrapers, and the atmosphere feels dark, crowded, and electric.",
+                  " A vintage TV displaying a man driving a car in a cyberpunk city playing in the living room."
+                ],
+                "local_prompts": [
+                  " An eagle flies high through the sky, flapping its wings.",
+                  " The camera quickly zooms toward the eagle’s eye as it flies. Inside the pupil, a cyberpunk city is already visible, distorted by the curved surface of the eye. As the zoom continues, the city within the pupil grows clearer.",
+                  " A cyberpunk city is visible. The camera approaches a car driving in the distance. Then the camera starts to track and lock onto a car moving through the neon-lit cyberpunk streets.",
+                  " The camera slowly pans to the side of the car, revealing a man sitting in the car, wearing sunglasses.",
+                  " The camera slowly zooms out and pulls back while the man continues driving. The camera pulls back revealing that the cyberpunk scene is playing on a television screen.",
+                  " The camera continues zooming out to reveal an old television set inside a cozy 20th century living room. Warm lamplight fills the space, with vintage furniture and people surrounding the TV while the cyberpunk movie continues playing on the screen."
+                ]
+              }
+          </script>
+          <div class="video-caption">Flying Eagle &rarr; Cyberpunk City &rarr; 20th Century Living Room</div>
+        </div>
+        <div class="video-card" data-prompt="A caveman stands in a rugged landscape, transforms into a Spartan warrior, then into a medieval knight in full armor.">
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/scene_transition_2.gif" alt="Scene transition 2">
+          </div>
+          <script class="prompt-data" type="application/json">
+              {
+                "global_prompt": [
+                  "A continuous cinematic shot that transitions across three distinct historical eras. Shot on 35mm film with anamorphic lens flares, volumetric lighting, and high contrast."],
+                "scene_prompts": [
+                  " A vast, wind-swept grassy landscape at golden hour, with dust motes dancing in the light."
+                ],
+                "local_prompts": [
+                  " A low-angle, handheld medium-close shot tracking a rugged caveman walking through tall, swaying grass. He is backlit by the setting sun, creating a rim-light effect on his furs.",
+                  " The camera whips rapidly downwards, tracking past the caveman's hairy legs. The frame fills with a motion-blurred close-up of the rushing green grass texture.",
+                  " The camera whips rapidly upwards from the grass, revealing the bronze greaves (shin armor) and red tunic of a Spartan. It continues tilting up to a medium-close shot of a Spartan soldier.",
+                  " The camera whips rapidly downwards, tracking past the Spartan's large round shield and legs. The frame fills with a motion-blurred close-up of the green grass texture.",
+                  " The camera whips rapidly upwards from the grass, revealing the metal-shod hooves of a horse. The camera tracks a majestic medieval knight in shining plate armor riding the horse through the grass."
+                ]
+              }
+          </script>
+          <div class="video-caption">Caveman &rarr; Spartan &rarr; Midieval Knight</div>
+        </div>
+        <div
+          class="video-card"
+          data-prompt=""
+          data-default-model="wan2-2-prompt-relay"
+          data-model-config='[
+            {"key":"sora2-storyboard","label":"Sora 2 Storyboard"},
+            {"key":"kling-2-6","label":"Kling 2.6"},
+            {"key":"veo3-1","label":"Veo3.1"},
+            {"key":"wan2-2","label":"Wan2.2"},
+            {"key":"wan2-2-prompt-relay","label":"Wan2.2 + Prompt Relay"}
+          ]'
+          data-model-sora2-storyboard="static/videos/scene_transition_3.gif"
+          data-model-kling-2-6="static/videos/scene_transition_3.gif"
+          data-model-veo3-1="static/videos/scene_transition_3.gif"
+          data-model-wan2-2="static/videos/scene_transition_3.gif"
+          data-model-wan2-2-prompt-relay="static/videos/scene_transition_3.gif">
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/scene_transition_3.gif" alt="Scene transition 3">
+          </div>
+          <script class="prompt-data" type="application/json">
+              {
+              "global_prompt": [
+                "High contrast lighting, cinematic atmosphere, 35mm film grain, shallow depth of field, realistic handheld camera motion, movie still, 8k resolution."],
+              
+              "scene_prompts": [
+                "  A handheld, front-facing, selfie perspective of a man filming himself at arm’s length, as if he is vlogging. The framing feels intimate and direct, with the camera clearly handheld."
+              ],
+              
+              "local_prompts": [
+                " The man looks directly into the lens, centered in frame. standing on a busy street in Hong Kong. Neon signs glow behind him, skyscrapers loom overhead, and crowds move in the background. The lighting is vibrant and urban, while the man remains centered and continues looking directly into the camera.",
+                
+                " The man raises his hand toward the camera. His palm moves closer until his hand completely fills the frame and covers the camera, smoothly blocking the lens and cutting off the scene.",
+                
+                " The hand pulls away from the lens, revealing the man in the same framing but now is filming himself in the grand canyons. The lighting is dramatic, with strong contrasts."
+              ]
+              }
+          </script>
+          <div class="video-caption">Hong Kong &rarr; Grand Canyon</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="video-row">
+      <h3 class="title is-4 row-title">Event Composition</h3>
+      <div class="video-grid">
+        <div class="video-card">
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/event_composition_1.gif" alt="Event Composition 1">
+          </div>
+          <script class="prompt-data" type="application/json">
+            {
+              "global_prompt": [
+              "A woman stands at a kitchen counter. In front of her on the counter is a ceramic bowl, a cardboard cereal box, and a clear glass filled with milk. She is preparing breakfast."],
+              
+              "local_prompts": [
+                  "The woman picks up the cereal box and pours cereal into the bowl and places the cereal box back down on the table.",
+                  "The woman picks up the glass of milk and pours it into the bowl of cereal and places the glass of milk back down on the table."
+              ]
+            }
+          </script>
+          <div class="video-caption">Pour Cereal &rarr; Pour Milk</div>
+        </div>
+        <div class="video-card">
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/event_composition_2.gif" alt="Event Composition 2">
+          </div>
+          <script class="prompt-data" type="application/json">
+            {
+              "global_prompt": [
+                "A modern apartment living room. Soft lighting. The atmosphere is intimate and serious. A man and a woman are chatting to each other at the table."
+              ],
+              "local_prompts": [
+                "The camera slowly pans to the right, focusing on the woman speaking.",
+                "The camera slowly pans to the left, focusing on the man speaking."
+              ]
+            }
+          </script>
+          <div class="video-caption">Pan Right &rarr; Pan Left</div>
+        </div>
+        <div class="video-card">
+          <div class="media-wrap">
+            <img class="media-clip" src="static/videos/event_composition_3.gif" alt="Event Composition 3">
+          </div>
+          <script class="prompt-data" type="application/json">
+            {
+              "global_prompt": [
+                "High contrast lighting, 35mm film grain, cinematic atmosphere, movie still, 8k resolution."],
+              "scene_prompts": [
+                " A man sitting at a table in a modern living room at night. The room is lit with cool, neutral lighting from overhead fixtures and window spill light, creating a sunny atmosphere."
+              ],
+              "local_prompts": [
+                " A tight close-up shot of the man's face, sharply lit with cool, directional light. His expression is confused. He stares across the table, then slowly removes his eyeglasses in disbelief.",
+                " The camera pans smoothly across the table to reveal that the man is looking at an anthropomorphic monkey wearing a t-shirt sitting opposite him. The monkey is messily eating food with its hands, crumbs and sauce scattered across the tabletop. The eating is careless and chaotic, sharply contrasting the clean, controlled environment.",
+                " The camera locks onto the monkey. The monkey abruptly stops eating mid-bite. It freezes for a moment, then slowly lowers the food and looks directly at the man. The camera zooms in on the monkey’s face as it gives a calm, innocent smile."
+              ]
+            }
+
+          </script>
+          <div class="video-caption">Man Removes Glasses &rarr; Reverse Shot &rarr; Monkey Stops Eating</div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</section>
+<!-- End video grid section -->
+
+<div class="prompt-overlay" id="prompt-overlay" aria-hidden="true">
+  <div class="prompt-panel" role="dialog" aria-modal="true" aria-labelledby="prompt-title">
+    <div class="prompt-header">
+      <h3 id="prompt-title" class="title is-4">Full Prompt</h3>
+      <button class="prompt-close" type="button" aria-label="Close prompt">&times;</button>
+    </div>
+    <pre class="prompt-text" id="prompt-text"></pre>
+  </div>
+</div>
+
+
+  <footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+
+
+
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Statcounter tracking code -->
+  
+<!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
+
+    <!-- End of Statcounter Code -->
+
+  </body>
+  </html>
