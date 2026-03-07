@@ -1,5 +1,5 @@
 [![Paper](https://img.shields.io/badge/cs.CV-Paper-b31b1b?logo=arxiv&logoColor=red)](https://gordonchen19.github.io/STENCIL.github.io/static/pdfs/chen.pdf)
-[![Project Page](https://img.shields.io/badge/Project-Website-green?logo=googlechrome&logoColor=green)](https://gordonchen19.github.io/STENCIL.github.io/)
+[![Project Page](https://img.shields.io/badge/Project-Website-green?logo=googlechrome&logoColor=green)](https://gordonchen19.github.io/Prompt-Relay/)
 
 <h1 align="center">Prompt Relay: Fine-Grained Temporal Prompt Routing for Multi-Event Video Generation</h1>
 
