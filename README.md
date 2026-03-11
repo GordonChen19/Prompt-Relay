@@ -52,6 +52,17 @@ Prompt Relay improves:
 
 Prompt Relay consistently outperforms baseline prompting strategies and remains competitive with recent strong models such as **Kling 3.0**. In particular, **Wan 2.2 + Prompt Relay** often produces stronger visual structure and more stable multi-event generation than the base Wan 2.2 model.
 
+## Wan2.2 vs Wan2.2 + Prompt Relay (Project Page Videos)
+
+The table below compares the two variants for each video shown on the [project page](https://gordonchen19.github.io/Prompt-Relay/).
+
+| Project Page Video | Wan2.2 | Wan2.2 + Prompt Relay (Ours) | Qualitative Comparison |
+| --- | --- | --- | --- |
+| Eagle -> cyberpunk city -> living room TV | [View](static/videos/eagle/wan22.mp4) | [View](static/videos/eagle/scene_transition_1.mp4) | Prompt Relay follows the intended event order more clearly, with cleaner transitions between semantic stages. |
+| Caveman -> Spartan -> medieval knight | [View](static/videos/caveman/wan22.mp4) | [View](static/videos/caveman/scene_transition_2.mp4) | Prompt Relay better isolates each temporal segment, reducing cross-event semantic mixing during transformations. |
+| Hong Kong selfie -> hand-cover transition -> canyon selfie | [View](static/videos/hkcanyon/wan22.mp4) | [View](static/videos/hkcanyon/pr.mp4) | Prompt Relay produces a more coherent scene handoff at the occlusion boundary and stronger temporal consistency after the cut. |
+| Child sequence | [View](static/videos/child/wan22.mp4) | [View](static/videos/child/prompt_relay.mp4) | Prompt Relay shows improved temporal control and multi-event stability over the base Wan2.2 output. |
+
 
 ## Usage
 
