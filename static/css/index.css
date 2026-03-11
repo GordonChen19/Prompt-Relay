@@ -292,6 +292,11 @@ body {
   margin: 1rem auto 0;
 }
 
+.tldr-label {
+  font-size: 1.45em;
+  font-weight: 800;
+}
+
 .teaser-gif img {
   max-width: 130%;
   width: 130%;
