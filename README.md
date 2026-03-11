@@ -56,12 +56,12 @@ Prompt Relay consistently outperforms baseline prompting strategies and remains 
 
 The table below compares the two variants for each video shown on the [project page](https://gordonchen19.github.io/Prompt-Relay/).
 
-| Wan2.2 | Wan2.2 + Prompt Relay (Ours) | Qualitative Comparison |
-| --- | --- | --- |
-| ![Eagle Wan2.2](static/videos/eagle/wan22.gif) | ![Eagle Prompt Relay](static/videos/eagle/scene_transition_1.gif) | Eagle -> cyberpunk city -> living room TV: Prompt Relay follows the intended event order more clearly, with cleaner transitions between semantic stages. |
-| ![Caveman Wan2.2](static/videos/caveman/wan22.gif) | ![Caveman Prompt Relay](static/videos/caveman/scene_transition_2.gif) | Caveman -> Spartan -> medieval knight: Prompt Relay better isolates each temporal segment, reducing cross-event semantic mixing during transformations. |
-| ![HK Canyon Wan2.2](static/videos/hkcanyon/wan22.gif) | ![HK Canyon Prompt Relay](static/videos/hkcanyon/pr.gif) | Hong Kong selfie -> hand-cover transition -> canyon selfie: Prompt Relay produces a more coherent scene handoff at the occlusion boundary and stronger temporal consistency after the cut. |
-| ![Child Wan2.2](static/videos/child/wan22.gif) | ![Child Prompt Relay](static/videos/child/prompt_relay.gif) | Child sequence: Prompt Relay shows improved temporal control and multi-event stability over the base Wan2.2 output. |
+| Wan2.2 | Wan2.2 + Prompt Relay (Ours) |
+| --- | --- |
+| ![Eagle Wan2.2](static/videos/eagle/wan22.gif) | ![Eagle Prompt Relay](static/videos/eagle/scene_transition_1.gif) |
+| ![Caveman Wan2.2](static/videos/caveman/wan22.gif) | ![Caveman Prompt Relay](static/videos/caveman/scene_transition_2.gif) |
+| ![HK Canyon Wan2.2](static/videos/hkcanyon/wan22.gif) | ![HK Canyon Prompt Relay](static/videos/hkcanyon/pr.gif) |
+| ![Child Wan2.2](static/videos/child/wan22.gif) | ![Child Prompt Relay](static/videos/child/prompt_relay.gif) |
 
 
 ## Usage
