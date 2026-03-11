@@ -60,7 +60,7 @@ The table below compares the two variants for each video shown on the [project p
 | --- | --- |
 | ![Eagle Wan2.2](static/videos/eagle/wan22.gif) | ![Eagle Prompt Relay](static/videos/eagle/scene_transition_1.gif) |
 | ![Caveman Wan2.2](static/videos/caveman/wan22.gif) | ![Caveman Prompt Relay](static/videos/caveman/scene_transition_2.gif) |
-| ![HK Canyon Wan2.2](static/videos/hkcanyon/wan22.gif) | ![HK Canyon Prompt Relay](static/videos/hkcanyon/pr.gif) |
+| ![HK Canyon Wan2.2](static/videos/hkcanyon/wan22_new.gif) | ![HK Canyon Prompt Relay](static/videos/hkcanyon/pr.gif) |
 | ![Child Wan2.2](static/videos/child/wan22.gif) | ![Child Prompt Relay](static/videos/child/prompt_relay.gif) |
 
 
