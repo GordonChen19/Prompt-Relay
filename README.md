@@ -22,7 +22,7 @@ Video diffusion models have achieved remarkable progress in generating high-qual
 **Prompt Relay** is an **inference-time, training-free, plug-and-play** method for fine-grained temporal control in video generation. Given a sequence of temporally constrained prompts, Prompt Relay routes each textual instruction to its intended temporal segment by modifying the cross-attention mechanism with a distance-based penalty.
 
 
-## Pipeline
+## Method
 
 The overall goal is to generate a video from a sequence of temporally constrained prompts:
 
@@ -40,7 +40,7 @@ $$
 
 Here, $C(Q, K)$ is a distance-based penalty that suppresses attention between latent queries inside the segment and prompt tokens that fall outside the intended temporal segment. This encourages each prompt to guide only its designated region of the video, while preventing semantic leakage into neighboring intervals.
 
-This makes Prompt Relay a simple yet effective way to retrofit temporal control onto existing video generation pipelines without retraining the underlying model.
+This makes Prompt Relay a simple yet effective way to retrofit temporal control onto existing video generation pipelines without retraining the underlying model. Further details are discuessed in the [project page](https://gordonchen19.github.io/Prompt-Relay/) as well as in the paper.
 
 ## Qualitative Results
 
@@ -51,7 +51,7 @@ Prompt Relay improves:
 
 Prompt Relay consistently outperforms baseline prompting strategies and remains competitive with recent strong models such as **Kling 3.0**. In particular, **Wan 2.2 + Prompt Relay** often produces stronger visual structure and more stable multi-event generation than the base Wan 2.2 model.
 
-| Metric (↓) | Sora 2 (Storyboard) | Kling 2.6 | Veo 3.1 | Wan 2.2 | Wan 2.2 + Prompt Relay |
+| Metric (↓) | Sora (Storyboard) | Kling 2.6 | Veo 3.1 | Wan 2.2 | Wan 2.2 + Prompt Relay (Ours)|
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Temporal Alignment | 4.67 | 1.30 | 3.93 | 4.00 | **1.10** |
 | Transition Naturalness | 4.60 | 4.43 | 1.30 | 3.50 | **1.17** |
@@ -92,14 +92,9 @@ The table below compares the two variants for each video shown on the [project p
 
 ## Implementation Details
 
-Prompt Relay takes as input a **global_prompt**, a list of **local_prompts**, and their corresponding **segment_lengths** (Optional). 
+Prompt Relay takes as input a **global_prompt**, a list of **local_prompts**, and their corresponding **segment_lengths** (Optional). The **global_prompt** conditions the entire video and serves to anchor persistent characters, objects, and scene context across all segments. The **local_prompts** are an ordered list of prompts, each conditioned on a specific temporal segment of the video. The **segment_lengths** define how many latent chunked frames are allocated to each local prompt. Given a video with x real frames, their sum must be (x - 1) // 4 + 1, corresponding to the total number of latent chunked frames used by the model.
 
-The **global_prompt** conditions the entire video and serves to anchor persistent characters, objects, and scene context across all segments.
-
-The **local_prompts** are an ordered list of prompts, each conditioned on a specific temporal segment of the video.
-
-The **segment_lengths** define how many latent chunked frames are allocated to each local prompt. Given a video with x real frames, their sum must be (x - 1) // 4 + 1, corresponding to the total number of latent chunked frames used by the model.
-
+We set `epsilon = 1e-3` and use `w = L/2 - 2` for all runs. Under this setting, `sigma` simplifies to `1 / ln(1 / epsilon) ≈ 0.1448`.
 
 Compared with the official Wan2.2 repository, Prompt Relay modifies only the following Python files:
 
@@ -121,6 +116,18 @@ Wan2.2/prompts.json
 For instance:
 
 ```bash
+{
+  "global_prompt": "A single continuous cinematic shot inside a cozy child's bedroom during the daytime. Warm sunlight streams through the window, toys and books are scattered around the room, and the atmosphere feels lively, playful, and realistic. A young boy is playing in his room.",
+
+  "local_prompts": [
+    "A young boy is lying flat on his bed in the middle of his room, staring up at the ceiling.",
+
+    "After a brief moment, he rolls over, pushes himself up, stands on the mattress, and starts jumping on the bed. He bounces up and down repeatedly with excitement, his hair and clothes moving naturally with each jump, while the bed sheets ripple beneath him.",
+
+    "The boy then runs toward a pile of toys near the corner of the room, grabs a toy airplane, and pretends to fly it through the air while making playful swooping motions with his arm. He races in a circle around the room."
+  ],
+  "segment_lengths": [7,12,14]
+}
 
 ```
 
