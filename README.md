@@ -51,6 +51,14 @@ Prompt Relay improves:
 
 Prompt Relay consistently outperforms baseline prompting strategies and remains competitive with recent strong models such as **Kling 3.0**. In particular, **Wan 2.2 + Prompt Relay** often produces stronger visual structure and more stable multi-event generation than the base Wan 2.2 model.
 
+| Metric (↓) | Sora 2 (Storyboard) | Kling 2.6 | Veo 3.1 | Wan 2.2 | Wan 2.2 + Prompt Relay |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Temporal Alignment | 4.67 | 1.30 | 3.93 | 4.00 | **1.10** |
+| Transition Naturalness | 4.60 | 4.43 | 1.30 | 3.50 | **1.17** |
+| Visual Quality | 3.67 | 2.50 | **2.0** | 4.00 | 2.83 |
+
+*Table 1. Human preference scores for multi-event video generation (lower values indicate better rankings).*
+
 ## Qualitative Comparison
 
 The table below compares the two variants for each video shown on the [project page](https://gordonchen19.github.io/Prompt-Relay/).
