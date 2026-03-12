@@ -4,7 +4,7 @@
 > **Note:** This repository is under construction.
 
 <h1 align="center">
-  <img src="static/images/application/Logo.png" alt="Prompt Relay logo" width="56" />
+  <img src="static/images/application/logo.png" alt="Prompt Relay logo" width="56" />
   Prompt Relay:  Inference-Time Temporal Prompt Routing For Multi-Event Video Generation
 </h1>
 
@@ -90,8 +90,21 @@ The table below compares the two variants for each video shown on the [project p
   </tbody>
 </table>
 
+## Implementation Details
+
+
+
 
 ## Usage
+
+We only modify the following python files from the official Wan2.2 Repository.
+
+```bash
+generate.py
+wan/image2video.py
+wan/modules/model.py
+wan/distributed/sequence_parallel.py
+```
 
 Prompt Relay takes as input a **global prompt**, a list of **local prompts**, and their corresponding **segment lengths**.
 
