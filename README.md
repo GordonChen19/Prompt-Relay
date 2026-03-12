@@ -1,7 +1,12 @@
 [![Paper](https://img.shields.io/badge/cs.CV-Paper-b31b1b?logo=arxiv&logoColor=red)](https://gordonchen19.github.io/STENCIL.github.io/static/pdfs/chen.pdf)
 [![Project Page](https://img.shields.io/badge/Project-Website-green?logo=googlechrome&logoColor=green)](https://gordonchen19.github.io/Prompt-Relay/)
 
-<h1 align="center">Prompt Relay: Fine-Grained Temporal Prompt Routing for Multi-Event Video Generation</h1>
+> **Note:** This repository is under construction.
+
+<h1 align="center">
+  <img src="static/images/application/Logo.png" alt="Prompt Relay logo" width="56" />
+  Prompt Relay:  Inference-Time Temporal Prompt Routing For Multi-Event Video Generation
+</h1>
 
 <p align="center">
   <a href="https://gordonchen19.github.io">Gordon Chen</a>,
@@ -17,7 +22,7 @@
 Video diffusion models have achieved remarkable progress in generating high-quality videos. However, these models struggle to represent the temporal succession of multiple events in real-world videos and lack explicit mechanisms to control when semantic concepts appear, how long they persist, and the order in which multiple events occur. Such control is especially important for movie-grade synthesis, where coherent storytelling depends on precise timing, duration, and transitions between events. When using a single paragraph-style prompt to describe a sequence of complex events, models often exhibit temporal entanglement, where semantics intended for different moments interfere with one another, resulting in poor text-video alignment. 
 
 **Prompt Relay** is an **inference-time, training-free, plug-and-play** method for fine-grained temporal control in video generation. Given a sequence of temporally constrained prompts, Prompt Relay routes each textual instruction to its intended temporal segment by modifying the cross-attention mechanism with a distance-based penalty.
-> **Note:** This repository is under construction.
+
 
 ---
 
@@ -56,12 +61,32 @@ Prompt Relay consistently outperforms baseline prompting strategies and remains 
 
 The table below compares the two variants for each video shown on the [project page](https://gordonchen19.github.io/Prompt-Relay/).
 
-| Wan2.2 | Wan2.2 + Prompt Relay (Ours) |
-| --- | --- |
-| ![Eagle Wan2.2](static/videos/eagle/wan22.gif) | ![Eagle Prompt Relay](static/videos/eagle/scene_transition_1.gif) |
-| ![Caveman Wan2.2](static/videos/caveman/wan22.gif) | ![Caveman Prompt Relay](static/videos/caveman/scene_transition_2.gif) |
-| ![HK Canyon Wan2.2](static/videos/hkcanyon/wan22_new.gif) | ![HK Canyon Prompt Relay](static/videos/hkcanyon/pr.gif) |
-| ![Child Wan2.2](static/videos/child/wan22.gif) | ![Child Prompt Relay](static/videos/child/prompt_relay.gif) |
+<table>
+  <thead>
+    <tr>
+      <th>Wan2.2</th>
+      <th>Wan2.2 + Prompt Relay (Ours)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td width="50%"><img src="static/videos/eagle/wan22.gif" alt="Eagle Wan2.2" width="100%"></td>
+      <td width="50%"><img src="static/videos/eagle/scene_transition_1.gif" alt="Eagle Prompt Relay" width="100%"></td>
+    </tr>
+    <tr>
+      <td width="50%"><img src="static/videos/caveman/wan22.gif" alt="Caveman Wan2.2" width="100%"></td>
+      <td width="50%"><img src="static/videos/caveman/scene_transition_2.gif" alt="Caveman Prompt Relay" width="100%"></td>
+    </tr>
+    <tr>
+      <td width="50%"><img src="static/videos/hkcanyon/wan22_new.gif" alt="HK Canyon Wan2.2" width="100%"></td>
+      <td width="50%"><img src="static/videos/hkcanyon/pr.gif" alt="HK Canyon Prompt Relay" width="100%"></td>
+    </tr>
+    <tr>
+      <td width="50%"><img src="static/videos/child/wan22.gif" alt="Child Wan2.2" width="100%"></td>
+      <td width="50%"><img src="static/videos/child/prompt_relay.gif" alt="Child Prompt Relay" width="100%"></td>
+    </tr>
+  </tbody>
+</table>
 
 
 ## Usage
@@ -82,7 +107,7 @@ python dbl/Wan2.2/generate.py \
   --ckpt_dir ./Wan2.2-T2V-A14B \
   --offload_model True \
   --convert_model_dtype \
- --frame_num 81 \
+  --frame_num 81 \
   --size "832*480" \
   --prompt_filepath dbl/Wan2.2/prompts.json\
 ```

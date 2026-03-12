@@ -109,6 +109,27 @@ $(document).ready(function() {
       }
     };
 
+    document.querySelectorAll('[data-video-carousel]').forEach((carousel) => {
+      const track = carousel.querySelector('.video-carousel-track');
+      if (!track || track.dataset.loopReady === 'true') {
+        return;
+      }
+
+      const cards = Array.from(track.children).filter((child) => child.classList.contains('video-card'));
+      if (cards.length <= 1) {
+        track.dataset.loopReady = 'false';
+        return;
+      }
+
+      const firstClone = cards[0].cloneNode(true);
+      const lastClone = cards[cards.length - 1].cloneNode(true);
+      firstClone.classList.add('is-clone');
+      lastClone.classList.add('is-clone');
+      track.insertBefore(lastClone, cards[0]);
+      track.appendChild(firstClone);
+      track.dataset.loopReady = 'true';
+    });
+
     document.querySelectorAll('.video-card').forEach((card) => {
       const mediaClip = card.querySelector('.media-clip');
       if (!mediaClip) {
@@ -205,6 +226,220 @@ $(document).ready(function() {
       const preferredModel = normalizeModelKey(card.dataset.defaultModel || '');
       const fallbackModel = cardModelOptions[0] ? cardModelOptions[0].key : '';
       setActiveModel(preferredModel || fallbackModel);
+    });
+
+    document.querySelectorAll('[data-video-carousel]').forEach((carousel) => {
+      const viewport = carousel.querySelector('.video-carousel-viewport');
+      const track = carousel.querySelector('.video-carousel-track');
+      const allSlides = track
+        ? Array.from(track.children).filter((child) => child.classList.contains('video-card'))
+        : [];
+      const realSlides = allSlides.filter((slide) => !slide.classList.contains('is-clone'));
+      const prevButton = carousel.querySelector('.video-carousel-nav.is-prev');
+      const nextButton = carousel.querySelector('.video-carousel-nav.is-next');
+      const dotsContainer = carousel.querySelector('.video-carousel-dots');
+
+      if (!viewport || !track || allSlides.length === 0 || realSlides.length === 0) {
+        return;
+      }
+
+      const hasLoopClones = allSlides.length === realSlides.length + 2 && realSlides.length > 1;
+      let currentIndex = hasLoopClones ? 1 : 0;
+      const dots = [];
+
+      const getRealIndex = () => {
+        if (!hasLoopClones) {
+          return currentIndex;
+        }
+        if (currentIndex <= 0) {
+          return realSlides.length - 1;
+        }
+        if (currentIndex >= allSlides.length - 1) {
+          return 0;
+        }
+        return currentIndex - 1;
+      };
+
+      const syncActiveSlide = () => {
+        allSlides.forEach((slide, index) => {
+          const isActive = index === currentIndex;
+          slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+          slide.classList.toggle('is-active', isActive);
+
+          slide.querySelectorAll('video.media-clip').forEach((video) => {
+            if (isActive) {
+              const playPromise = video.play();
+              if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(() => {});
+              }
+              return;
+            }
+            video.pause();
+          });
+        });
+      };
+
+      const getSlideStep = () => {
+        if (!allSlides[0]) {
+          return viewport.clientWidth;
+        }
+        const trackStyles = window.getComputedStyle(track);
+        const gap = parseFloat(trackStyles.columnGap || trackStyles.gap || '0') || 0;
+        return allSlides[0].getBoundingClientRect().width + gap;
+      };
+
+      const updateCarousel = ({ immediate = false } = {}) => {
+        if (immediate) {
+          track.style.transition = 'none';
+        }
+        const step = getSlideStep();
+        const activeSlide = allSlides[currentIndex] || allSlides[0];
+        const activeWidth = activeSlide ? activeSlide.getBoundingClientRect().width : viewport.clientWidth;
+        const centerOffset = (viewport.clientWidth - activeWidth) / 2;
+        track.style.transform = `translateX(${centerOffset - (currentIndex * step)}px)`;
+        dots.forEach((dot, index) => {
+          const isActive = index === getRealIndex();
+          dot.classList.toggle('is-active', isActive);
+          dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        syncActiveSlide();
+        if (immediate) {
+          track.getBoundingClientRect();
+          track.style.transition = '';
+        }
+      };
+
+      const goToSlide = (nextIndex) => {
+        if (realSlides.length <= 1) {
+          currentIndex = 0;
+          updateCarousel({ immediate: true });
+          return;
+        }
+
+        if (hasLoopClones) {
+          if (nextIndex < 0) {
+            currentIndex = realSlides.length;
+          } else if (nextIndex > allSlides.length - 1) {
+            currentIndex = 1;
+          } else {
+            currentIndex = nextIndex;
+          }
+          updateCarousel();
+          return;
+        }
+
+        const total = realSlides.length;
+        currentIndex = (nextIndex + total) % total;
+        updateCarousel();
+      };
+
+      if (dotsContainer) {
+        dotsContainer.innerHTML = '';
+        realSlides.forEach((_, index) => {
+          const dot = document.createElement('button');
+          dot.type = 'button';
+          dot.className = 'video-carousel-dot';
+          dot.setAttribute('aria-label', `Show video ${index + 1}`);
+          dot.setAttribute('aria-selected', 'false');
+          dot.addEventListener('click', () => {
+            const nextIndex = hasLoopClones ? index + 1 : index;
+            goToSlide(nextIndex);
+          });
+          dotsContainer.appendChild(dot);
+          dots.push(dot);
+        });
+      }
+
+      const singleSlide = realSlides.length <= 1;
+      if (prevButton) {
+        prevButton.disabled = singleSlide;
+        prevButton.addEventListener('click', () => {
+          goToSlide(currentIndex - 1);
+        });
+      }
+      if (nextButton) {
+        nextButton.disabled = singleSlide;
+        nextButton.addEventListener('click', () => {
+          goToSlide(currentIndex + 1);
+        });
+      }
+      if (dotsContainer) {
+        dotsContainer.hidden = singleSlide;
+      }
+
+      carousel.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          goToSlide(currentIndex - 1);
+        }
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          goToSlide(currentIndex + 1);
+        }
+      });
+
+      let touchStartX = 0;
+      let touching = false;
+      viewport.addEventListener('touchstart', (event) => {
+        if (event.touches.length !== 1) {
+          return;
+        }
+        touchStartX = event.touches[0].clientX;
+        touching = true;
+      }, { passive: true });
+
+      viewport.addEventListener('touchend', (event) => {
+        if (!touching || event.changedTouches.length !== 1) {
+          touching = false;
+          return;
+        }
+        const deltaX = event.changedTouches[0].clientX - touchStartX;
+        touching = false;
+        if (Math.abs(deltaX) < 40) {
+          return;
+        }
+        goToSlide(deltaX > 0 ? currentIndex - 1 : currentIndex + 1);
+      }, { passive: true });
+
+      if (hasLoopClones) {
+        track.addEventListener('transitionend', (event) => {
+          if (event.target !== track || event.propertyName !== 'transform') {
+            return;
+          }
+          if (currentIndex === 0) {
+            currentIndex = realSlides.length;
+            updateCarousel({ immediate: true });
+            return;
+          }
+          if (currentIndex === allSlides.length - 1) {
+            currentIndex = 1;
+            updateCarousel({ immediate: true });
+          }
+        });
+      }
+
+      window.addEventListener('resize', updateCarousel);
+      updateCarousel({ immediate: true });
+    });
+
+    document.querySelectorAll('[data-method-collapsible]').forEach((container) => {
+      const content = container.querySelector('.method-content');
+      const toggleButton = container.querySelector('.method-read-button');
+      if (!content || !toggleButton) {
+        return;
+      }
+
+      const setExpanded = (expanded) => {
+        content.hidden = !expanded;
+        toggleButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        toggleButton.textContent = expanded ? 'Read less' : 'Read more';
+      };
+
+      setExpanded(false);
+      toggleButton.addEventListener('click', () => {
+        const expanded = toggleButton.getAttribute('aria-expanded') === 'true';
+        setExpanded(!expanded);
+      });
     });
 
     const costVisualizer = document.getElementById('cost-visualizer');

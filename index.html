@@ -58,7 +58,7 @@
 
                   <!-- Github link -->
                   <span class="link-block">
-                    <a href="https://github.com/GordonChen19/STENCIL/" target="_blank"
+                    <a href="https://github.com/GordonChen19/Prompt-Relay/" target="_blank"
                     class="external-link button is-normal is-rounded is-dark">
                     <span class="icon">
                       <i class="fab fa-github"></i>
@@ -93,9 +93,10 @@
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
 
-        <div class="content has-text-centered">
-          <p>
-            An inference-time, training-free, plug-and-play method to support granular control over the temporal placement of each text prompt in multi-event video generation. 
+        <div class="content">
+           <h2 class="title is-3 has-text-centered has-text-white">TL;DR</h2>
+          <p class="tldr-summary">
+            Existing video generation models do not have mechanisms to support fine-grained temporal control in multi-event video generation. To this end, we propose Prompt Relay, an inference-time, training-free, plug-and-play method to support granular control over the temporal placement of each text prompt.
           </p>
           <figure class="teaser-gif">
             <img src="static/images/Teaser.gif" alt="Temporal cross-attention teaser">
@@ -118,36 +119,42 @@
           <figure class="pipeline-figure">
             <img
               src="static/images/application/Grid.png"
-              style="width: 150%; max-width: 150%; height: auto;"
             />
           </figure>
+          <h2 class="title is-3 has-text-centered has-text-white">Method</h2>
           <p>
             Given a sequence of temporally-constrained text prompts {(p<sub>s</sub>, t<sub>s</sub><sup>start</sup>, t<sub>s</sub><sup>end</sup>)}<sup>N</sup><sub>s=1</sub>, our goal is to generate a video such that each arbitrary prompt p<sub>s</sub> is realized within its designated temporal interval [t<sub>s</sub><sup>start</sup>, t<sub>s</sub><sup>end</sup>]. The generated video should preserve global coherence while ensuring that each prompt influences only its assigned temporal region.
           </p>
 
-          <h2 class="title is-3 has-text-centered has-text-white">Temporal Cross-Attention Routing</h2>
-          
-          <p>
-            We enforce temporal locality by injecting a distance-based penalty term, C, into the cross-attention mechanism:
-          </p>
-          <div class="equation">Attn(Q, K, V) = softmax(<span class="frac"><span class="num">QK<sup>T</sup></span><span class="den">&radic;d</span></span> - C(Q, K)) V</div>
-          <p>
-            The role of C(Q, K) is to suppress attention between query and key tokens that do not fall within the same temporal interval [t<sub>s</sub><sup>start</sup>, t<sub>s</sub><sup>end</sup>]. This constrains each prompt to guide generation only within its designated segment and prevents semantic leakage into other parts of the video. For an arbitrary query token indexed by i and a key token j associated with prompt p<sub>s</sub>, the penalty is defined as:
-          </p>
-          <div class="equation">C(i, j) = 1[j &isin; K<sub>s</sub>] &middot; <span class="frac"><span class="num">ReLU(|f(i) - m<sub>s</sub>| - w)<sup>2</sup></span><span class="den">2&nbsp;&sigma;<sup>2</sup></span></span>,&nbsp;&nbsp;m<sub>s</sub> = <span class="frac"><span class="num">t<sub>s</sub><sup>start</sup> + t<sub>s</sub><sup>end</sup></span><span class="den">2</span></span></div>
-          <p>
-            Here, f(i) denotes the latent frame index associated with query token i, and ms denotes the midpoint of the corresponding temporal segment. The parameter w(w &lt; ms) defines a local window around the segment midpoint within which no penalty is applied, while σ controls the rate at which attention decays outside this window. Query tokens within the window incur zero penalty and can attend freely to their associated prompt tokens. Beyond this region, attention is smoothly attenuated as a function of the temporal distance between the query and the segment midpoint.
-          </p>
-          <h3 class="title is-4 has-text-centered has-text-white">Boundry-Aware Decay</h3>
-          <p>
-            To suppress semantic interference across temporal segments, attention between queries near segment boundaries and prompt tokens from neighboring segments should be negligible. We therefore choose the decay parameter σ so that the attention prior sufficiently decreases near segment endpoints. Since our penalty subtracts C(i,j) from the logits, it applies a multiplicative factor exp(-C(i,j)) to the unnormalized attention scores before softmax. This prior is 1 inside the “free-attention” window and decays toward the segment boundaries. Let the endpoint distance from the segment midpoint be L = |f(i) − m<sub>s</sub>|. We choose σ such that the prior reaches a small user-defined value ϵ ∈ (0,1) at the endpoints:
-          </p>
-          <div class="equation">
-            exp(-<span class="frac"><span class="num">(L - w)<sup>2</sup></span><span class="den">2&sigma;<sup>2</sup></span></span>) = &epsilon; &rArr; &sigma; = <span class="frac"><span class="num">L - w</span><span class="den">2 ln(1/&epsilon;)</span></span>.
+         
+
+          <div class="method-collapsible" data-method-collapsible>
+            <div class="method-content" hidden>
+              <h2 class="title is-3 has-text-centered has-text-white">Temporal Cross-Attention Routing</h2>
+              <p>
+                We enforce temporal locality by injecting a distance-based penalty term, C, into the cross-attention mechanism:
+              </p>
+              <div class="equation">Attn(Q, K, V) = softmax(<span class="frac"><span class="num">QK<sup>T</sup></span><span class="den">&radic;d</span></span> - C(Q, K)) V</div>
+              <p>
+                The role of C(Q, K) is to suppress attention between query and key tokens that do not fall within the same temporal interval [t<sub>s</sub><sup>start</sup>, t<sub>s</sub><sup>end</sup>]. This constrains each prompt to guide generation only within its designated segment and prevents semantic leakage into other parts of the video. For an arbitrary query token indexed by i and a key token j associated with prompt p<sub>s</sub>, the penalty is defined as:
+              </p>
+              <div class="equation">C(i, j) = 1[j &isin; K<sub>s</sub>] &middot; <span class="frac"><span class="num">ReLU(|f(i) - m<sub>s</sub>| - w)<sup>2</sup></span><span class="den">2&nbsp;&sigma;<sup>2</sup></span></span>,&nbsp;&nbsp;m<sub>s</sub> = <span class="frac"><span class="num">t<sub>s</sub><sup>start</sup> + t<sub>s</sub><sup>end</sup></span><span class="den">2</span></span></div>
+              <p>
+                Here, f(i) denotes the latent frame index associated with query token i, and m<sub>s</sub> denotes the midpoint of the corresponding temporal segment. The parameter w defines a local window around the segment midpoint within which no penalty is applied, while σ controls the rate at which attention decays outside this window. Query tokens within the window incur zero penalty and can attend freely to their associated prompt tokens. Beyond this region, attention is smoothly attenuated as a function of the temporal distance between the query and the segment midpoint.
+              </p>
+              <h3 class="title is-4 has-text-centered has-text-white">Boundry-Aware Decay</h3>
+              <p>
+                To suppress semantic interference across temporal segments, attention between queries near segment boundaries and prompt tokens from neighboring segments should be negligible. We therefore choose the decay parameter σ so that the attention prior sufficiently decreases near segment endpoints. Since our penalty subtracts C(i,j) from the logits, it applies a multiplicative factor exp(-C(i,j)) to the unnormalized attention scores before softmax. This prior is 1 inside the “free-attention” window and decays toward the segment boundaries. Let the endpoint distance from the segment midpoint be L. We choose σ such that the prior reaches a small user-defined value ϵ ∈ (0,1) at the endpoints:
+              </p>
+              <div class="equation">
+                exp(-<span class="frac"><span class="num">(L - w)<sup>2</sup></span><span class="den">2&sigma;<sup>2</sup></span></span>) = &epsilon; &rArr; &sigma; = <span class="frac"><span class="num">L - w</span><span class="den">2 ln(1/&epsilon;)</span></span>.
+              </div>
+              <p>
+                This formulation ensures smooth transitions between neighboring prompts while preventing destructive interference across segments. As a result, each textual instruction primarily influences its intended temporal region, allowing the model to focus on one semantic concept at a time while maintaining global temporal coherence.
+              </p>
+            </div>
+            <button class="method-read-button" type="button" aria-expanded="false">Read more</button>
           </div>
-          <p>
-            This formulation ensures smooth transitions between neighboring prompts while preventing destructive interference across segments. As a result, each textual instruction primarily influences its intended temporal region, allowing the model to focus on one semantic concept at a time while maintaining global temporal coherence.
-          </p>
         </div>
       </div>
     </div>
@@ -162,13 +169,16 @@
 <section class="section hero is-dark">
   <div class="container is-max-desktop video-grid-section">
     <h2 class="title is-3 has-text-centered">Video Gallery</h2>
-    <p class="video-gallery-note has-text-centered">
+    <p class="video-gallery-note">
       When combined with Wan 2.2, Prompt Relay substantially strengthens multi-event generation and helps the model become far more competitive with several recent closed-source state-of-the-art systems, such as Kling 3.0 and Veo 3.1. We also observe that Prompt Relay enhances visual quality over baselines. A plausible reason is that Prompt Relay suppresses interference between prompts assigned to different temporal segments, reducing competition in the cross-attention space and allowing the model to focus more effectively on the currently active semantic concepts.
       
     </p>
 
     <div class="video-row">
-      <div class="video-grid">
+      <div class="video-carousel" data-video-carousel tabindex="0" aria-label="Video gallery carousel">
+        <button class="video-carousel-nav is-prev" type="button" aria-label="Show previous video">&#10094;</button>
+        <div class="video-carousel-viewport">
+          <div class="video-carousel-track">
         <div
           class="video-card"
           data-default-model="wan2-2-prompt-relay"
@@ -272,6 +282,10 @@ man in the same framing but now is filming himself in the grand canyons. The lig
           </div>
           <div class="video-caption">Prompt: A single continuous cinematic shot inside a cozy child's bedroom during the daytime. Warm sunlight streams through the window, toys and books are scattered around the room, and the atmosphere feels lively, playful, and realistic. A young boy is playing in his room. A young boy is lying flat on his bed in the middle of his room, staring up at the ceiling. After a brief moment, he rolls over, pushes himself up, stands on the mattress, and starts jumping on the bed. He bounces up and down repeatedly with excitement, his hair and clothes moving naturally with each jump, while the bed sheets ripple beneath him. The boy then runs toward a pile of toys near the corner of the room, grabs a toy airplane, and pretends to fly it through the air while making playful swooping motions with his arm. He races in a circle around the room.</div>
         </div>
+          </div>
+        </div>
+        <button class="video-carousel-nav is-next" type="button" aria-label="Show next video">&#10095;</button>
+        <div class="video-carousel-dots" aria-label="Select video"></div>
       </div>
     </div>
 

@@ -1,3 +1,10 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000;
+}
+
 body {
   font-family: 'Noto Sans', sans-serif;
   background-color: #000;
@@ -292,9 +299,29 @@ body {
   margin: 1rem auto 0;
 }
 
-.tldr-label {
+.tldr-heading {
+  margin: 0 0 0.5rem;
   font-size: 1.45em;
   font-weight: 800;
+  color: #fff;
+  text-align: center;
+}
+
+.section.hero .content h3.tldr-heading {
+  color: #fff !important;
+}
+
+.tldr-summary {
+  margin: 0.75rem 0 0;
+  width: 100%;
+  max-width: none;
+  padding: 1rem 1.25rem;
+  text-align: justify;
+  text-align-last: left;
+  color: #fff;
+  line-height: 1.6;
+  border: none;
+  background: transparent;
 }
 
 .teaser-gif img {
@@ -309,7 +336,54 @@ body {
 }
 
 .pipeline-figure img {
-  transform: translateX(-10%);
+  width: 150%;
+  max-width: 150%;
+  height: auto;
+  display: block;
+}
+
+.method-collapsible {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.method-read-button {
+  display: inline-block;
+  cursor: pointer;
+  padding: 0.45rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 700;
+  background: transparent;
+  user-select: none;
+  font: inherit;
+}
+
+.method-read-button::after {
+  content: " \25BE";
+  margin-left: 0.4rem;
+}
+
+.method-read-button[aria-expanded="true"]::after {
+  content: " \25B4";
+}
+
+.method-content {
+  margin-bottom: 0.9rem;
+}
+
+.method-content[hidden] {
+  display: none !important;
+}
+
+.method-content p {
+  text-align: justify;
+  text-align-last: left;
+}
+
+.method-content .equation {
+  text-align: center;
 }
 
 .video-grid-section {
@@ -317,9 +391,14 @@ body {
 }
 
 .video-gallery-note {
-  max-width: 980px;
-  margin: 0.25rem auto 1.2rem;
+  width: 100%;
+  max-width: none;
+  margin: 0.25rem 0 1.2rem;
+  padding: 0.9rem 1.15rem;
   color: #d4dbe7;
+  line-height: 1.6;
+  text-align: justify;
+  text-align-last: left;
 }
 
 .video-row {
@@ -330,10 +409,112 @@ body {
   margin-bottom: 1rem;
 }
 
-.video-grid {
+.video-carousel {
+  position: relative;
+  padding: 0 2.6rem;
+}
+
+.video-carousel:focus-visible {
+  outline: 2px solid #3cd4ff;
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+
+.video-carousel-viewport {
+  overflow: hidden;
+}
+
+.video-carousel-track {
+  display: flex;
+  gap: 0.9rem;
+  transition: transform 0.35s ease;
+  will-change: transform;
+}
+
+.video-carousel-track > .video-card {
+  flex: 0 0 min(88%, 920px);
+  min-width: min(88%, 920px);
+  opacity: 0.42;
+  transition: opacity 0.25s ease;
+}
+
+.video-carousel-track > .video-card.is-active {
+  opacity: 1;
+}
+
+.video-carousel-nav {
+  position: absolute;
+  top: clamp(95px, 25vw, 210px);
+  transform: translateY(-50%);
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 999px;
+  border: 1px solid #313741;
+  background: rgba(15, 15, 15, 0.95);
+  color: #d8e0ea;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
+  place-items: center;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  z-index: 2;
+}
+
+.video-carousel-nav.is-prev {
+  left: 0;
+}
+
+.video-carousel-nav.is-next {
+  right: 0;
+}
+
+.video-carousel-nav:hover {
+  border-color: #4a5667;
+  color: #f4f8ff;
+}
+
+.video-carousel-nav:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.video-carousel-nav:focus-visible {
+  outline: 2px solid #3cd4ff;
+  outline-offset: 2px;
+}
+
+.video-carousel-dots {
+  margin-top: 0.9rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.video-carousel-dot {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0;
+  flex: 0 0 auto;
+  width: 0.62rem;
+  height: 0.62rem;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 1px solid #596274;
+  background: transparent;
+  line-height: 0;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.video-carousel-dot.is-active {
+  background: #3cd4ff;
+  border-color: #3cd4ff;
+}
+
+.video-carousel-dot:focus-visible {
+  outline: 2px solid #3cd4ff;
+  outline-offset: 2px;
 }
 
 .video-card {
@@ -417,6 +598,27 @@ body {
   margin-top: 0.5rem;
   font-size: 0.9em;
   color: #ccc;
+}
+
+@media (max-width: 768px) {
+  .video-carousel {
+    padding: 0 2rem;
+  }
+
+  .video-carousel-track {
+    gap: 0.7rem;
+  }
+
+  .video-carousel-track > .video-card {
+    flex: 0 0 86%;
+    min-width: 86%;
+  }
+
+  .video-carousel-nav {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.95rem;
+  }
 }
 
 .prompt-overlay {
