@@ -1,4 +1,4 @@
-[![Paper](https://img.shields.io/badge/cs.CV-Paper-b31b1b?logo=arxiv&logoColor=red)](https://gordonchen19.github.io/STENCIL.github.io/static/pdfs/chen.pdf)
+[![Paper](https://img.shields.io/badge/cs.CV-Paper-b31b1b?logo=arxiv&logoColor=red)](static/pdfs/Prompt_Relay__CVPRW_2026_.pdf)
 [![Project Page](https://img.shields.io/badge/Project-Website-green?logo=googlechrome&logoColor=green)](https://gordonchen19.github.io/Prompt-Relay/)
 
 > **Note:** This repository is under construction.
@@ -94,7 +94,7 @@ The table below compares the two variants for each video shown on the [project p
 
 Prompt Relay takes as input a **global_prompt**, a list of **local_prompts**, and their corresponding **segment_lengths** (Optional). The **global_prompt** conditions the entire video and serves to anchor persistent characters, objects, and scene context across all segments. The **local_prompts** are an ordered list of prompts, each conditioned on a specific temporal segment of the video. The **segment_lengths** define how many latent chunked frames are allocated to each local prompt. Given a video with x real frames, their sum must be (x - 1) // 4 + 1, corresponding to the total number of latent chunked frames used by the model.
 
-We set `epsilon = 1e-3` and use `w = L/2 - 2` for all runs. Under this setting, `sigma` simplifies to `1 / ln(1 / epsilon) ≈ 0.1448`.
+We set `epsilon = 1e-3` and use `w = L/2 - 2` where `L` is the segment length for all runs. Under this setting, `sigma` simplifies to `1 / ln(1 / epsilon) ≈ 0.1448`.
 
 Compared with the official Wan2.2 repository, Prompt Relay modifies only the following Python files:
 
