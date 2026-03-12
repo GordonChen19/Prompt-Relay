@@ -4,7 +4,7 @@
 > **Note:** This repository is under construction.
 
 <h1 align="center">
-  <img src="static/images/application/logo.png" alt="Prompt Relay logo" width="56" />
+  <img src="static/images/Logo.png" alt="Prompt Relay logo" width="56" />
   Prompt Relay:  Inference-Time Temporal Prompt Routing For Multi-Event Video Generation
 </h1>
 
@@ -92,26 +92,36 @@ The table below compares the two variants for each video shown on the [project p
 
 ## Implementation Details
 
+Prompt Relay takes as input a **global_prompt**, a list of **local_prompts**, and their corresponding **segment_lengths** (Optional). 
+
+The **global_prompt** conditions the entire video and serves to anchor persistent characters, objects, and scene context across all segments.
+
+The **local_prompts** are an ordered list of prompts, each conditioned on a specific temporal segment of the video.
+
+The **segment_lengths** define how many latent chunked frames are allocated to each local prompt. Given a video with x real frames, their sum must be (x - 1) // 4 + 1, corresponding to the total number of latent chunked frames used by the model.
 
 
+Compared with the official Wan2.2 repository, Prompt Relay modifies only the following Python files:
 
-## Usage
-
-We only modify the following python files from the official Wan2.2 Repository.
-
-```bash
+```text
 generate.py
 wan/image2video.py
 wan/modules/model.py
 wan/distributed/sequence_parallel.py
 ```
 
-Prompt Relay takes as input a **global prompt**, a list of **local prompts**, and their corresponding **segment lengths**.
+## Usage
 
 Users can define their prompts in:
 
 ```bash
 Wan2.2/prompts.json
+```
+
+For instance:
+
+```bash
+
 ```
 
 and then run:
@@ -127,4 +137,4 @@ python dbl/Wan2.2/generate.py \
   --prompt_filepath dbl/Wan2.2/prompts.json\
 ```
 
-The rest works the same as Wan's original repository.
+If the `--prompt_filepath` argument is not provided, the script runs the baseline Wan2.2 pipeline.
