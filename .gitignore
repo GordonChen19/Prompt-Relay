@@ -1,3 +1,5 @@
 /venv/*
 pdftopng.py
 /webpage/*
+.DS_Store
+/src/.DS_Store
