@@ -14,14 +14,6 @@
    <a href="https://liuziwei7.github.io/team.html">Ziwei Liu</a>
 </p>
 
-<p align="center">
-  <a href="static/videos/Trailer.mov">Trailer.mov</a>
-</p>
-
-<p align="center">
-  <video src="static/videos/Trailer.mov" controls width="100%"></video>
-</p>
-
 
 ## :mega: Overview
 
