@@ -1,7 +1,7 @@
 [![Paper](https://img.shields.io/badge/cs.CV-Paper-b31b1b?logo=arxiv&logoColor=red)](https://arxiv.org/abs/2604.10030)
 [![Project Page](https://img.shields.io/badge/Project-Website-green?logo=googlechrome&logoColor=green)](https://gordonchen19.github.io/Prompt-Relay/)
 
-> **Note:** This repository is under construction. (USE THE MAIN BRANCH)
+> **Note:** This repository is under construction. (USE THE MAIN BRANCH of WAN2.2)
 
 <h1 align="center">
   <img src="static/images/Logo.png" alt="Prompt Relay logo" width="56" />
