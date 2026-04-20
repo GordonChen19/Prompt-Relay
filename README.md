@@ -151,9 +151,16 @@ If the `--prompt_filepath` argument is not provided, the script runs the baselin
 If you find Prompt Relay useful in your research or projects, please consider citing our paper:
 
 
-@article{chen2026prompt,
-  title={Prompt Relay: Inference-Time Temporal Control for Multi-Event Video Generation},
-  author={Chen, Gordon and Huang, Ziqi and Liu, Ziwei},
-  journal={arXiv preprint arXiv:2604.10030},
-  year={2026}
+```bibtex
+
+@article{chen2026promptrelay,
+
+  title   = {Prompt Relay: Inference-Time Temporal Prompt Routing for Multi-Event Video Generation},
+
+  author  = {Chen, Gordon and Huang, Ziqi and Liu, Ziwei},
+
+  journal = {arXiv preprint arXiv:2604.10030},
+
+  year    = {2026}
+
 }
