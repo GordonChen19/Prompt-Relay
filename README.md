@@ -147,7 +147,8 @@ python dbl/Wan2.2/generate.py \
 If the `--prompt_filepath` argument is not provided, the script runs the baseline Wan2.2 pipeline.
 
 
-📖 Citation
+
+## 📖 Citation
 If you find Prompt Relay useful in your research or projects, please consider citing our paper:
 
 
