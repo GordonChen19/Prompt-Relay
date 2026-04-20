@@ -1,7 +1,7 @@
 [![Paper](https://img.shields.io/badge/cs.CV-Paper-b31b1b?logo=arxiv&logoColor=red)](https://arxiv.org/abs/2604.10030)
 [![Project Page](https://img.shields.io/badge/Project-Website-green?logo=googlechrome&logoColor=green)](https://gordonchen19.github.io/Prompt-Relay/)
 
-> **Note:** This repository is under construction.
+> **Note:** This repository is under construction. (USE THE MAIN BRANCH of WAN2.2)
 
 <h1 align="center">
   <img src="static/images/Logo.png" alt="Prompt Relay logo" width="56" />
@@ -145,3 +145,17 @@ python dbl/Wan2.2/generate.py \
 ```
 
 If the `--prompt_filepath` argument is not provided, the script runs the baseline Wan2.2 pipeline.
+
+
+📖 Citation
+If you find Prompt Relay useful in your research or projects, please consider citing our paper:
+
+
+```bibtex
+
+@article{chen2026prompt,
+  title={Prompt Relay: Inference-Time Temporal Control for Multi-Event Video Generation},
+  author={Chen, Gordon and Huang, Ziqi and Liu, Ziwei},
+  journal={arXiv preprint arXiv:2604.10030},
+  year={2026}
+}
