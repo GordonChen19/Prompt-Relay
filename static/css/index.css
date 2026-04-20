@@ -686,6 +686,47 @@ body.is-prompt-open {
   }
 }
 
+.citation-note {
+  margin-bottom: 0.85rem !important;
+  color: #d1d5db;
+  text-align: center;
+}
+
+.citation-bibtex-shell {
+  position: relative;
+}
+
+.citation-copy-button {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.7rem;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  z-index: 1;
+}
+
+.citation-bibtex {
+  margin: 0;
+  padding: 2.7rem 1.1rem 1rem;
+  background: #070707;
+  border: 1px solid #2b2b2b;
+  border-radius: 10px;
+  color: #f5f5f5;
+  font-family: 'Menlo', monospace;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.citation-bibtex code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
 .title,
 .subtitle,
 .content,

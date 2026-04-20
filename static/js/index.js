@@ -656,6 +656,83 @@ $(document).ready(function() {
       }
     }
 
+    const citationCopyButton = document.getElementById('copy-citation');
+    if (citationCopyButton) {
+      const copyTargetId = citationCopyButton.dataset.copyTarget;
+      const copyTarget = copyTargetId ? document.getElementById(copyTargetId) : null;
+      const copyIcon = citationCopyButton.querySelector('i');
+      let labelTimer = null;
+
+      const setCopyButtonState = (state) => {
+        const stateMap = {
+          default: { icon: ['far', 'fa-copy'], label: 'Copy BibTeX' },
+          success: { icon: ['fas', 'fa-check'], label: 'Copied' },
+          error: { icon: ['fas', 'fa-xmark'], label: 'Copy failed' },
+          empty: { icon: ['fas', 'fa-xmark'], label: 'No citation text' },
+        };
+        const next = stateMap[state] || stateMap.default;
+        if (copyIcon) {
+          copyIcon.className = `${next.icon[0]} ${next.icon[1]}`;
+        }
+        citationCopyButton.setAttribute('aria-label', next.label);
+        citationCopyButton.setAttribute('title', next.label);
+        if (labelTimer) {
+          window.clearTimeout(labelTimer);
+        }
+        if (state !== 'default') {
+          labelTimer = window.setTimeout(() => {
+            setCopyButtonState('default');
+          }, 1600);
+        }
+      };
+
+      const fallbackCopyText = (text) => {
+        const helper = document.createElement('textarea');
+        helper.value = text;
+        helper.setAttribute('readonly', '');
+        helper.style.position = 'fixed';
+        helper.style.opacity = '0';
+        helper.style.pointerEvents = 'none';
+        document.body.appendChild(helper);
+        helper.focus();
+        helper.select();
+        let copied = false;
+        try {
+          copied = document.execCommand('copy');
+        } catch (error) {
+          copied = false;
+        }
+        document.body.removeChild(helper);
+        return copied;
+      };
+
+      citationCopyButton.addEventListener('click', async () => {
+        const citationText = copyTarget ? copyTarget.textContent.trim() : '';
+        if (!citationText) {
+          setCopyButtonState('empty');
+          return;
+        }
+
+        citationCopyButton.disabled = true;
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(citationText);
+          } else {
+            const copied = fallbackCopyText(citationText);
+            if (!copied) {
+              throw new Error('Clipboard API is unavailable');
+            }
+          }
+          setCopyButtonState('success');
+        } catch (error) {
+          console.warn('Failed to copy citation:', error);
+          setCopyButtonState('error');
+        } finally {
+          citationCopyButton.disabled = false;
+        }
+      });
+    }
+
     const overlay = document.getElementById('prompt-overlay');
     if (!overlay) {
       return;
