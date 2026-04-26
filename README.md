@@ -5,7 +5,7 @@
 
 <h1 align="center">
   <img src="static/images/Logo.png" alt="Prompt Relay logo" width="56" />
-  Prompt Relay:  Inference-Time Temporal Prompt Routing For Multi-Event Video Generation
+  Prompt Relay: Inference-Time Prompt Routing for Temporal Control in Multi-Event Video Generation
 </h1>
 
 <p align="center">
