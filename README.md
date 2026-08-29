@@ -146,6 +146,45 @@ python dbl/Wan2.2/generate.py \
 
 If the `--prompt_filepath` argument is not provided, the script runs the baseline Wan2.2 pipeline.
 
+## HunyuanVideo-1.5 Extension
+
+A native Prompt Relay implementation for the official
+[HunyuanVideo-1.5](https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5) codebase is
+included as the `src/HunyuanVideo-1.5` submodule. It uses the same
+`global_prompt`, `local_prompts`, and optional `segment_lengths` JSON schema as
+the Wan2.2 implementation.
+
+Clone this repository together with both model submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/DasbootU9607/Prompt-Relay.git
+cd Prompt-Relay
+```
+
+Run the HunyuanVideo-1.5 text-to-video implementation from its own directory:
+
+```bash
+cd src/HunyuanVideo-1.5
+torchrun --nproc_per_node=1 generate.py \
+  --model_path ./ckpts \
+  --prompt_filepath prompt_relay_prompts.json \
+  --resolution 480p \
+  --video_length 121 \
+  --num_inference_steps 50 \
+  --output_path ./outputs/hunyuan_prompt_relay.mp4
+```
+
+The extension routes positive Qwen prompt tokens to the requested video-time
+segments. Global-prompt tokens, ByT5 tokens, image-condition tokens, and the
+classifier-free-guidance negative branch keep their original behavior. Prompt
+Relay currently supports Hunyuan text-to-video generation; image-to-video input
+is rejected explicitly.
+
+See the Hunyuan submodule documentation for implementation details and tests:
+
+- [English guide](src/HunyuanVideo-1.5/PROMPT_RELAY.md)
+- [Chinese guide](src/HunyuanVideo-1.5/PROMPT_RELAY_ZH.md)
+
 
 
 ## 📖 Citation

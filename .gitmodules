@@ -1,3 +1,7 @@
 [submodule "src/Wan2.2"]
   path = src/Wan2.2
   url = https://github.com/GordonChen19/Wan2.2.git
+[submodule "src/HunyuanVideo-1.5"]
+	path = src/HunyuanVideo-1.5
+	url = https://github.com/DasbootU9607/HunyuanVideo-1.5.git
+	branch = feat/prompt-relay
