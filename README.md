@@ -152,7 +152,13 @@ A native Prompt Relay implementation for the official
 [HunyuanVideo-1.5](https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5) codebase is
 included as the `src/HunyuanVideo-1.5` submodule. It uses the same
 `global_prompt`, `local_prompts`, and optional `segment_lengths` JSON schema as
-the Wan2.2 implementation.
+the Wan2.2 implementation. The Hunyuan extension additionally accepts independent,
+overlapping `segment_intervals` in seconds or internal frames. See the
+[overlap guide](src/HunyuanVideo-1.5/PROMPT_RELAY.md#overlapping-intervals) and
+[example JSON](src/HunyuanVideo-1.5/prompt_relay_overlap.json).
+For automatic scheduling, set `auto_overlap: true` with an optional fixed overlap
+duration or ratio; see the [automatic allocation guide](src/HunyuanVideo-1.5/PROMPT_RELAY.md#automatic-overlap-allocation)
+and [bank/car example](src/HunyuanVideo-1.5/prompt_relay_auto_overlap.json).
 
 Clone this repository together with both model submodules:
 
