@@ -1,7 +1,35 @@
 [![Paper](https://img.shields.io/badge/cs.CV-Paper-b31b1b?logo=arxiv&logoColor=red)](https://arxiv.org/abs/2604.10030)
 [![Project Page](https://img.shields.io/badge/Project-Website-green?logo=googlechrome&logoColor=green)](https://gordonchen19.github.io/Prompt-Relay/)
 
-> **Note:** This repository is under construction. (USE THE MAIN BRANCH of WAN2.2)
+> **Wan2.2 overlap branch:** This branch pins the overlapping Prompt Relay implementation
+> in `src/Wan2.2`. Use the recorded submodule commit when checking out this branch.
+
+## Wan2.2 overlapping time segments
+
+The T2V-A14B Prompt Relay implementation now accepts independent
+`segment_intervals`, including overlapping time ranges. For example, a robber
+entering a car during `[0, 3)` seconds and the bank exploding behind it during
+`[2, 4)` seconds can both guide attention during `[2, 3)`.
+
+Without explicit intervals, prompts keep the original consecutive allocation;
+the program does not infer overlap from the text. See the
+[English guide](src/Wan2.2/PROMPT_RELAY.md),
+[中文说明](src/Wan2.2/PROMPT_RELAY_ZH.md), and
+[example JSON](src/Wan2.2/prompt_relay_overlap.json).
+
+```bash
+git clone --branch wan2.2-overlap-prompt-relay --recurse-submodules https://github.com/GordonChen19/Prompt-Relay.git
+cd Prompt-Relay/src/Wan2.2
+python generate.py --task t2v-A14B --ckpt_dir /path/to/Wan2.2-T2V-A14B \
+  --size "832*480" --frame_num 81 --offload_model True --convert_model_dtype \
+  --prompt_filepath prompt_relay_overlap.json
+```
+
+For an existing clone, switch to this branch, run `git submodule sync --recursive`,
+then `git submodule update --init --recursive` to load its recorded model versions.
+The Wan source is published in
+[`DasbootU9607/Wan2.2:feat/prompt-relay-overlap`](https://github.com/DasbootU9607/Wan2.2/tree/feat/prompt-relay-overlap).
+This branch also retains the Hunyuan overlap extension below.
 
 <h1 align="center">
   <img src="static/images/Logo.png" alt="Prompt Relay logo" width="56" />
