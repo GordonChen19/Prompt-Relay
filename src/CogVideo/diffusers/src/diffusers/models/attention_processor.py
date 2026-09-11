@@ -51,15 +51,14 @@ else:
 # Prompt Relay
 # modification-11
 # =================================================================================================================================
-def build_temporal_cost(q_token_idx, Lq, Lk, text_seq_length, device, dtype):
+def build_temporal_cost(q_token_idx, video_seq_length, text_seq_length, device, dtype):
     import torch
-    # Lq and Lk are both (text_seq_length + video_seq_length)
-    offset = torch.zeros(Lq, Lk, device=device, dtype=dtype)
+    
+    # Allocate ONLY Video x Text penalty (~38 MB), bypassing the 14.7 GB Full map
+    offset = torch.zeros(video_seq_length, text_seq_length, device=device, dtype=dtype)
     
     tokens_per_frame = int(q_token_idx[0]['tokens_per_frame'])
-    video_seq_length = Lq - text_seq_length
     
-    # Only calculate temporal costs for the video portion
     query_frames = (
         torch.arange(video_seq_length, device=device, dtype=torch.long)
         // tokens_per_frame
@@ -67,7 +66,6 @@ def build_temporal_cost(q_token_idx, Lq, Lk, text_seq_length, device, dtype):
 
     for seg in q_token_idx:
         w = seg['window']
-        # clone().detach() prevents PyTorch "To copy construct from a tensor" warnings
         sigma = seg['sigma'].clone().detach().to(device=device, dtype=torch.float32)
         local = seg['local_token_idx'].to(device=device)
         midpoint = torch.tensor(seg['midpoint'], dtype=torch.float32, device=device)
@@ -75,8 +73,8 @@ def build_temporal_cost(q_token_idx, Lq, Lk, text_seq_length, device, dtype):
         d = (query_frames.float()[:, None] - midpoint).abs()
         cost = (torch.relu(d - w) ** 2) / (2 * sigma ** 2)
 
-        # Apply cost ONLY to Video queries attending to Text keys
-        offset[text_seq_length:, local] = cost.to(offset.dtype)
+        # Apply cost directly (offset is now sized exclusively to video_seq_length)
+        offset[:, local] = cost.to(offset.dtype)
         
     return offset
 # =================================================================================================================================
@@ -85,39 +83,61 @@ def build_temporal_cost(q_token_idx, Lq, Lk, text_seq_length, device, dtype):
 # Prompt Relay
 # modification-12
 # =================================================================================================================================
-def chunked_softmax_attention(q, k, v, q_token_idx, text_seq_length, chunk_size=64):
-    import math
+def chunked_softmax_attention(q, k, v, q_token_idx, text_seq_length, chunk_size=4096):
     import torch
-    
+    import torch.nn.functional as F
+
     B, H, Lq, D = q.shape
-    _, _, Lk, _ = k.shape
-    scale = 1.0 / math.sqrt(D)
+    video_seq_length = Lq - text_seq_length
 
-    temporal_cost_map = build_temporal_cost(q_token_idx, Lq, Lk, text_seq_length, q.device, q.dtype)
-    out = torch.zeros(B, H, Lq, D, device=q.device, dtype=q.dtype)
+    # Native SDPA for Text Queries
+    q_text = q[:, :, :text_seq_length, :]
+    out_text = F.scaled_dot_product_attention(
+        q_text, k, v, dropout_p=0.0, is_causal=False
+    )
 
-    for start in range(0, Lq, chunk_size):
-        end = min(start + chunk_size, Lq)
-        logits = torch.matmul(q[:, :, start:end, :], k.transpose(-2, -1)) * scale 
+    # Chunked SDPA for Video Queries
+    q_video = q[:, :, text_seq_length:, :]
+    out_video = torch.empty(B, H, video_seq_length, D, device=q.device, dtype=q.dtype)
+    
+    # Build the small Video -> Text penalty map
+    temporal_cost_map = build_temporal_cost(q_token_idx, video_seq_length, text_seq_length, q.device, q.dtype)
 
-        mask_chunk = temporal_cost_map[start:end].unsqueeze(0).unsqueeze(0)
-        
-        # New CFG Isolation
+    for start in range(0, video_seq_length, chunk_size):
+        end = min(start + chunk_size, video_seq_length)
+        q_chunk = q_video[:, :, start:end, :]
+        chunk_len = end - start
+
+        # The penalty applies ONLY to Text Keys. Video Keys have 0 penalty.
+        penalty_text = temporal_cost_map[start:end] 
+        # SDPA adds the mask to logits, so we must negate our penalty
+        mask_text = -penalty_text.unsqueeze(0).unsqueeze(0) 
+
+        # Apply CFG Leakage Fix (Zero out penalty for unconditional batch half)
         if B >= 2:
-            # First half is unconditional, second half is conditional
-            zero_mask = torch.zeros_like(mask_chunk).repeat(B // 2, 1, 1, 1)
-            cond_mask = mask_chunk.repeat(B - (B // 2), 1, 1, 1)
-            mask_chunk = torch.cat([zero_mask, cond_mask], dim=0)
+            zero_mask = torch.zeros_like(mask_text).repeat(B // 2, 1, 1, 1)
+            cond_mask = mask_text.repeat(B - (B // 2), 1, 1, 1)
+            mask_text = torch.cat([zero_mask, cond_mask], dim=0) 
+        else:
+            mask_text = mask_text.repeat(B, 1, 1, 1)
 
-        # Calculate in float32 for numerical stability
-        logits = logits.to(torch.float32) - mask_chunk.to(torch.float32) 
-        
-        # Cast BACK to float16/bfloat16 to match the 'v' tensor
-        attn = torch.softmax(logits, dim=-1).to(v.dtype) 
-        
-        out[:, :, start:end] = torch.matmul(attn, v)
-        
-    return out
+        # Video Keys get 0 mask
+        mask_video = torch.zeros(B, 1, chunk_len, video_seq_length, device=q.device, dtype=q.dtype)
+
+        # Stitch the mask together for the SDPA call [B, 1, chunk_len, L_total]
+        mask_chunk = torch.cat([mask_text, mask_video], dim=-1)
+
+        # Call ultra-fast native PyTorch C++ SDPA
+        out_chunk = F.scaled_dot_product_attention(
+            q_chunk, k, v, attn_mask=mask_chunk.to(q.dtype), dropout_p=0.0, is_causal=False
+        )
+
+        out_video[:, :, start:end, :] = out_chunk
+
+        # Flush VRAM
+        del mask_text, mask_video, mask_chunk, out_chunk
+
+    return torch.cat([out_text, out_video], dim=2)
 # =================================================================================================================================
 
 @maybe_allow_in_graph
