@@ -1,0 +1,17 @@
+{
+  "global_prompt": "Minimalist 3D geometric shapes on a clean white background.",
+  "local_prompts": [
+    " A green cube appears in the center.",
+    " A blue circle appears next to the green cube.",
+    " A red triangle appears next to the blue circle.",
+    " A yellow star appears next to the red triangle.",
+    " A purple diamond appears next to the yellow star."
+  ],
+  "time_intervals": [
+    [0.0, 3.0],
+    [2.0, 5.0],
+    [4.0, 7.0],
+    [6.0, 9.0],
+    [8.0, 10.0]
+  ]
+}

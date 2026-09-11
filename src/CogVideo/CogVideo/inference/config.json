@@ -1,0 +1,5 @@
+{
+  "global_prompt": "A completely blank wall.",
+  "local_prompts": ["The wall is painted bright neon red.", "The wall is painted bright neon blue."],
+  "segment_lengths": [2, 1]
+}

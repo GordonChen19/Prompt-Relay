@@ -1,0 +1,43 @@
+[project]
+name = "cogvideo"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "datasets>=2.14.4",
+    "decord>=0.6.0",
+    "deepspeed>=0.16.4",
+    "diffusers>=0.32.2",
+    "opencv-python>=4.11.0.86",
+    "peft>=0.13.2",
+    "pydantic>=2.10.6",
+    "sentencepiece>=0.2.0",
+    "torch>=2.5.1",
+    "torchvision>=0.20.1",
+    "transformers>=4.46.3",
+    "wandb>=0.19.7",
+]
+
+
+[tool.ruff]
+exclude = ['.git', '.mypy_cache', '.ruff_cache', '.venv', 'dist']
+target-version = 'py310'
+line-length = 100
+
+[tool.ruff.format]
+line-ending = 'lf'
+quote-style = 'preserve'
+
+[tool.ruff.lint]
+select = ["E", "W"]
+ignore = [
+    "E999",
+    "EXE001",
+    "UP009",
+    "F401",
+    "TID252",
+    "F403",
+    "F841",
+    "E501",
+    "W293",
+]
