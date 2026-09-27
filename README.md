@@ -100,9 +100,12 @@ The Wan2.2 T2V implementation is organized in the following Python files:
 generate.py
 wan/text2video.py
 wan/prompt_relay.py
+wan/sliding_window.py
 wan/modules/model.py
 wan/modules/temporal_routing.py
+wan/modules/sliding_window.py
 wan/distributed/sequence_parallel.py
+wan/distributed/ulysses.py
 ```
 
 ## Usage
@@ -110,7 +113,7 @@ wan/distributed/sequence_parallel.py
 ### Setup
 
 ```bash
-git clone --branch wan2.2-overlap-only --recurse-submodules https://github.com/GordonChen19/Prompt-Relay.git
+git clone --branch wan2.2-sliding-window --recurse-submodules https://github.com/GordonChen19/Prompt-Relay.git
 cd Prompt-Relay
 ```
 
@@ -123,10 +126,10 @@ git submodule sync --recursive
 git submodule update --init --recursive
 ```
 
-For an existing clone, switch to `wan2.2-overlap-only` before running
+For an existing clone, switch to `wan2.2-sliding-window` before running
 these submodule commands. Use the versions recorded by this branch. The Wan
 implementation is maintained in
-[`DasbootU9607/Wan2.2:feat/prompt-relay-overlap`](https://github.com/DasbootU9607/Wan2.2/tree/feat/prompt-relay-overlap).
+[`DasbootU9607/Wan2.2:feat/prompt-relay-sliding-window`](https://github.com/DasbootU9607/Wan2.2/tree/feat/prompt-relay-sliding-window).
 
 ### Sequential events
 
@@ -164,7 +167,7 @@ python generate.py \
   --prompt_filepath prompts.json
 ```
 
-If the `--prompt_filepath` argument is not provided, the script runs the baseline Wan2.2 pipeline.
+If `--prompt_filepath` is not provided, the script runs without Prompt Relay.
 
 ### Overlapping events (Wan2.2 T2V-A14B)
 
@@ -207,6 +210,32 @@ from text or support `auto_overlap`.
 See the [English guide](src/Wan2.2/PROMPT_RELAY.md) or
 [中文说明](src/Wan2.2/PROMPT_RELAY_ZH.md) for interval validation, decay settings,
 and tests.
+
+### Sliding-window self-attention (Wan2.2 T2V-A14B)
+
+To limit the temporal span of video self-attention during longer generation,
+enable sliding windows. Run from `src/Wan2.2`:
+
+```bash
+python generate.py --task t2v-A14B --ckpt_dir /path/to/Wan2.2-T2V-A14B \
+  --size "832*480" --frame_num 241 --offload_model True --convert_model_dtype \
+  --prompt "A continuous wide shot of a hiker walking beside a lake, with a dog exploring nearby." \
+  --sliding_window --window_length 31 --window_stride 16
+```
+
+The feature is off by default; use `--sliding_window false` to disable it.
+`window_length` and `window_stride` count **internal latent frames**, with
+defaults 31 and 16. Require `0 < window_stride <= window_length`. An 81-frame
+output has 21 internal frames, so use a smaller window such as 12/6 to exercise
+windowing on a short clip. The 241-frame example above has 61 internal frames.
+
+Overlapping window outputs are averaged. Prompt Relay can be used at the same
+time by adding `--prompt_filepath your_schedule.json`; its timing remains
+relative to the full video. Windows affect video self-attention, while Prompt
+Relay continues to route text through cross-attention. Smaller windows can
+alter long-range consistency, and full-video latents and decoding still use
+memory. See the [implementation and validation guide](src/Wan2.2/SLIDING_WINDOW.md)
+for tests and end-to-end comparison steps.
 
 ## 📖 Citation
 If you find Prompt Relay useful in your research or projects, please consider citing our paper:

@@ -1,4 +1,4 @@
 [submodule "src/Wan2.2"]
   path = src/Wan2.2
   url = https://github.com/DasbootU9607/Wan2.2.git
-  branch = feat/prompt-relay-overlap
+  branch = feat/prompt-relay-sliding-window
