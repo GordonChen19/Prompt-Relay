@@ -148,6 +148,11 @@ If the `--prompt_filepath` argument is not provided, the script runs the baselin
 
 ## HunyuanVideo-1.5 Extension
 
+Long-video inference supports [temporal sliding-window self-attention](src/HunyuanVideo-1.5/SLIDING_WINDOW.md)
+via `--sliding_window --window_length 31 --window_stride 16`. The feature is off by
+default; window sizes are measured in internal latent frames and can be combined
+with Prompt Relay.
+
 A native Prompt Relay implementation for the official
 [HunyuanVideo-1.5](https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5) codebase is
 included as the `src/HunyuanVideo-1.5` submodule. It uses the same
