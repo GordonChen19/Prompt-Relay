@@ -1,8 +1,6 @@
 [![Paper](https://img.shields.io/badge/cs.CV-Paper-b31b1b?logo=arxiv&logoColor=red)](https://arxiv.org/abs/2604.10030)
 [![Project Page](https://img.shields.io/badge/Project-Website-green?logo=googlechrome&logoColor=green)](https://gordonchen19.github.io/Prompt-Relay/)
 
-> **Note:** This repository is under construction. (USE THE MAIN BRANCH of WAN2.2)
-
 <h1 align="center">
   <img src="static/images/Logo.png" alt="Prompt Relay logo" width="56" />
   Prompt Relay: Inference-Time Prompt Routing for Temporal Control in Multi-Event Video Generation
@@ -92,30 +90,51 @@ The table below compares the two variants for each video shown on the [project p
 
 ## Implementation Details
 
-Prompt Relay takes as input a **global_prompt**, a list of **local_prompts**, and their corresponding **segment_lengths** (Optional). The **global_prompt** conditions the entire video and serves to anchor persistent characters, objects, and scene context across all segments. The **local_prompts** are an ordered list of prompts, each conditioned on a specific temporal segment of the video. The **segment_lengths** define how many latent chunked frames are allocated to each local prompt. Given a video with x real frames, their sum must be (x - 1) // 4 + 1, corresponding to the total number of latent chunked frames used by the model.
+Prompt Relay takes as input a **global_prompt**, a list of **local_prompts**, and optional timing information. The **global_prompt** conditions the entire video and anchors persistent characters, objects, and scene context. For consecutive events, **segment_lengths** specifies the number of internal latent frames allocated to each local prompt. To cover a video of `x` output frames, the lengths sum to `(x - 1) // 4 + 1`. For overlapping events, use independent **segment_intervals** instead; see [overlapping events](#overlapping-events-wan22-t2v-a14b) below.
 
-We set `epsilon = 1e-3` and use `w = L/2 - 2` where `L` is the segment length for all runs. Under this setting, `sigma` simplifies to `1 / ln(1 / epsilon) ≈ 0.1448`.
+For the original consecutive-schedule experiments, we set `epsilon = 1e-3` and use `w = L/2 - 2`, where `L` is the segment length. Under this setting, `sigma` simplifies to `1 / ln(1 / epsilon) ≈ 0.1448`. Explicit overlapping intervals use the decay settings described in the [Wan guide](src/Wan2.2/PROMPT_RELAY.md#attention).
 
-Compared with the official Wan2.2 repository, Prompt Relay modifies only the following Python files:
+The Wan2.2 T2V implementation is organized in the following Python files:
 
 ```text
 generate.py
-wan/image2video.py
+wan/text2video.py
+wan/prompt_relay.py
 wan/modules/model.py
+wan/modules/temporal_routing.py
 wan/distributed/sequence_parallel.py
 ```
 
 ## Usage
 
-Users can define their prompts in:
+### Setup
 
 ```bash
-Wan2.2/prompts.json
+git clone --branch wan2.2-overlap-only --recurse-submodules https://github.com/GordonChen19/Prompt-Relay.git
+cd Prompt-Relay
 ```
 
-For instance:
+Install the [Wan dependencies](src/Wan2.2/README.md#installation) and download
+the [T2V-A14B weights](src/Wan2.2/README.md#model-download). Replace the checkpoint
+path in the commands below with your local model directory.
 
 ```bash
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
+For an existing clone, switch to `wan2.2-overlap-only` before running
+these submodule commands. Use the versions recorded by this branch. The Wan
+implementation is maintained in
+[`DasbootU9607/Wan2.2:feat/prompt-relay-overlap`](https://github.com/DasbootU9607/Wan2.2/tree/feat/prompt-relay-overlap).
+
+### Sequential events
+
+Save your prompts in `src/Wan2.2/prompts.json`. For example, the following
+schedule divides an 81-frame video into three consecutive segments of seven
+internal frames each:
+
+```json
 {
   "global_prompt": "A single continuous cinematic shot inside a cozy child's bedroom during the daytime. Warm sunlight streams through the window, toys and books are scattered around the room, and the atmosphere feels lively, playful, and realistic. A young boy is playing in his room.",
 
@@ -126,27 +145,68 @@ For instance:
 
     "The boy then runs toward a pile of toys near the corner of the room, grabs a toy airplane, and pretends to fly it through the air while making playful swooping motions with his arm. He races in a circle around the room."
   ],
-  "segment_lengths": [7,12,14]
+  "segment_lengths": [7, 7, 7]
 }
 
 ```
 
-and then run:
+From the repository root, run:
 
 ```bash
-python dbl/Wan2.2/generate.py \
+cd src/Wan2.2
+python generate.py \
   --task t2v-A14B \
-  --ckpt_dir ./Wan2.2-T2V-A14B \
+  --ckpt_dir /path/to/Wan2.2-T2V-A14B \
   --offload_model True \
   --convert_model_dtype \
   --frame_num 81 \
   --size "832*480" \
-  --prompt_filepath dbl/Wan2.2/prompts.json\
+  --prompt_filepath prompts.json
 ```
 
 If the `--prompt_filepath` argument is not provided, the script runs the baseline Wan2.2 pipeline.
 
+### Overlapping events (Wan2.2 T2V-A14B)
 
+Use `segment_intervals` when events need to happen at the same time. Each
+`[start, end)` pair corresponds to one local prompt; the end time is excluded.
+For example, the following schedule lets the robber enter the car during
+`[0, 3)` seconds while an explosion occurs at the bank during `[2, 4)` seconds:
+
+```json
+{
+  "global_prompt": "A continuous wide shot outside a bank, with a getaway car in the foreground.",
+  "local_prompts": [
+    "The robber opens the car door and climbs into the getaway car.",
+    "The bank entrance behind the car explodes, with fire and smoke."
+  ],
+  "segment_intervals": [[0, 3], [2, 4]],
+  "time_unit": "seconds"
+}
+```
+
+Both prompts receive zero temporal penalty during `[2, 3)`. They still share
+attention, so this permits simultaneous guidance without guaranteeing that
+both events will be generated successfully.
+
+Run the supplied [example JSON](src/Wan2.2/prompt_relay_overlap.json) from the
+same `src/Wan2.2` directory:
+
+```bash
+python generate.py --task t2v-A14B --ckpt_dir /path/to/Wan2.2-T2V-A14B \
+  --size "832*480" --frame_num 81 --offload_model True --convert_model_dtype \
+  --prompt_filepath prompt_relay_overlap.json
+```
+
+`time_unit` supports `seconds` or `internal_frame` (default). Do not combine
+`segment_intervals` with `segment_lengths`, and leave prompt extension disabled
+when using Prompt Relay JSON. Without explicit intervals, prompts keep their
+original consecutive allocation; this Wan implementation does not infer overlap
+from text or support `auto_overlap`.
+
+See the [English guide](src/Wan2.2/PROMPT_RELAY.md) or
+[中文说明](src/Wan2.2/PROMPT_RELAY_ZH.md) for interval validation, decay settings,
+and tests.
 
 ## 📖 Citation
 If you find Prompt Relay useful in your research or projects, please consider citing our paper:
@@ -160,3 +220,4 @@ If you find Prompt Relay useful in your research or projects, please consider ci
   journal={arXiv preprint arXiv:2604.10030},
   year={2026}
 }
+```
