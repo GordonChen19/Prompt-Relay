@@ -1,0 +1,12 @@
+{
+  "global_prompt": "A continuous wide shot of a red toy robot and a blue toy car on a wooden desk, warm daylight, fixed camera. Soft room ambience and quiet mechanical sounds.",
+  "local_prompts": [
+    "The red robot raises its right arm and waves.",
+    "The blue car rolls slowly from left to right while the robot continues waving.",
+    "The red robot lowers its arm and turns toward the blue car."
+  ],
+  "segment_intervals": [[0.0, 2.6], [1.8, 4.2], [3.8, 5.166666666666667]],
+  "time_unit": "seconds",
+  "tail_width": 0.3333333333333333,
+  "epsilon": 0.001
+}

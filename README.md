@@ -105,6 +105,14 @@ wan/modules/model.py
 wan/distributed/sequence_parallel.py
 ```
 
+## MiniMax H3
+
+This branch adds overlapping Prompt Relay and optional temporal sliding-window
+attention for MiniMax H3 (`t2va`, `fl2va`, and `ref2va`) through the official
+Diffusers backend. See the [MiniMax H3 guide](src/MiniMax-H3/README.md) for setup,
+the JSON schedule, CLI/Python examples, implementation details, and tests.
+The implementation is in `src/MiniMax-H3`; no pretrained weights are included.
+
 ## Usage
 
 Users can define their prompts in:

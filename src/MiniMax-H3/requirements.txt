@@ -1,0 +1,8 @@
+# H3 is available on Diffusers main; pin the implementation we adapted/tested.
+diffusers @ git+https://github.com/huggingface/diffusers.git@e0abab83b5df05de9e7abd788643c1a7c1e42e28
+torch>=2.6
+transformers==5.17.0
+huggingface_hub==1.33.0
+accelerate==1.15.0
+av>=14
+pytest>=8
