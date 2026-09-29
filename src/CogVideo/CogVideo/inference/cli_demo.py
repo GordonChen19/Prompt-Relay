@@ -66,7 +66,10 @@ def generate_video(
     generate_type: str = Literal["t2v", "i2v", "v2v"],  # i2v: image to video, v2v: video to video
     seed: int = 42,
     fps: int = 16,
-    prompt_filepath: Optional[str] = None # <--- Prompt Relay modification-3.2.0
+    prompt_filepath: Optional[str] = None, # <--- Prompt Relay modification-3.2.0
+    sliding_window: bool = False,
+    window_length: int = 40,
+    window_stride: int = 20,
 ):
     """
     Generates a video based on the given prompt and saves it to the specified path.
@@ -152,6 +155,12 @@ def generate_video(
     pipe.vae.enable_slicing()
     pipe.vae.enable_tiling()
 
+    attention_kwargs = {
+        "sliding_window": sliding_window,
+        "window_length": window_length,
+        "window_stride": window_stride
+    }
+
     # 4. Generate the video frames based on the prompt.
     # `num_frames` is the Number of frames to generate.
     if generate_type == "i2v":
@@ -160,14 +169,14 @@ def generate_video(
             width=width,
             prompt=prompt,
             image=image,
-            # The path of the image, the resolution of video will be the same as the image for CogVideoX1.5-5B-I2V, otherwise it will be 720 * 480
-            num_videos_per_prompt=num_videos_per_prompt,  # Number of videos to generate per prompt
-            num_inference_steps=num_inference_steps,  # Number of inference steps
-            num_frames=num_frames,  # Number of frames to generate
-            use_dynamic_cfg=True,  # This id used for DPM scheduler, for DDIM scheduler, it should be False
+            num_videos_per_prompt=num_videos_per_prompt,
+            num_inference_steps=num_inference_steps,
+            num_frames=num_frames,
+            use_dynamic_cfg=True,
             guidance_scale=guidance_scale,
-            generator=torch.Generator().manual_seed(seed),  # Set the seed for reproducibility
+            generator=torch.Generator().manual_seed(seed),
             prompt_filepath=prompt_filepath, # <--- Prompt Relay modification-3.2.1
+            attention_kwargs=attention_kwargs,
         ).frames[0]
     elif generate_type == "t2v":
         video_generate = pipe(
@@ -182,20 +191,22 @@ def generate_video(
             generator=torch.Generator().manual_seed(seed),
             prompt_filepath=prompt_filepath, # <--- Prompt Relay modification-3.2.2
             fps=fps, # <--- Prompt Relay modification-15.2
+            attention_kwargs=attention_kwargs,
         ).frames[0]
     else:
         video_generate = pipe(
             height=height,
             width=width,
             prompt=prompt,
-            video=video,  # The path of the video to be used as the background of the video
+            video=video,
             num_videos_per_prompt=num_videos_per_prompt,
             num_inference_steps=num_inference_steps,
             num_frames=num_frames,
             use_dynamic_cfg=True,
             guidance_scale=guidance_scale,
-            generator=torch.Generator().manual_seed(seed),  # Set the seed for reproducibility
+            generator=torch.Generator().manual_seed(seed),
             prompt_filepath=prompt_filepath, # <--- Prompt Relay modification-3.2.3
+            attention_kwargs=attention_kwargs,
         ).frames[0]
     export_to_video(video_generate, output_path, fps=fps)
 
@@ -264,6 +275,9 @@ if __name__ == "__main__":
         "--dtype", type=str, default="bfloat16", help="The data type for computation"
     )
     parser.add_argument("--seed", type=int, default=42, help="The seed for reproducibility")
+    parser.add_argument("--sliding_window", action="store_true", help="enable/disable sliding-window attention")
+    parser.add_argument("--window_length", type=int, default=40, help="temporal window size")
+    parser.add_argument("--window_stride", type=int, default=20, help="stride between consecutive windows")
     
     args = parser.parse_args()
     dtype = torch.float16 if args.dtype == "float16" else torch.bfloat16
@@ -300,5 +314,8 @@ if __name__ == "__main__":
         generate_type=args.generate_type,
         seed=args.seed,
         fps=args.fps,
-        prompt_filepath = args.prompt_filepath # <--- Prompt Relay modification-3.1
+        prompt_filepath = args.prompt_filepath, # <--- Prompt Relay modification-3.1
+        sliding_window=args.sliding_window,
+        window_length=args.window_length,
+        window_stride=args.window_stride
     )

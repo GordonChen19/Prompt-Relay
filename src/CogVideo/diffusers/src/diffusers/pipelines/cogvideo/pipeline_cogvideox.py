@@ -521,7 +521,7 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
         full_prompt = global_prompt + "".join(local_prompts)
         
         # Tokenize and Find Sub-prompts
-        full_ids = self.tokenizer(full_prompt, add_special_tokens=True, padding=False, return_attention_mask=False)["input_ids"]
+        full_ids = self.tokenizer(full_prompt, add_special_tokens=True, padding=False, return_mask=False)["input_ids"]
         
         def sentence_to_token_indices(subsentences):
             def find_subsequence(haystack, needle):
@@ -558,7 +558,9 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
                     L = (frame_end - frame_start) / 2.0
                     
                     # Window parameter w = L - 2 
-                    w = max(0.0, L - 2.0)
+                    # NEW: Resolution-independent window. 
+                    # 80% of the interval gets 100% text attention.
+                    w = L * 0.5
                     
                     # Ensures the attention prior reaches epsilon (0.1) at the endpoints
                     if L == w:
@@ -577,7 +579,7 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
             return q_token_idx
 
         spans = sentence_to_token_indices(local_prompts)
-        
+
         # Interval Processing Logic
         frame_intervals = []
         if len(local_prompts) != 0:
@@ -592,7 +594,7 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
                     
                     # Cap raw_end at the maximum available raw frames
                     raw_end = min(raw_end, num_frames - 1)
-
+                    
                     patch_size_t = getattr(self.transformer.config, "patch_size_t", None)
                     temporal_patch_scale = patch_size_t if patch_size_t is not None else 1
 
