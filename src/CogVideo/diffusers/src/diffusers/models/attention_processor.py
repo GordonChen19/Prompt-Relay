@@ -51,7 +51,7 @@ else:
 # Prompt Relay
 # modification-11
 # =================================================================================================================================
-def build_temporal_cost(q_token_idx, video_seq_length, text_seq_length, device, dtype):
+def build_temporal_cost(q_token_idx, video_seq_length, text_seq_length, device, dtype, offset_frames=0):
     import torch
     
     # Allocate ONLY Video x Text penalty, bypassing the Full map
@@ -59,10 +59,11 @@ def build_temporal_cost(q_token_idx, video_seq_length, text_seq_length, device, 
     
     tokens_per_frame = int(q_token_idx[0]['tokens_per_frame'])
     
+    # ADD offset_frames so the chunk calculates its true global position
     query_frames = (
         torch.arange(video_seq_length, device=device, dtype=torch.long)
         // tokens_per_frame
-    )
+    ) + offset_frames
 
     for seg in q_token_idx:
         w = seg['window']
@@ -73,7 +74,6 @@ def build_temporal_cost(q_token_idx, video_seq_length, text_seq_length, device, 
         d = (query_frames.float()[:, None] - midpoint).abs()
         cost = (torch.relu(d - w) ** 2) / (2 * sigma ** 2)
 
-        # Apply cost directly (offset is now sized exclusively to video_seq_length)
         offset[:, local] = cost.to(offset.dtype)
         
     return offset
@@ -83,14 +83,14 @@ def build_temporal_cost(q_token_idx, video_seq_length, text_seq_length, device, 
 # Prompt Relay
 # modification-12
 # =================================================================================================================================
-def chunked_softmax_attention(q, k, v, q_token_idx, text_seq_length, chunk_size=4096, sliding_window=False, window_length=40, window_stride=20):
+def chunked_softmax_attention(q, k, v, q_token_idx, text_seq_length, chunk_size=4096, offset_frames=0):
     import torch
     import torch.nn.functional as F
 
     B, H, Lq, D = q.shape
     video_seq_length = Lq - text_seq_length
 
-    # 1. Native SDPA for Text Queries (Instantaneous, no penalty needed)
+    # 1. Native SDPA for Text Queries 
     q_text = q[:, :, :text_seq_length, :]
     out_text = F.scaled_dot_product_attention(
         q_text, k, v, dropout_p=0.0, is_causal=False
@@ -100,46 +100,22 @@ def chunked_softmax_attention(q, k, v, q_token_idx, text_seq_length, chunk_size=
     q_video = q[:, :, text_seq_length:, :]
     out_video = torch.empty(B, H, video_seq_length, D, device=q.device, dtype=q.dtype)
     
-    # Determine tokens per frame
-    if q_token_idx is not None and len(q_token_idx) > 0:
-        tokens_per_frame = int(q_token_idx[0]['tokens_per_frame'])
-    else:
-        # Fallback deduction based on standard CogVideoX latent frame counts
-        tokens_per_frame = 1350
-        for possible_frames in [161, 81, 41, 21]:
-            if video_seq_length % possible_frames == 0:
-                tokens_per_frame = video_seq_length // possible_frames
-                break
-
-    # Build the small Video -> Text penalty map (~38 MB)
     if q_token_idx is not None:
-        temporal_cost_map = build_temporal_cost(q_token_idx, video_seq_length, text_seq_length, q.device, q.dtype)
+        # Pass the offset parameter down
+        temporal_cost_map = build_temporal_cost(q_token_idx, video_seq_length, text_seq_length, q.device, q.dtype, offset_frames)
     else:
         temporal_cost_map = torch.zeros(video_seq_length, text_seq_length, device=q.device, dtype=q.dtype)
-
-    # Precompute sliding window frame mask if enabled
-    if sliding_window:
-        num_frames = video_seq_length // tokens_per_frame
-        frame_mask = torch.zeros((num_frames, num_frames), dtype=torch.bool, device=q.device)
-        start_frame = 0
-        while start_frame < num_frames:
-            end_frame = min(start_frame + window_length, num_frames)
-            frame_mask[start_frame:end_frame, start_frame:end_frame] = True
-            if end_frame == num_frames:
-                break
-            start_frame += window_stride
 
     for start in range(0, video_seq_length, chunk_size):
         end = min(start + chunk_size, video_seq_length)
         q_chunk = q_video[:, :, start:end, :]
         chunk_len = end - start
 
-        # The penalty applies ONLY to Text Keys. Video Keys have 0 penalty.
+        # The penalty applies ONLY to Text Keys. 
         penalty_text = temporal_cost_map[start:end] 
-        # SDPA adds the mask to logits, so we must negate our penalty
         mask_text = -penalty_text.unsqueeze(0).unsqueeze(0) 
 
-        # Apply CFG Leakage Fix (Zero out penalty for unconditional batch half)
+        # Apply CFG Leakage Fix 
         if B >= 2:
             zero_mask = torch.zeros_like(mask_text).repeat(B // 2, 1, 1, 1)
             cond_mask = mask_text.repeat(B - (B // 2), 1, 1, 1)
@@ -147,40 +123,18 @@ def chunked_softmax_attention(q, k, v, q_token_idx, text_seq_length, chunk_size=
         else:
             mask_text = mask_text.repeat(B, 1, 1, 1)
 
-        # Video Keys get sliding window mask or 0 mask
-        if sliding_window:
-            chunk_start_frame = start // tokens_per_frame
-            chunk_end_frame = (end - 1) // tokens_per_frame + 1
-            
-            # Slice the precomputed boolean matrix just for this chunk's frames to save memory
-            slice_frame_mask = frame_mask[chunk_start_frame:chunk_end_frame, :]
-            slice_token_mask_k = slice_frame_mask.repeat_interleave(tokens_per_frame, dim=1)
-            slice_token_mask_q = slice_token_mask_k.repeat_interleave(tokens_per_frame, dim=0)
-            
-            offset = start - (chunk_start_frame * tokens_per_frame)
-            chunk_token_mask = slice_token_mask_q[offset : offset + chunk_len, :]
-            
-            # Convert boolean constraints into SDPA float logit penalties
-            mask_video = torch.where(
-                chunk_token_mask, 
-                torch.tensor(0.0, dtype=q.dtype, device=q.device), 
-                torch.tensor(float('-inf'), dtype=q.dtype, device=q.device)
-            )
-            mask_video = mask_video.unsqueeze(0).unsqueeze(0).expand(B, 1, chunk_len, video_seq_length)
-        else:
-            mask_video = torch.zeros(B, 1, chunk_len, video_seq_length, device=q.device, dtype=q.dtype)
+        # Video Keys get Global Attention (Zero Mask) because slicing happens natively in the Latent Loop now
+        mask_video = torch.zeros(B, 1, chunk_len, video_seq_length, device=q.device, dtype=q.dtype)
 
-        # Stitch the mask together for the SDPA call [B, 1, chunk_len, L_total]
+        # Stitch the mask together
         mask_chunk = torch.cat([mask_text, mask_video], dim=-1)
 
-        # Call ultra-fast native PyTorch C++ SDPA
         out_chunk = F.scaled_dot_product_attention(
             q_chunk, k, v, attn_mask=mask_chunk.to(q.dtype), dropout_p=0.0, is_causal=False
         )
 
         out_video[:, :, start:end, :] = out_chunk
 
-        # Flush VRAM
         del mask_text, mask_video, mask_chunk, out_chunk
 
     return torch.cat([out_text, out_video], dim=2)
@@ -2422,7 +2376,6 @@ class CogVideoXAttnProcessor2_0:
         if not hasattr(F, "scaled_dot_product_attention"):
             raise ImportError("CogVideoXAttnProcessor requires PyTorch 2.0, to use it, please upgrade PyTorch to 2.0.")
 
-    # add sliding_window, window_length, window_stride
     def __call__(
         self,
         attn: Attention,
@@ -2431,11 +2384,8 @@ class CogVideoXAttnProcessor2_0:
         attention_mask: torch.Tensor | None = None,
         image_rotary_emb: torch.Tensor | None = None,
         cross_attn_q_token_idx: Optional[List[Dict[str, Any]]] = None, # <--- Prompt Relay modification-13
-        sliding_window: bool = False,
-        window_length: int = 40,
-        window_stride: int = 20,
+        offset_frames: int = 0,
     ) -> torch.Tensor:
-
         text_seq_length = encoder_hidden_states.size(1)
 
         hidden_states = torch.cat([encoder_hidden_states, hidden_states], dim=1)
@@ -2474,15 +2424,13 @@ class CogVideoXAttnProcessor2_0:
         # Prompt Relay
         # modification-14
         # =================================================================================================================================
-        if (cross_attn_q_token_idx is not None or sliding_window) and encoder_hidden_states is not None:
+        if cross_attn_q_token_idx is not None and encoder_hidden_states is not None:
             # Bypass PyTorch SDPA and apply the temporal mask
             hidden_states = chunked_softmax_attention(
                 query, key, value, 
                 cross_attn_q_token_idx, 
                 text_seq_length,
-                sliding_window=sliding_window,
-                window_length=window_length,
-                window_stride=window_stride
+                offset_frames=offset_frames,
             )
         else:
             # Standard unmasked attention

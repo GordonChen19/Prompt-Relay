@@ -15,7 +15,7 @@
 
 import inspect
 import math
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Tuple, Union
 
 import torch
 from transformers import T5EncoderModel, T5Tokenizer
@@ -469,7 +469,6 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
         else:
             # CogVideoX 1.5
             base_num_frames = (num_frames + p_t - 1) // p_t
-
             freqs_cos, freqs_sin = get_3d_rotary_pos_embed(
                 embed_dim=self.transformer.config.attention_head_dim,
                 crops_coords=None,
@@ -501,7 +500,7 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
     @property
     def interrupt(self):
         return self._interrupt
-
+    
     def _prepare_prompts(self, global_prompt, local_prompts, time_intervals, num_frames, fps, height, width):
         import math
         import torch
@@ -854,9 +853,27 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
 
         # 8. Denoising loop
         num_warmup_steps = max(len(timesteps) - num_inference_steps * self.scheduler.order, 0)
+        
+        # Determine Latent Sliding Window constraints
+        sliding_window = attention_kwargs.get("sliding_window", False) if attention_kwargs else False
+        window_size = attention_kwargs.get("window_length", 42) if attention_kwargs else 42
+        stride = attention_kwargs.get("window_stride", 20) if attention_kwargs else 20
+
+        # ---> PREVENT LOGs SPAM <---
+        clean_attn_kwargs = attention_kwargs.copy() if attention_kwargs else {}
+        clean_attn_kwargs.pop("sliding_window", None)
+        clean_attn_kwargs.pop("window_length", None)
+        clean_attn_kwargs.pop("window_stride", None)
+        
+        # Calculate tokens per frame for RoPE slicing
+        p = self.transformer.config.patch_size
+        p_t = getattr(self.transformer.config, "patch_size_t", None)
+        temporal_patch_scale = p_t if p_t is not None else 1
+        h_lat = height // self.vae_scale_factor_spatial
+        w_lat = width // self.vae_scale_factor_spatial
+        tokens_per_frame = (h_lat // p) * (w_lat // p)
 
         with self.progress_bar(total=num_inference_steps) as progress_bar:
-            # for DPM-solver++
             old_pred_original_sample = None
             for i, t in enumerate(timesteps):
                 if self.interrupt:
@@ -865,21 +882,72 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
                 self._current_timestep = t
                 latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
-
-                # broadcast to batch dimension in a way that's compatible with ONNX/Core ML
                 timestep = t.expand(latent_model_input.shape[0])
 
-                # predict noise model_output
-                with self.transformer.cache_context("cond_uncond"):
-                    noise_pred = self.transformer(
-                        hidden_states=latent_model_input,
-                        encoder_hidden_states=prompt_embeds,
-                        timestep=timestep,
-                        image_rotary_emb=image_rotary_emb,
-                        attention_kwargs=attention_kwargs,
-                        cross_attn_q_token_idx=cross_attn_q_token_idx, # <--- Prompt Relay modification-7
-                        return_dict=False,
-                    )[0]
+                if not sliding_window or latent_model_input.shape[1] <= window_size:
+                    with self.transformer.cache_context("cond_uncond"):
+                        noise_pred = self.transformer(
+                            hidden_states=latent_model_input,
+                            encoder_hidden_states=prompt_embeds,
+                            timestep=timestep,
+                            image_rotary_emb=image_rotary_emb,
+                            attention_kwargs=clean_attn_kwargs,
+                            cross_attn_q_token_idx=cross_attn_q_token_idx,
+                            return_dict=False,
+                        )[0]
+                else:
+                    # Latent Temporal Blending Loop
+                    noise_pred = torch.zeros_like(latent_model_input)
+                    # Use float/weight accumulation instead of flat count
+                    overlap_weight = torch.zeros((1, latent_model_input.shape[1], 1, 1, 1), device=device, dtype=latent_model_input.dtype)
+                    latent_frames = latent_model_input.shape[1]
+                    overlap = window_size - stride
+                    
+                    # Fix 1: Generate the base RoPE grid (0 to window_size) to be reused identicaly by every chunk
+                    t_end_base = (window_size // temporal_patch_scale) * tokens_per_frame
+                    base_rotary_emb = (
+                        image_rotary_emb[0][:t_end_base],
+                        image_rotary_emb[1][:t_end_base]
+                    ) if image_rotary_emb is not None else None
+                    
+                    for start_idx in range(0, latent_frames, stride):
+                        end_idx = start_idx + window_size
+                        if end_idx > latent_frames:
+                            end_idx = latent_frames
+                            start_idx = max(0, end_idx - window_size)
+                            
+                        chunk_latents = latent_model_input[:, start_idx:end_idx, :, :, :]
+                        
+                        # Pass Absolute Time Offset to Prompt Relay 
+                        chunk_attn_kwargs = clean_attn_kwargs.copy() if clean_attn_kwargs else {}
+                        chunk_attn_kwargs["offset_frames"] = start_idx // temporal_patch_scale
+                        
+                        with self.transformer.cache_context("cond_uncond"):
+                            chunk_pred = self.transformer(
+                                hidden_states=chunk_latents,
+                                encoder_hidden_states=prompt_embeds,
+                                timestep=timestep,
+                                image_rotary_emb=base_rotary_emb, # Use the static base RoPE
+                                attention_kwargs=chunk_attn_kwargs,
+                                cross_attn_q_token_idx=cross_attn_q_token_idx,
+                                return_dict=False,
+                            )[0]
+                            
+                        # Fix 2: Create linear blending mask
+                        chunk_w = torch.ones((1, window_size, 1, 1, 1), device=device, dtype=latent_model_input.dtype)
+                        if start_idx > 0: # Fade in left
+                            chunk_w[:, :overlap, :, :, :] = torch.linspace(0, 1, overlap, device=device, dtype=latent_model_input.dtype).view(1, -1, 1, 1, 1)
+                        if end_idx < latent_frames: # Fade out right
+                            chunk_w[:, -overlap:, :, :, :] = torch.linspace(1, 0, overlap, device=device, dtype=latent_model_input.dtype).view(1, -1, 1, 1, 1)
+                            
+                        noise_pred[:, start_idx:end_idx, :, :, :] += chunk_pred * chunk_w
+                        overlap_weight[:, start_idx:end_idx, :, :, :] += chunk_w
+                        
+                        if end_idx == latent_frames:
+                            break
+                            
+                    noise_pred = noise_pred / overlap_weight
+
                 noise_pred = noise_pred.float()
 
                 # perform guidance

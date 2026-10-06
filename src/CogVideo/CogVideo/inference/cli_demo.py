@@ -275,10 +275,11 @@ if __name__ == "__main__":
         "--dtype", type=str, default="bfloat16", help="The data type for computation"
     )
     parser.add_argument("--seed", type=int, default=42, help="The seed for reproducibility")
+
     parser.add_argument("--sliding_window", action="store_true", help="enable/disable sliding-window attention")
-    parser.add_argument("--window_length", type=int, default=40, help="temporal window size")
+    parser.add_argument("--window_length", type=int, default=42, help="temporal window size")
     parser.add_argument("--window_stride", type=int, default=20, help="stride between consecutive windows")
-    
+
     args = parser.parse_args()
     dtype = torch.float16 if args.dtype == "float16" else torch.bfloat16
 
