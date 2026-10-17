@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import inspect
 import math
-from typing import Callable
+from typing import Callable, Optional, List, Dict, Tuple, Any
 
 import torch
 import torch.nn.functional as F
@@ -48,96 +48,120 @@ else:
     XLA_AVAILABLE = False
 
 # =================================================================================================================================
-# Prompt Relay
-# modification-11
+# [RELAY-BLOCK-A] Prompt Relay attention for the "block" method. Replaces v0 modification-11 and modification-12.
+#
+# Batch layout. Every batch element is one CFG branch. `branches` lists (n_text, apply_relay) per batch element, in batch
+# order, e.g. [(226, False), (K * 226, True)] for [negative branch, conditional branch]. A branch's real text tokens are
+# its first n_text text positions. Positions after that are zero padding, added only so both branches fit one tensor;
+# they are removed before attention, so nothing ever attends to them.
+#
+# Negative branch: plain scaled-dot-product attention over its 226 text tokens + all video tokens (stock CogVideoX maths).
+# Conditional branch, text = K event blocks, block k = stock 226-token T5 prompt "event k + global":
+#   video queries -> text keys : bias_k(f) on every key of block k, where
+#                                bias_k(f) = -C_k(f) - log( sum_j exp(-C_j(f)) )        (normalised per frame)
+#                                C_k(f)    = ReLU(|f - m_k| - w_k)^2 / (2 * sigma_k^2)  (Prompt Relay penalty)
+#                                f = temporal patch of the video query (+ sliding-window offset)
+#   video queries -> video keys: no bias
+#   text queries  -> text keys : block k's queries attend only to block k's keys (-inf on the other blocks)
+#   text queries  -> video keys: no bias
 # =================================================================================================================================
-def build_temporal_cost(q_token_idx, video_seq_length, text_seq_length, device, dtype, offset_frames=0):
-    import torch
-    
-    # Allocate ONLY Video x Text penalty, bypassing the Full map
-    offset = torch.zeros(video_seq_length, text_seq_length, device=device, dtype=dtype)
-    
-    tokens_per_frame = int(q_token_idx[0]['tokens_per_frame'])
-    
-    # ADD offset_frames so the chunk calculates its true global position
-    query_frames = (
-        torch.arange(video_seq_length, device=device, dtype=torch.long)
-        // tokens_per_frame
-    ) + offset_frames
+_RELAY_MASK_ALIGN = 16  # row stride the memory-efficient SDPA kernel wants for attn_mask; otherwise it copies the mask
 
-    for seg in q_token_idx:
-        w = seg['window']
-        sigma = seg['sigma'].clone().detach().to(device=device, dtype=torch.float32)
-        local = seg['local_token_idx'].to(device=device)
-        midpoint = torch.tensor(seg['midpoint'], dtype=torch.float32, device=device)
 
-        d = (query_frames.float()[:, None] - midpoint).abs()
-        cost = (torch.relu(d - w) ** 2) / (2 * sigma ** 2)
+def _relay_aligned_zeros(rows, cols, device, dtype):
+    """Zero [rows, cols] tensor whose row stride is a multiple of _RELAY_MASK_ALIGN, so SDPA uses it without copying."""
+    padded = -(-cols // _RELAY_MASK_ALIGN) * _RELAY_MASK_ALIGN
+    return torch.zeros(rows, padded, device=device, dtype=dtype)[:, :cols]
 
-        offset[:, local] = cost.to(offset.dtype)
-        
-    return offset
-# =================================================================================================================================
 
-# =================================================================================================================================
-# Prompt Relay
-# modification-12
-# =================================================================================================================================
-def chunked_softmax_attention(q, k, v, q_token_idx, text_seq_length, chunk_size=4096, offset_frames=0):
-    import torch
-    import torch.nn.functional as F
+def relay_segment_bias(segments, num_frames, offset_frames=0, device=None):
+    """Normalised Prompt Relay bias per (temporal patch, event block): [num_frames, K], float32, all <= 0."""
+    frames = torch.arange(num_frames, device=device, dtype=torch.float32) + float(offset_frames)
+    costs = []
+    for seg in segments:
+        d = frames - float(seg["midpoint"])
+        if seg.get("is_first", False):  # no penalty before the first event's midpoint
+            d = d.clamp(min=0.0)
+        if seg.get("is_last", False):  # no penalty after the last event's midpoint
+            d = d.clamp(max=0.0)
+        sigma = float(seg["sigma"])
+        costs.append(torch.relu(d.abs() - float(seg["window"])) ** 2 / (2.0 * sigma**2))
+    bias = -torch.stack(costs, dim=1)
+    return bias - torch.logsumexp(bias, dim=1, keepdim=True)  # weights exp(bias) sum to 1 at every frame
 
-    B, H, Lq, D = q.shape
-    video_seq_length = Lq - text_seq_length
 
-    # 1. Native SDPA for Text Queries 
-    q_text = q[:, :, :text_seq_length, :]
-    out_text = F.scaled_dot_product_attention(
-        q_text, k, v, dropout_p=0.0, is_causal=False
+def _relay_block_of_token(segments, n_text, device):
+    """Event block index of every text token; -1 = not in any block."""
+    block_of = torch.full((n_text,), -1, dtype=torch.long, device=device)
+    for s, seg in enumerate(segments):
+        block_of[seg["local_token_idx"].to(device=device, dtype=torch.long)] = s
+    return block_of
+
+
+def _relay_branch_attention(q, k, v, n_text, segments, offset_frames, chunk_size):
+    """Attention for the conditional branch, whose text is exactly its first n_text tokens (batch dim of size 1)."""
+    seq_len = q.shape[2]
+    video_len = seq_len - n_text
+    tpf = int(segments[0]["tokens_per_frame"])
+    if video_len % tpf != 0:
+        raise ValueError(f"video length {video_len} is not a multiple of tokens_per_frame {tpf}")
+    num_frames = video_len // tpf
+    blk_bias = relay_segment_bias(segments, num_frames, offset_frames, q.device)  # [F, K]
+    block_of = _relay_block_of_token(segments, n_text, q.device)  # [n_text]
+    col = torch.where(block_of < 0, torch.full_like(block_of, len(segments)), block_of)
+    tok_bias = torch.cat([blk_bias, blk_bias.new_zeros(num_frames, 1)], dim=1)[:, col]  # [F, n_text]
+    out = torch.empty_like(q)
+
+    # 1. Text queries: own block's text keys only, all video keys with no bias
+    mask = _relay_aligned_zeros(n_text, seq_len, q.device, q.dtype)
+    mask[:, :n_text].masked_fill_(block_of[:, None] != block_of[None, :], float("-inf"))
+    out[:, :, :n_text] = F.scaled_dot_product_attention(
+        q[:, :, :n_text], k, v, attn_mask=mask[None, None], dropout_p=0.0, is_causal=False
     )
+    del mask
 
-    # 2. Chunked SDPA for Video Queries
-    q_video = q[:, :, text_seq_length:, :]
-    out_video = torch.empty(B, H, video_seq_length, D, device=q.device, dtype=q.dtype)
-    
-    if q_token_idx is not None:
-        # Pass the offset parameter down
-        temporal_cost_map = build_temporal_cost(q_token_idx, video_seq_length, text_seq_length, q.device, q.dtype, offset_frames)
-    else:
-        temporal_cost_map = torch.zeros(video_seq_length, text_seq_length, device=q.device, dtype=q.dtype)
-
-    for start in range(0, video_seq_length, chunk_size):
-        end = min(start + chunk_size, video_seq_length)
-        q_chunk = q_video[:, :, start:end, :]
-        chunk_len = end - start
-
-        # The penalty applies ONLY to Text Keys. 
-        penalty_text = temporal_cost_map[start:end] 
-        mask_text = -penalty_text.unsqueeze(0).unsqueeze(0) 
-
-        # Apply CFG Leakage Fix 
-        if B >= 2:
-            zero_mask = torch.zeros_like(mask_text).repeat(B // 2, 1, 1, 1)
-            cond_mask = mask_text.repeat(B - (B // 2), 1, 1, 1)
-            mask_text = torch.cat([zero_mask, cond_mask], dim=0) 
-        else:
-            mask_text = mask_text.repeat(B, 1, 1, 1)
-
-        # Video Keys get Global Attention (Zero Mask) because slicing happens natively in the Latent Loop now
-        mask_video = torch.zeros(B, 1, chunk_len, video_seq_length, device=q.device, dtype=q.dtype)
-
-        # Stitch the mask together
-        mask_chunk = torch.cat([mask_text, mask_video], dim=-1)
-
-        out_chunk = F.scaled_dot_product_attention(
-            q_chunk, k, v, attn_mask=mask_chunk.to(q.dtype), dropout_p=0.0, is_causal=False
+    # 2. Video queries, in chunks: normalised bias on text keys, no bias on video keys
+    frame_of = torch.arange(video_len, device=q.device) // tpf
+    buf = _relay_aligned_zeros(min(chunk_size, video_len), seq_len, q.device, q.dtype)
+    for start in range(0, video_len, chunk_size):
+        end = min(start + chunk_size, video_len)
+        mask = buf[: end - start]
+        mask[:, :n_text] = tok_bias[frame_of[start:end]].to(q.dtype)
+        out[:, :, n_text + start : n_text + end] = F.scaled_dot_product_attention(
+            q[:, :, n_text + start : n_text + end], k, v, attn_mask=mask[None, None], dropout_p=0.0, is_causal=False
         )
+    del buf
+    return out
 
-        out_video[:, :, start:end, :] = out_chunk
 
-        del mask_text, mask_video, mask_chunk, out_chunk
-
-    return torch.cat([out_text, out_video], dim=2)
+def prompt_relay_attention(query, key, value, text_seq_length, branches, segments=None, offset_frames=0,
+                           chunk_size=1024):
+    """query/key/value: [B, H, text_seq_length + video_len, D], text first. Returns the same shape."""
+    batch = query.shape[0]
+    if len(branches) != batch:
+        raise ValueError(f"got {len(branches)} relay branches for batch size {batch}")
+    T = text_seq_length
+    out = torch.zeros_like(query)  # padding text rows stay zero; nothing ever attends to them
+    for b, (n_text, apply_relay) in enumerate(branches):
+        n_text = int(n_text)
+        if not 0 < n_text <= T:
+            raise ValueError(f"branch {b}: n_text={n_text} outside (0, {T}]")
+        if n_text == T:
+            q, k, v = query[b : b + 1], key[b : b + 1], value[b : b + 1]
+        else:  # drop the zero-padding text tokens -> this branch sees exactly its own real tokens
+            q = torch.cat([query[b : b + 1, :, :n_text], query[b : b + 1, :, T:]], dim=2)
+            k = torch.cat([key[b : b + 1, :, :n_text], key[b : b + 1, :, T:]], dim=2)
+            v = torch.cat([value[b : b + 1, :, :n_text], value[b : b + 1, :, T:]], dim=2)
+        if apply_relay and segments:
+            o = _relay_branch_attention(q, k, v, n_text, segments, offset_frames, chunk_size)
+        else:
+            o = F.scaled_dot_product_attention(q, k, v, dropout_p=0.0, is_causal=False)
+        out[b : b + 1, :, :n_text] = o[:, :, :n_text]
+        out[b : b + 1, :, T:] = o[:, :, n_text:]
+        del q, k, v, o
+    return out
+# =================================================================================================================================
+# [RELAY-BLOCK-A] end
 # =================================================================================================================================
 
 @maybe_allow_in_graph
@@ -2383,8 +2407,12 @@ class CogVideoXAttnProcessor2_0:
         encoder_hidden_states: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
         image_rotary_emb: torch.Tensor | None = None,
-        cross_attn_q_token_idx: Optional[List[Dict[str, Any]]] = None, # <--- Prompt Relay modification-13
-        offset_frames: int = 0,
+        # [RELAY-BLOCK-B] Prompt Relay arguments (replaces the v0 extra arguments of this processor)
+        cross_attn_q_token_idx: Optional[List[Dict[str, Any]]] = None,  # event blocks + timing (None = no relay)
+        offset_frames: int = 0,  # sliding window: absolute temporal patch of this window's first frame
+        relay_branches: Optional[List[Tuple[int, bool]]] = None,  # per batch element: (real text length, apply relay)
+        relay_chunk_size: int = 1024,  # video queries per masked attention call (memory vs speed)
+        # [RELAY-BLOCK-B] end
     ) -> torch.Tensor:
         text_seq_length = encoder_hidden_states.size(1)
 
@@ -2421,22 +2449,34 @@ class CogVideoXAttnProcessor2_0:
                 key[:, :, text_seq_length:] = apply_rotary_emb(key[:, :, text_seq_length:], image_rotary_emb)
 
         # =================================================================================================================================
-        # Prompt Relay
-        # modification-14
+        # [RELAY-BLOCK-C] Prompt Relay attention (replaces v0 modification-14)
         # =================================================================================================================================
-        if cross_attn_q_token_idx is not None and encoder_hidden_states is not None:
-            # Bypass PyTorch SDPA and apply the temporal mask
-            hidden_states = chunked_softmax_attention(
-                query, key, value, 
-                cross_attn_q_token_idx, 
+        if cross_attn_q_token_idx is not None and relay_branches is None:
+            # Called without branch info: treat every batch element as a full-length conditional branch.
+            relay_branches = [(text_seq_length, True)] * batch_size
+        use_relay = relay_branches is not None and (
+            cross_attn_q_token_idx is not None or any(int(n) != text_seq_length for n, _ in relay_branches)
+        )
+        if use_relay:
+            if attention_mask is not None:
+                raise ValueError("Prompt Relay attention does not support an extra attention_mask.")
+            hidden_states = prompt_relay_attention(
+                query,
+                key,
+                value,
                 text_seq_length,
+                relay_branches,
+                segments=cross_attn_q_token_idx,
                 offset_frames=offset_frames,
+                chunk_size=relay_chunk_size,
             )
         else:
-            # Standard unmasked attention
+            # Stock CogVideoX attention (unchanged open-source line)
             hidden_states = F.scaled_dot_product_attention(
                 query, key, value, attn_mask=attention_mask, dropout_p=0.0, is_causal=False
             )
+        # =================================================================================================================================
+        # [RELAY-BLOCK-C] end
         # =================================================================================================================================
 
         hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)

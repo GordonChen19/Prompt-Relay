@@ -501,124 +501,100 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
     def interrupt(self):
         return self._interrupt
     
-    def _prepare_prompts(self, global_prompt, local_prompts, time_intervals, num_frames, fps, height, width):
+    # =================================================================================================================================
+    # Prompt Relay
+    # modification-5
+    # =================================================================================================================================
+    def _prepare_prompts(self, local_spans, time_intervals, num_frames, fps, height, width):
         import math
         import torch
         
-        # Hardware & Compression Constants
         vae_temporal_scale = getattr(self, "vae_scale_factor_temporal", 4)
         vae_spatial_scale = getattr(self, "vae_scale_factor_spatial", 8)
-        patch_size = self.transformer.config.patch_size # usually 2
+        patch_size = self.transformer.config.patch_size 
 
-        latent_frames = (num_frames - 1) // vae_temporal_scale + 1
         h_lat = height // vae_spatial_scale
         w_lat = width // vae_spatial_scale
         h_patches = h_lat // patch_size
         w_patches = w_lat // patch_size
         tokens_per_frame = h_patches * w_patches
 
-        full_prompt = global_prompt + "".join(local_prompts)
+        q_token_idx = []
+        epsilon = 0.1
         
-        # Tokenize and Find Sub-prompts
-        full_ids = self.tokenizer(full_prompt, add_special_tokens=True, padding=False, return_mask=False)["input_ids"]
-        
-        def sentence_to_token_indices(subsentences):
-            def find_subsequence(haystack, needle):
-                for start in range(len(haystack) - len(needle) + 1):
-                    if haystack[start: start + len(needle)] == needle: 
-                        return (start, start + len(needle))
-                return None
+        if len(local_spans) > 0 and time_intervals and len(time_intervals) > 0:
+            for i, interval in enumerate(time_intervals):
+                start_tok, end_tok = local_spans[i]
+                spans = list(range(start_tok, end_tok))
                 
-            token_indices = {}
-            for subsentence in subsentences:
-                sub_ids = self.tokenizer(subsentence, padding=False, add_special_tokens=False)["input_ids"]
-                match = find_subsequence(full_ids, sub_ids)
-                if match is None:
-                    raise ValueError(f"Subsentence not found in full prompt: {subsentence}")
-                token_indices[subsentence] = match
-            return token_indices
-
-        # Build the payload containing the temporal cost data
-        def build_q_token_idx(frame_intervals, token_spans, tokens_per_frame):        
-            import math
-            import torch
-            
-            q_token_idx = []
-            epsilon = 0.1
-            
-            if len(frame_intervals) != 0:
-                for _, (frame_start, frame_end, subsentences) in enumerate(frame_intervals): 
-                    spans = []
-                    for subsentence in subsentences:
-                        start, end = token_spans[subsentence]
-                        spans.extend(range(start, end))
-                        
-                    midpoint = (frame_start + frame_end) / 2.0
-                    L = (frame_end - frame_start) / 2.0
-                    
-                    # Window parameter w = L - 2 
-                    # NEW: Resolution-independent window. 
-                    # 80% of the interval gets 100% text attention.
-                    w = L * 0.5
-                    
-                    # Ensures the attention prior reaches epsilon (0.1) at the endpoints
-                    if L == w:
-                        sigma_val = 0.1448 # Fallback for extremely short segments
-                    else:
-                        sigma_val = (L - w) / math.sqrt(2 * math.log(1 / epsilon))
-                    
-                    payload = {
-                        "window": w,
-                        "sigma": torch.tensor(sigma_val, dtype=torch.float16),
-                        "midpoint": midpoint,
-                        "tokens_per_frame": tokens_per_frame,
-                        "local_token_idx": torch.tensor(spans, dtype=torch.long),
-                    }
-                    q_token_idx.append(payload)
-            return q_token_idx
-
-        spans = sentence_to_token_indices(local_prompts)
-
-        # Interval Processing Logic
-        frame_intervals = []
-        if len(local_prompts) != 0:
-            if time_intervals and len(time_intervals) > 0:
-                # Map explicit time intervals (seconds) to latent frames
-                for i, interval in enumerate(time_intervals):
-                    start_sec, end_sec = interval
-                    
-                    # Convert seconds to raw frames based on fps
-                    raw_start = math.floor(start_sec * fps)
-                    raw_end = math.floor(end_sec * fps)
-                    
-                    # Cap raw_end at the maximum available raw frames
-                    raw_end = min(raw_end, num_frames - 1)
-                    
-                    patch_size_t = getattr(self.transformer.config, "patch_size_t", None)
-                    temporal_patch_scale = patch_size_t if patch_size_t is not None else 1
-
-                    # Map raw frames to 3D latent temporal patches
-                    latent_start = (raw_start // vae_temporal_scale) // temporal_patch_scale
-                    latent_end = (raw_end // vae_temporal_scale) // temporal_patch_scale
-                    
-                    # Prevent zero-length segments if intervals are extremely short
-                    if latent_end == latent_start:
-                        latent_end += 1
-                        
-                    frame_intervals.append((latent_start, latent_end, [local_prompts[i]]))
-            else:
-                num_prompts = len(local_prompts)
-                frame_intervals = []
-                for i in range(num_prompts):
-                    l_start = round(i * latent_frames / num_prompts)
-                    l_end = round((i + 1) * latent_frames / num_prompts)
-                    frame_intervals.append((l_start, l_end, [local_prompts[i]]))
+                start_sec, end_sec = interval
                 
-            q_token_idx = build_q_token_idx(frame_intervals, spans, tokens_per_frame)
-        else:
-            q_token_idx = None
-            
-        return q_token_idx
+                raw_start = math.floor(start_sec * fps)
+                raw_end = math.floor(end_sec * fps)
+                raw_end = min(raw_end, num_frames - 1)
+                
+                patch_size_t = getattr(self.transformer.config, "patch_size_t", None)
+                temporal_patch_scale = patch_size_t if patch_size_t is not None else 1
+
+                latent_start = (raw_start // vae_temporal_scale) // temporal_patch_scale
+                latent_end = (raw_end // vae_temporal_scale) // temporal_patch_scale
+                
+                if latent_end == latent_start:
+                    latent_end += 1
+
+                midpoint = (latent_start + latent_end) / 2.0
+                L = (latent_end - latent_start) / 2.0
+                
+                # CORRECT UNITS: Convert the paper's 2 latent frames into patch space
+                w = L - (2 / temporal_patch_scale)
+                if w < 0: w = 0
+                
+                if L <= w:
+                    sigma_val = 0.1448
+                else:
+                    sigma_val = (L - w) / math.sqrt(2 * math.log(1 / epsilon))
+                
+                payload = {
+                    "window": w,
+                    "sigma": torch.tensor(sigma_val, dtype=torch.float16),
+                    "midpoint": midpoint,
+                    "tokens_per_frame": tokens_per_frame,
+                    "local_token_idx": torch.tensor(spans, dtype=torch.long),
+                    "is_first": i == 0,                     # Flag for infinite left boundary
+                    "is_last": i == len(time_intervals) - 1 # Flag for infinite right boundary
+                }
+                q_token_idx.append(payload)
+                
+        return q_token_idx if len(q_token_idx) > 0 else None
+    # =================================================================================================================================
+
+    # =================================================================================================================================
+    # [RELAY-BLOCK-P1] Text encoding for the "block" method, event text first (round 6, "B_ef")
+    # =================================================================================================================================
+    def _encode_relay_blocks(self, global_prompt, local_prompts, max_sequence_length, device):
+        """One complete stock prompt per event: "local_k + global", encoded exactly like a stock CogVideoX prompt
+        (content + EOS + padding = max_sequence_length tokens, T5 with no attention mask). Event k's block is the
+        whole span of that prompt. Returns ([1, K * max_sequence_length, D] embeddings, list of block spans).
+        Rounds 2-3 used "global + local_k"; with that order the first event was weak in the first 1-2 s."""
+        blocks, spans = [], []
+        for k, lp in enumerate(local_prompts):
+            block_prompt = f"{lp.strip()} {global_prompt.strip()}".strip()  # event text first, then the global prompt
+            n_tokens = len(self.tokenizer(block_prompt, add_special_tokens=True).input_ids)
+            logger.warning(f"Prompt Relay block {k} ({n_tokens} tokens incl. EOS): {block_prompt!r}")
+            if n_tokens > max_sequence_length:
+                logger.warning(
+                    f"Prompt Relay (block): local prompt {k} + global = {n_tokens} tokens > {max_sequence_length}; "
+                    "the end of the global prompt is truncated for this block."
+                )
+            emb = self._get_t5_prompt_embeds(
+                prompt=block_prompt, num_videos_per_prompt=1, max_sequence_length=max_sequence_length, device=device
+            )
+            spans.append((k * emb.shape[1], (k + 1) * emb.shape[1]))
+            blocks.append(emb)
+        return torch.cat(blocks, dim=1), spans
+    # =================================================================================================================================
+    # [RELAY-BLOCK-P1] end
+    # =================================================================================================================================
     
     @torch.no_grad()
     @replace_example_docstring(EXAMPLE_DOC_STRING)
@@ -644,7 +620,7 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
         attention_kwargs: dict[str, Any] | None = None,
         callback_on_step_end: Callable[[int, int], None] | PipelineCallback | MultiPipelineCallbacks | None = None,
         callback_on_step_end_tensor_inputs: list[str] = ["latents"],
-        max_sequence_length: int = 226,
+        max_sequence_length: int = 226,  # [RELAY-BLOCK-P2] diffusers default restored (v0 had 224)
         prompt_filepath: Optional[str] = None, # <--- Prompt Relay modification-4
         fps: int = 16, # <--- Prompt Relay modification-15.1
     ) -> CogVideoXPipelineOutput | tuple:
@@ -737,25 +713,52 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
             callback_on_step_end_tensor_inputs = callback_on_step_end.tensor_inputs
 
         # =================================================================================================================================
-        # Prompt Relay
-        # modification-6
+        # [RELAY-BLOCK-P3] Prompt Relay text setup, "block" method (replaces v0 modification-6)
+        #   conditional branch: [event 1 + global][event 2 + global] ... each a stock 226-token T5 prompt
+        #   negative branch:    the stock 226-token "" prompt, no relay
         # =================================================================================================================================
         cross_attn_q_token_idx = None
+        relay_text_lens = None  # (negative, conditional): number of real text tokens in each CFG branch
         if prompt_filepath is not None:
             import json
-            with open(prompt_filepath, 'r') as f:
-                prompts = json.load(f)
 
-            global_prompt = prompts.get("global_prompt", "")
-            local_prompts = prompts.get("local_prompts", [])
-            # segment_lengths = prompts.get("segment_lengths", []) # use time_intervals now instead of specifying latent frames
-            time_intervals = prompts.get("time_intervals", [])
-            local_prompts = [" " + lp for lp in local_prompts]
-            cross_attn_q_token_idx = self._prepare_prompts(
-                global_prompt, local_prompts, time_intervals, num_frames, fps, height, width
+            with open(prompt_filepath, "r") as f:
+                relay_json = json.load(f)
+            global_prompt = relay_json.get("global_prompt", "")
+            local_prompts = relay_json.get("local_prompts", [])
+            time_intervals = relay_json.get("time_intervals", [])
+            if len(local_prompts) != len(time_intervals):
+                raise ValueError("Prompt Relay: local_prompts and time_intervals must have the same length.")
+
+            device = self._execution_device
+            prompt_embeds, relay_block_spans = self._encode_relay_blocks(
+                global_prompt, local_prompts, max_sequence_length, device
             )
-            
-            prompt = global_prompt + "".join(local_prompts)
+            negative_prompt_embeds = self._get_t5_prompt_embeds(
+                prompt=negative_prompt or "",
+                num_videos_per_prompt=1,
+                max_sequence_length=max_sequence_length,
+                device=device,
+            )
+            relay_text_lens = (negative_prompt_embeds.shape[1], prompt_embeds.shape[1])
+
+            # Zero-pad both to one length so they share a batch; the padding is removed again inside attention.
+            common_len = max(relay_text_lens)
+            prompt_embeds = torch.nn.functional.pad(prompt_embeds, (0, 0, 0, common_len - prompt_embeds.shape[1]))
+            negative_prompt_embeds = torch.nn.functional.pad(
+                negative_prompt_embeds, (0, 0, 0, common_len - negative_prompt_embeds.shape[1])
+            )
+
+            # Timing of each event block (v0 modification-5, unchanged)
+            cross_attn_q_token_idx = self._prepare_prompts(
+                relay_block_spans, time_intervals, num_frames, fps, height, width
+            )
+
+            # Bypass the default prompt encoding
+            prompt = None
+            negative_prompt = None
+        # =================================================================================================================================
+        # [RELAY-BLOCK-P3] end
         # =================================================================================================================================
 
         height = height or self.transformer.config.sample_height * self.vae_scale_factor_spatial
@@ -793,6 +796,19 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
         # of the Imagen paper: https://huggingface.co/papers/2205.11487 . `guidance_scale = 1`
         # corresponds to doing no classifier free guidance.
         do_classifier_free_guidance = guidance_scale > 1.0
+
+        # =================================================================================================================================
+        # [RELAY-BLOCK-P4] Branch info for the attention processor, in batch order (the batch is cat([negative, conditional]))
+        # =================================================================================================================================
+        if relay_text_lens is not None:
+            negative_len, conditional_len = relay_text_lens
+            relay_branches = ([(negative_len, False)] if do_classifier_free_guidance else []) + [(conditional_len, True)]
+            attention_kwargs = dict(attention_kwargs or {})
+            attention_kwargs["relay_branches"] = relay_branches
+            self._attention_kwargs = attention_kwargs
+        # =================================================================================================================================
+        # [RELAY-BLOCK-P4] end
+        # =================================================================================================================================
 
         # 3. Encode input prompt
         prompt_embeds, negative_prompt_embeds = self.encode_prompt(
@@ -865,13 +881,10 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
         clean_attn_kwargs.pop("window_length", None)
         clean_attn_kwargs.pop("window_stride", None)
         
-        # Calculate tokens per frame for RoPE slicing
-        p = self.transformer.config.patch_size
+        # Latent frames per temporal patch (converts a window's start latent into Prompt Relay's offset_frames)
+        # [RELAY-CLEAN-3] tokens_per_frame / h_lat / w_lat / p removed: they were only used by the old RoPE slicing
         p_t = getattr(self.transformer.config, "patch_size_t", None)
         temporal_patch_scale = p_t if p_t is not None else 1
-        h_lat = height // self.vae_scale_factor_spatial
-        w_lat = width // self.vae_scale_factor_spatial
-        tokens_per_frame = (h_lat // p) * (w_lat // p)
 
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             old_pred_original_sample = None
@@ -898,23 +911,13 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
                 else:
                     # Latent Temporal Blending Loop
                     noise_pred = torch.zeros_like(latent_model_input)
-                    # Use float/weight accumulation instead of flat count
                     overlap_weight = torch.zeros((1, latent_model_input.shape[1], 1, 1, 1), device=device, dtype=latent_model_input.dtype)
                     latent_frames = latent_model_input.shape[1]
                     overlap = window_size - stride
-                    
-                    # Fix 1: Generate the base RoPE grid (0 to window_size) to be reused identicaly by every chunk
-                    t_end_base = (window_size // temporal_patch_scale) * tokens_per_frame
-                    base_rotary_emb = (
-                        image_rotary_emb[0][:t_end_base],
-                        image_rotary_emb[1][:t_end_base]
-                    ) if image_rotary_emb is not None else None
-                    
+
                     for start_idx in range(0, latent_frames, stride):
-                        end_idx = start_idx + window_size
-                        if end_idx > latent_frames:
-                            end_idx = latent_frames
-                            start_idx = max(0, end_idx - window_size)
+                        end_idx = min(start_idx + window_size, latent_frames)
+                        chunk_len = end_idx - start_idx
                             
                         chunk_latents = latent_model_input[:, start_idx:end_idx, :, :, :]
                         
@@ -922,23 +925,36 @@ class CogVideoXPipeline(DiffusionPipeline, CogVideoXLoraLoaderMixin):
                         chunk_attn_kwargs = clean_attn_kwargs.copy() if clean_attn_kwargs else {}
                         chunk_attn_kwargs["offset_frames"] = start_idx // temporal_patch_scale
                         
+                        # [RELAY-CLEAN-3] commented-out old RoPE slicing removed (it was not executed)
+
+                        # LOCAL ROPE GENERATION (Prevents out-of-bounds extrapolation)
+                        chunk_rotary_emb = (
+                            self._prepare_rotary_positional_embeddings(
+                                height, width, chunk_len, device
+                            )
+                            if self.transformer.config.use_rotary_positional_embeddings
+                            else None
+                        )
+                        
                         with self.transformer.cache_context("cond_uncond"):
                             chunk_pred = self.transformer(
                                 hidden_states=chunk_latents,
                                 encoder_hidden_states=prompt_embeds,
                                 timestep=timestep,
-                                image_rotary_emb=base_rotary_emb, # Use the static base RoPE
+                                image_rotary_emb=chunk_rotary_emb, 
                                 attention_kwargs=chunk_attn_kwargs,
                                 cross_attn_q_token_idx=cross_attn_q_token_idx,
                                 return_dict=False,
                             )[0]
                             
-                        # Fix 2: Create linear blending mask
-                        chunk_w = torch.ones((1, window_size, 1, 1, 1), device=device, dtype=latent_model_input.dtype)
+                        # Dynamically sized blending mask
+                        chunk_w = torch.ones((1, chunk_len, 1, 1, 1), device=device, dtype=latent_model_input.dtype)
+                        fade_len = min(overlap, chunk_len)
+                        
                         if start_idx > 0: # Fade in left
-                            chunk_w[:, :overlap, :, :, :] = torch.linspace(0, 1, overlap, device=device, dtype=latent_model_input.dtype).view(1, -1, 1, 1, 1)
+                            chunk_w[:, :fade_len, :, :, :] = torch.linspace(0, 1, fade_len, device=device, dtype=latent_model_input.dtype).view(1, -1, 1, 1, 1)
                         if end_idx < latent_frames: # Fade out right
-                            chunk_w[:, -overlap:, :, :, :] = torch.linspace(1, 0, overlap, device=device, dtype=latent_model_input.dtype).view(1, -1, 1, 1, 1)
+                            chunk_w[:, -fade_len:, :, :, :] = torch.linspace(1, 0, fade_len, device=device, dtype=latent_model_input.dtype).view(1, -1, 1, 1, 1)
                             
                         noise_pred[:, start_idx:end_idx, :, :, :] += chunk_pred * chunk_w
                         overlap_weight[:, start_idx:end_idx, :, :, :] += chunk_w
