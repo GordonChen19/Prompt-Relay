@@ -1,0 +1,21 @@
+[
+  {
+    "id": "basketball_three_moves",
+    "file_name": "basketball_three_moves.mp4",
+    "global_prompt": "A young man in a grey hoodie on an empty outdoor basketball court at dusk, fixed camera.",
+    "local_prompts": [
+      "The man jumps up and down in place, arms swinging above his head.",
+      "The man sprints forward across the court toward the camera.",
+      "The man walks slowly backwards away from the camera."
+    ]
+  },
+  {
+    "id": "chef_chop_then_fry",
+    "file_name": "chef_chop_then_fry.mp4",
+    "global_prompt": "A chef in a white uniform at a wooden counter in a bright kitchen, fixed camera.",
+    "local_prompts": [
+      "The chef chops a red bell pepper into thin strips with a large knife.",
+      "The chef tosses the pepper strips into a hot pan on the stove, and steam rises."
+    ]
+  }
+]

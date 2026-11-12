@@ -3,3 +3,9 @@ pdftopng.py
 /webpage/*
 .DS_Store
 /src/.DS_Store
+
+# evaluation
+outputs/
+eval_results/
+models/
+__pycache__/

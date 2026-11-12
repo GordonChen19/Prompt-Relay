@@ -1,0 +1,13 @@
+# Installed together with VBench's own requirements, in VBench's own environment (see README "Setup"):
+#   pip install -r vbench_eval/third_party/VBench/requirements.txt -r vbench_eval/requirements.txt
+# The pins below keep everything compatible with VBench's transformers==4.33.2:
+#   pyiqa 0.1.10 is the last release that does not require transformers 4.36 or newer (0.1.11 onward do);
+#   VBench's imaging_quality needs only its MUSIQ model, present in 0.1.10.
+#   peft and open-clip-torch are DreamSim's (i2v_background) dependencies, held at releases from VBench's time.
+pyiqa==0.1.10
+dreamsim==0.2.1
+peft==0.6.2
+open-clip-torch==2.24.0
+imageio>=2.30
+imageio-ffmpeg>=0.4.9
+Pillow

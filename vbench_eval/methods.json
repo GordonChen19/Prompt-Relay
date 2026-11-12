@@ -1,0 +1,116 @@
+{
+  "_about": [
+    "Which methods generate_suite.py runs, and how. Edit 'paths' once per machine.",
+    "Paths may start with ~. Relative paths are relative to the repo root (the folder holding src/ and vbench_eval/).",
+    "Placeholders in args: any key of 'paths' or 'settings', plus, per prompt entry:",
+    "  {output} the video to write, {prompt_joined} global + local prompts as one prompt (for plain models),",
+    "  {prompt_file} a JSON with the entry's global_prompt and local_prompts (Prompt Relay's input),",
+    "  {global_prompt}, {local_1}, {local_2}, ..., {image_1}, {image_2}, ..., {image_latent_2}, ...",
+    "runs_on: 'text' = entries without images; 'first_image' = entries with images (uses image 1);",
+    "  'two_images' = entries with exactly 2 images and 2 local prompts (Visual Relay); 'all'.",
+    "parallel: 'wan' = torchrun with FSDP + Ulysses over --gpus (plain python with offloading on 1 GPU); 'none' = one GPU.",
+    "record_switch: 'image_latents' = record where Img2 starts (frame 4L-3) next to the video, so evaluation cuts there."
+  ],
+  "paths": {
+    "wan_python": "~/venv/bin/python",
+    "h3_python": "~/venvs/h3/bin/python",
+    "wan_t2v_ckpt": "~/checkpoints/Wan2.2-T2V-A14B",
+    "wan_i2v_ckpt": "~/checkpoints/Wan2.2-I2V-A14B",
+    "h3_model": "MiniMaxAI/MiniMax-H3"
+  },
+  "settings": {
+    "seed": 48216,
+    "wan_size": "832*480",
+    "wan_frame_num": 81,
+    "wan_i2v_sample_shift": 3,
+    "h3_frame_num": 124,
+    "h3_height": 768,
+    "h3_width": 1344,
+    "h3_steps": 50
+  },
+  "methods": {
+    "wan2.2_t2v": {
+      "enabled": true,
+      "about": "Wan 2.2 T2V-A14B, plain: global and local prompts joined into one prompt",
+      "runs_on": "text",
+      "python": "{wan_python}",
+      "code_dir": "src/Wan2.2",
+      "script": "generate.py",
+      "parallel": "wan",
+      "args": ["--task", "t2v-A14B", "--size", "{wan_size}", "--frame_num", "{wan_frame_num}",
+               "--ckpt_dir", "{wan_t2v_ckpt}", "--base_seed", "{seed}",
+               "--prompt", "{prompt_joined}", "--save_file", "{output}"]
+    },
+    "wan2.2_t2v_prompt_relay": {
+      "enabled": true,
+      "about": "Prompt Relay on Wan 2.2 T2V-A14B (local prompts split evenly over the video)",
+      "runs_on": "text",
+      "python": "{wan_python}",
+      "code_dir": "src/Wan2.2",
+      "script": "generate.py",
+      "parallel": "wan",
+      "args": ["--task", "t2v-A14B", "--size", "{wan_size}", "--frame_num", "{wan_frame_num}",
+               "--ckpt_dir", "{wan_t2v_ckpt}", "--base_seed", "{seed}",
+               "--prompt_filepath", "{prompt_file}", "--save_file", "{output}"]
+    },
+    "wan2.2_i2v": {
+      "enabled": true,
+      "about": "Wan 2.2 I2V-A14B, plain: image 1 as the first frame, global and local prompts joined into one; same settings as Visual Relay",
+      "runs_on": "first_image",
+      "record_switch": "image_latents",
+      "python": "{wan_python}",
+      "code_dir": "src/Wan2.2",
+      "script": "generate.py",
+      "parallel": "wan",
+      "args": ["--task", "i2v-A14B", "--size", "{wan_size}", "--frame_num", "{wan_frame_num}",
+               "--ckpt_dir", "{wan_i2v_ckpt}", "--base_seed", "{seed}", "--sample_shift", "{wan_i2v_sample_shift}",
+               "--image", "{image_1}", "--prompt", "{prompt_joined}", "--save_file", "{output}"]
+    },
+    "wan2.2_i2v_visual_relay": {
+      "enabled": true,
+      "about": "Visual Relay on Wan 2.2 I2V-A14B: image 1 at the start, image 2 at image_latents[1] (single-frame contextual anchor, RoPE offset 0.5, B1 velocity)",
+      "runs_on": "two_images",
+      "record_switch": "image_latents",
+      "python": "{wan_python}",
+      "code_dir": "src/Visual-Relay/Wan2.2",
+      "script": "generate.py",
+      "parallel": "wan",
+      "args": ["--task", "i2v-A14B", "--size", "{wan_size}", "--frame_num", "{wan_frame_num}",
+               "--ckpt_dir", "{wan_i2v_ckpt}", "--base_seed", "{seed}", "--sample_shift", "{wan_i2v_sample_shift}",
+               "--prompt", "{global_prompt}",
+               "--image", "{image_1}", "--image_latent_index", "0", "--image_prompt", "{local_1}",
+               "--image", "{image_2}", "--image_latent_index", "{image_latent_2}", "--image_prompt", "{local_2}",
+               "--image_condition_joint_img2_guidance",
+               "--image_condition_joint_img2_guidance_shifted_anchor",
+               "--image_condition_joint_img2_guidance_align_b1",
+               "--image_condition_joint_img2_guidance_anchor_rope_offset", "0.5",
+               "--image_condition_joint_img2_guidance_single_frame_anchor",
+               "--image_condition_joint_img2_guidance_single_frame_anchor_four_history",
+               "--save_file", "{output}"]
+    },
+    "minimax_h3": {
+      "enabled": false,
+      "about": "MiniMax H3, plain (global and local prompts joined). NOT SET UP YET: whoever runs H3 checks these arguments, then sets enabled to true",
+      "runs_on": "text",
+      "python": "{h3_python}",
+      "code_dir": "src/MiniMax-H3",
+      "script": "generate.py",
+      "parallel": "none",
+      "args": ["--model_path", "{h3_model}", "--prompt", "{prompt_joined}",
+               "--frame_num", "{h3_frame_num}", "--height", "{h3_height}", "--width", "{h3_width}",
+               "--num_inference_steps", "{h3_steps}", "--seed", "{seed}", "--output_path", "{output}"]
+    },
+    "minimax_h3_prompt_relay": {
+      "enabled": false,
+      "about": "Prompt Relay on MiniMax H3. NOT SET UP YET: whoever runs H3 checks these arguments, then sets enabled to true",
+      "runs_on": "text",
+      "python": "{h3_python}",
+      "code_dir": "src/MiniMax-H3",
+      "script": "generate.py",
+      "parallel": "none",
+      "args": ["--model_path", "{h3_model}", "--prompt_filepath", "{prompt_file}",
+               "--frame_num", "{h3_frame_num}", "--height", "{h3_height}", "--width", "{h3_width}",
+               "--num_inference_steps", "{h3_steps}", "--seed", "{seed}", "--output_path", "{output}"]
+    }
+  }
+}

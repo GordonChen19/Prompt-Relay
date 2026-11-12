@@ -1,0 +1,36 @@
+[
+  {
+    "id": "samurai_ninja_orbit",
+    "file_name": "samurai_ninja_orbit.mp4",
+    "global_prompt": "A shot of a ninja and a samurai in a moonlit Japanese temple courtyard.",
+    "local_prompts": [
+      "The camera begins behind the red-armored samurai facing the black-clad ninja. The camera circles the two people quickly and ends behind the shoulder of the black-clad ninja.",
+      "The orbit ends behind the black-clad ninja facing the red-armored samurai."
+    ],
+    "images": [
+      "src/Visual-Relay/Img1.png",
+      "src/Visual-Relay/Img2.png"
+    ],
+    "image_latents": [
+      0,
+      14
+    ]
+  },
+  {
+    "id": "rock_feather_fall",
+    "file_name": "rock_feather_fall.mp4",
+    "global_prompt": "A rock and a white feather above the ground in an outdoor scene. The camera remains static and the background stays unchanged.",
+    "local_prompts": [
+      "The rock and the white feather fall from the same height. The rock drops quickly and reaches the ground first, while the feather descends slowly, drifting and fluttering in the air.",
+      "The rock lies still on the ground while the white feather keeps drifting slowly downward, gently fluttering in the air."
+    ],
+    "images": [
+      "src/Visual-Relay/fnr1.png",
+      "src/Visual-Relay/fnr2.png"
+    ],
+    "image_latents": [
+      0,
+      10
+    ]
+  }
+]
