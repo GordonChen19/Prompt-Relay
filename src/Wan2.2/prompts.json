@@ -1,0 +1,14 @@
+{
+  "global_prompt": "A single continuous shallow-depth-of-field cinematic tracking shot, with elegant camera movement, strong visual continuity, and no cuts featuring a cowgirl wearing boots and sunglasses walking out of an elevator into a modern office.",
+  "mode": "gaussian",
+  "local_prompts": [
+    "The shot begins on the closed elevator doors in a quiet modern office hallway. The elevator doors slide open to reveal only the cowgirl's boots. The camera starts low at floor level, tightly framed on her boots, and tracks backward smoothly as she steps out of the elevator and begins walking forward.",
+    "The camera continues tracking the cowgirl for several steps as she walks, then begins a smooth rising arc around the front of her body. As it arcs and lifts from a low angle to a higher medium shot, with the camera always staying in front of the cowgirl. it gradually reveals her figure and face while she keeps walking forward.  The camera keeps gliding backward in front of her and rises further into a close frontal shot of her face. She is wearing dark sunglasses as she walks.",
+    " Without breaking stride, she slowly raises her hand and removes the sunglasses, revealing her eyes. The camera holds on her face in the same uninterrupted motion, preserving the elegant continuous-shot feeling."
+  ],
+  "frame_intervals": [
+    [0, 7],
+    [7, 14],
+    [14, 21]
+  ]
+}

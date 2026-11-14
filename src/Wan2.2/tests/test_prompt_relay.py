@@ -1,0 +1,215 @@
+import importlib.util
+import json
+import sys
+import tempfile
+import types
+import unittest
+from pathlib import Path
+
+
+try:
+    import torch
+except ModuleNotFoundError:
+    torch = types.ModuleType("torch")
+    sys.modules["torch"] = torch
+    TORCH_AVAILABLE = False
+else:
+    TORCH_AVAILABLE = True
+
+
+MODULE_PATH = Path(__file__).parents[1] / "wan" / "prompt_relay.py"
+SPEC = importlib.util.spec_from_file_location("prompt_relay_for_tests", MODULE_PATH)
+PROMPT_RELAY = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = PROMPT_RELAY
+SPEC.loader.exec_module(PROMPT_RELAY)
+
+PromptRelayConfig = PROMPT_RELAY.PromptRelayConfig
+PromptRelaySegment = PROMPT_RELAY.PromptRelaySegment
+build_temporal_penalty = PROMPT_RELAY.build_temporal_penalty
+
+
+class PromptRelayConfigTests(unittest.TestCase):
+    def test_loads_json_and_normalizes_prompts(self):
+        payload = {
+            "global_prompt": " Global prompt ",
+            "local_prompts": [" First action ", "Second action"],
+            "segment_lengths": [2, 3],
+            "mode": "GAUSSIAN",
+            "sigma": 0.5,
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "prompts.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            config = PromptRelayConfig.from_json(path)
+
+        self.assertEqual(config.global_prompt, "Global prompt")
+        self.assertEqual(config.local_prompts, ("First action", "Second action"))
+        self.assertEqual(
+            config.full_prompt, "Global prompt First action Second action"
+        )
+        self.assertEqual(config.mode, "gaussian")
+        self.assertEqual(config.frame_intervals(5), ((0, 2), (2, 5)))
+
+    def test_equal_intervals_match_existing_ceil_behavior(self):
+        config = PromptRelayConfig.from_mapping(
+            {
+                "global_prompt": "Global",
+                "local_prompts": ["one", "two", "three", "four"],
+            }
+        )
+        self.assertEqual(
+            config.frame_intervals(21),
+            ((0, 6), (6, 12), (12, 18), (18, 21)),
+        )
+        self.assertEqual(config.mode, "gaussian")
+
+    def test_rejects_mismatched_segment_lengths(self):
+        with self.assertRaisesRegex(ValueError, "one entry per local prompt"):
+            PromptRelayConfig.from_mapping(
+                {
+                    "global_prompt": "Global",
+                    "local_prompts": ["one", "two"],
+                    "segment_lengths": [5],
+                }
+            )
+
+    def test_rejects_segment_lengths_that_do_not_cover_timeline(self):
+        config = PromptRelayConfig.from_mapping(
+            {
+                "global_prompt": "Global",
+                "local_prompts": ["one", "two"],
+                "segment_lengths": [4, 4],
+            }
+        )
+        with self.assertRaisesRegex(ValueError, "must sum"):
+            config.frame_intervals(9)
+
+    def test_rejects_unknown_mode(self):
+        with self.assertRaisesRegex(ValueError, "mode must be one of"):
+            PromptRelayConfig.from_mapping(
+                {
+                    "global_prompt": "Global",
+                    "local_prompts": ["one"],
+                    "mode": "sharp",
+                }
+            )
+
+    def test_explicit_frame_intervals_can_overlap(self):
+        config = PromptRelayConfig.from_mapping(
+            {
+                "global_prompt": "Global",
+                "local_prompts": ["one", "two", "three"],
+                "frame_intervals": [[0, 7], [3, 8], [8, 21]],
+            }
+        )
+        self.assertEqual(
+            config.frame_intervals(21),
+            ((0, 7), (3, 8), (8, 21)),
+        )
+
+    def test_rejects_intervals_beyond_latent_timeline(self):
+        config = PromptRelayConfig.from_mapping(
+            {
+                "global_prompt": "Global",
+                "local_prompts": ["one"],
+                "frame_intervals": [[0, 22]],
+            }
+        )
+        with self.assertRaisesRegex(ValueError, "cannot extend beyond"):
+            config.frame_intervals(21)
+
+    def test_rejects_lengths_and_explicit_intervals_together(self):
+        with self.assertRaisesRegex(ValueError, "mutually exclusive"):
+            PromptRelayConfig.from_mapping(
+                {
+                    "global_prompt": "Global",
+                    "local_prompts": ["one", "two"],
+                    "segment_lengths": [4, 4],
+                    "frame_intervals": [[0, 4], [3, 8]],
+                }
+            )
+
+
+@unittest.skipUnless(TORCH_AVAILABLE, "PyTorch is not installed")
+class TemporalPenaltyTests(unittest.TestCase):
+    def test_overlapping_intervals_enable_both_local_prompts(self):
+        segments = (
+            PromptRelaySegment(
+                frame_start=0,
+                frame_end=4,
+                token_indices=(1,),
+                tokens_per_frame=1,
+                mode="hard",
+                sigma=1.0,
+            ),
+            PromptRelaySegment(
+                frame_start=2,
+                frame_end=6,
+                token_indices=(2,),
+                tokens_per_frame=1,
+                mode="hard",
+                sigma=1.0,
+            ),
+        )
+        penalty = build_temporal_penalty(
+            segments, 6, 4, device=torch.device("cpu")
+        )
+        self.assertEqual(penalty[3, 1].item(), 0.0)
+        self.assertEqual(penalty[3, 2].item(), 0.0)
+        self.assertEqual(penalty[1, 2].item(), 1e9)
+        self.assertEqual(penalty[5, 1].item(), 1e9)
+
+    def test_hard_mode_masks_only_local_tokens_outside_interval(self):
+        segment = PromptRelaySegment(
+            frame_start=0,
+            frame_end=4,
+            token_indices=(1,),
+            tokens_per_frame=1,
+            mode="hard",
+            sigma=1.0,
+        )
+        penalty = build_temporal_penalty(
+            (segment,), 6, 3, device=torch.device("cpu")
+        )
+        self.assertTrue(torch.equal(penalty[:, 0], torch.zeros(6)))
+        self.assertEqual(penalty[3, 1].item(), 0.0)
+        self.assertEqual(penalty[4, 1].item(), 1e9)
+        self.assertEqual(penalty[5, 1].item(), 1e9)
+
+    def test_query_offset_preserves_global_frame_coordinates(self):
+        segment = PromptRelaySegment(
+            frame_start=0,
+            frame_end=4,
+            token_indices=(1,),
+            tokens_per_frame=2,
+            mode="hard",
+            sigma=1.0,
+        )
+        penalty = build_temporal_penalty(
+            (segment,),
+            2,
+            3,
+            device=torch.device("cpu"),
+            query_token_offset=10,
+        )
+        self.assertTrue(torch.equal(penalty[:, 1], torch.full((2,), 1e9)))
+
+    def test_gaussian_mode_is_soft_outside_inner_window(self):
+        segment = PromptRelaySegment(
+            frame_start=0,
+            frame_end=8,
+            token_indices=(1,),
+            tokens_per_frame=1,
+            mode="gaussian",
+            sigma=1.0,
+        )
+        penalty = build_temporal_penalty(
+            (segment,), 8, 3, device=torch.device("cpu")
+        )
+        self.assertEqual(penalty[4, 1].item(), 0.0)
+        self.assertGreater(penalty[0, 1].item(), 0.0)
+        self.assertLess(penalty[0, 1].item(), 1e9)
+
+
+if __name__ == "__main__":
+    unittest.main()
