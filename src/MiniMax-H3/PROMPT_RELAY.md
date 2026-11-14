@@ -16,7 +16,7 @@ Install the dependencies from `requirements.txt`, then run from this directory:
 ```bash
 python generate_prompt_relay.py \
   --model_path . \
-  --prompt_filepath prompt_relay.json \
+  --prompt_filepath prompts.json \
   --frame_num 124 \
   --output_path outputs/h3_prompt_relay.mp4
 ```
