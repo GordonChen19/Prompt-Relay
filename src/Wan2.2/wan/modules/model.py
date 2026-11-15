@@ -18,7 +18,8 @@ def prompt_relay_attention(
     v,
     segments,
     query_token_offset=0,
-    chunk_size=16,
+    chunk_size=128,
+    temporal_penalty=None,
 ):
     """Compute cross-attention with temporal penalties on local-prompt tokens."""
 
@@ -29,13 +30,20 @@ def prompt_relay_attention(
     batch_size, num_heads, query_length, head_dim = q.shape
     context_length = k.shape[2]
     scale = 1.0 / math.sqrt(head_dim)
-    penalty = build_temporal_penalty(
-        segments,
-        query_length,
-        context_length,
-        device=q.device,
-        query_token_offset=query_token_offset,
-    )
+    if temporal_penalty is None:
+        temporal_penalty = build_temporal_penalty(
+            segments,
+            query_length,
+            context_length,
+            device=q.device,
+            query_token_offset=query_token_offset,
+        )
+    elif temporal_penalty.shape != (query_length, context_length):
+        raise ValueError(
+            "temporal_penalty must have shape "
+            f"({query_length}, {context_length}), got "
+            f"{tuple(temporal_penalty.shape)}"
+        )
 
     output = torch.empty(
         batch_size,
@@ -49,7 +57,7 @@ def prompt_relay_attention(
     for start in range(0, query_length, chunk_size):
         end = min(start + chunk_size, query_length)
         logits = torch.matmul(q[:, :, start:end], transposed_k) * scale
-        logits = logits.float() - penalty[start:end][None, None]
+        logits = logits.float() - temporal_penalty[start:end][None, None]
         attention = torch.softmax(logits, dim=-1).to(v.dtype)
         output[:, :, start:end] = torch.matmul(attention, v)
 
@@ -207,6 +215,7 @@ class WanCrossAttention(WanSelfAttention):
         context_lens,
         prompt_relay_segments=None,
         query_token_offset=0,
+        prompt_relay_temporal_penalty=None,
     ):
         r"""
         Args:
@@ -233,6 +242,7 @@ class WanCrossAttention(WanSelfAttention):
                 v,
                 prompt_relay_segments,
                 query_token_offset=query_token_offset,
+                temporal_penalty=prompt_relay_temporal_penalty,
             )
 
         # output
@@ -288,6 +298,7 @@ class WanAttentionBlock(nn.Module):
         context_lens,
         prompt_relay_segments=None,
         prompt_relay_query_token_offset=0,
+        prompt_relay_temporal_penalty=None,
     ):
         r"""
         Args:
@@ -317,6 +328,7 @@ class WanAttentionBlock(nn.Module):
                 context_lens,
                 prompt_relay_segments=prompt_relay_segments,
                 query_token_offset=prompt_relay_query_token_offset,
+                prompt_relay_temporal_penalty=prompt_relay_temporal_penalty,
             )
             y = self.ffn(
                 self.norm2(x).float() * (1 + e[4].squeeze(2)) + e[3].squeeze(2))
@@ -547,6 +559,16 @@ class WanModel(ModelMixin, ConfigMixin):
                 for u in context
             ]))
 
+        prompt_relay_temporal_penalty = None
+        if prompt_relay_segments:
+            prompt_relay_temporal_penalty = build_temporal_penalty(
+                prompt_relay_segments,
+                x.size(1),
+                context.size(1),
+                device=x.device,
+                query_token_offset=0,
+            )
+
         # arguments
         kwargs = dict(
             e=e0,
@@ -557,6 +579,7 @@ class WanModel(ModelMixin, ConfigMixin):
             context_lens=context_lens,
             prompt_relay_segments=prompt_relay_segments,
             prompt_relay_query_token_offset=0,
+            prompt_relay_temporal_penalty=prompt_relay_temporal_penalty,
         )
 
         for block in self.blocks:

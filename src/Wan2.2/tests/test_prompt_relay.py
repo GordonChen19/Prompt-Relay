@@ -4,6 +4,7 @@ import sys
 import tempfile
 import types
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -26,6 +27,57 @@ SPEC.loader.exec_module(PROMPT_RELAY)
 PromptRelayConfig = PROMPT_RELAY.PromptRelayConfig
 PromptRelaySegment = PROMPT_RELAY.PromptRelaySegment
 build_temporal_penalty = PROMPT_RELAY.build_temporal_penalty
+
+
+def load_model_module_for_tests():
+    """Load wan.modules.model without requiring an installed diffusers package."""
+
+    package_name = "wan_model_for_tests"
+    package = types.ModuleType(package_name)
+    package.__path__ = []
+    modules_package = types.ModuleType(f"{package_name}.modules")
+    modules_package.__path__ = []
+
+    configuration_utils = types.ModuleType("diffusers.configuration_utils")
+    modeling_utils = types.ModuleType("diffusers.models.modeling_utils")
+    diffusers = types.ModuleType("diffusers")
+    diffusers_models = types.ModuleType("diffusers.models")
+
+    class ConfigMixin:
+        pass
+
+    class ModelMixin(torch.nn.Module):
+        pass
+
+    def register_to_config(function):
+        return function
+
+    configuration_utils.ConfigMixin = ConfigMixin
+    configuration_utils.register_to_config = register_to_config
+    modeling_utils.ModelMixin = ModelMixin
+
+    attention = types.ModuleType(f"{package_name}.modules.attention")
+    attention.flash_attention = lambda *args, **kwargs: None
+
+    module_path = Path(__file__).parents[1] / "wan" / "modules" / "model.py"
+    spec = importlib.util.spec_from_file_location(
+        f"{package_name}.modules.model", module_path
+    )
+    module = importlib.util.module_from_spec(spec)
+    replacements = {
+        package_name: package,
+        f"{package_name}.modules": modules_package,
+        f"{package_name}.prompt_relay": PROMPT_RELAY,
+        f"{package_name}.modules.attention": attention,
+        "diffusers": diffusers,
+        "diffusers.configuration_utils": configuration_utils,
+        "diffusers.models": diffusers_models,
+        "diffusers.models.modeling_utils": modeling_utils,
+        spec.name: module,
+    }
+    with mock.patch.dict(sys.modules, replacements):
+        spec.loader.exec_module(module)
+    return module
 
 
 class PromptRelayConfigTests(unittest.TestCase):
@@ -132,6 +184,50 @@ class PromptRelayConfigTests(unittest.TestCase):
 
 @unittest.skipUnless(TORCH_AVAILABLE, "PyTorch is not installed")
 class TemporalPenaltyTests(unittest.TestCase):
+    def test_precomputed_penalty_preserves_attention_result(self):
+        model = load_model_module_for_tests()
+        torch.manual_seed(7)
+        q = torch.randn(1, 6, 2, 4)
+        k = torch.randn(1, 5, 2, 4)
+        v = torch.randn(1, 5, 2, 4)
+        segment = PromptRelaySegment(
+            frame_start=1,
+            frame_end=3,
+            token_indices=(2, 3),
+            tokens_per_frame=2,
+            mode="gaussian",
+            sigma=0.932,
+        )
+        segments = (segment,)
+        query_token_offset = 4
+        penalty = build_temporal_penalty(
+            segments,
+            q.size(1),
+            k.size(1),
+            device=q.device,
+            query_token_offset=query_token_offset,
+        )
+
+        original = model.prompt_relay_attention(
+            q,
+            k,
+            v,
+            segments,
+            query_token_offset=query_token_offset,
+            chunk_size=2,
+        )
+        precomputed = model.prompt_relay_attention(
+            q,
+            k,
+            v,
+            segments,
+            query_token_offset=query_token_offset,
+            chunk_size=3,
+            temporal_penalty=penalty,
+        )
+
+        self.assertTrue(torch.allclose(original, precomputed, atol=1e-6))
+
     def test_overlapping_intervals_enable_both_local_prompts(self):
         segments = (
             PromptRelaySegment(

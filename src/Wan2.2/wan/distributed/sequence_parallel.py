@@ -3,6 +3,7 @@ import torch
 import torch.cuda.amp as amp
 
 from ..modules.model import sinusoidal_embedding_1d
+from ..prompt_relay import build_temporal_penalty
 from .ulysses import distributed_attention
 from .util import gather_forward, get_rank, get_world_size
 
@@ -123,6 +124,19 @@ def sp_dit_forward(
     e = torch.chunk(e, get_world_size(), dim=1)[get_rank()]
     e0 = torch.chunk(e0, get_world_size(), dim=1)[get_rank()]
 
+    prompt_relay_query_token_offset = (
+        get_rank() * sequence_length_per_rank
+    )
+    prompt_relay_temporal_penalty = None
+    if prompt_relay_segments:
+        prompt_relay_temporal_penalty = build_temporal_penalty(
+            prompt_relay_segments,
+            x.size(1),
+            context.size(1),
+            device=x.device,
+            query_token_offset=prompt_relay_query_token_offset,
+        )
+
     # arguments
     kwargs = dict(
         e=e0,
@@ -132,9 +146,8 @@ def sp_dit_forward(
         context=context,
         context_lens=context_lens,
         prompt_relay_segments=prompt_relay_segments,
-        prompt_relay_query_token_offset=(
-            get_rank() * sequence_length_per_rank
-        ),
+        prompt_relay_query_token_offset=prompt_relay_query_token_offset,
+        prompt_relay_temporal_penalty=prompt_relay_temporal_penalty,
     )
 
     for block in self.blocks:
