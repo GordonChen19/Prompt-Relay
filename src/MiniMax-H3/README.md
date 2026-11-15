@@ -233,6 +233,10 @@ python generate_prompt_relay.py \
   --output_path outputs/h3_prompt_relay.mp4
 ```
 
+For four-GPU Prompt Relay inference, use `torchrun --nproc_per_node=4` and add
+`--ulysses_size 4`; see [PROMPT_RELAY.md](PROMPT_RELAY.md#multi-gpu) for the
+complete command and memory-boundary details.
+
 The integration targets the official Diffusers modular pipeline pinned in
 `requirements.txt`. It applies the temporal bias only from generated-video
 queries to local-prompt text keys inside H3's packed joint attention.

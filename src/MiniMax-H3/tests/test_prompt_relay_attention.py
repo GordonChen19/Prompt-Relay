@@ -8,6 +8,7 @@ except ModuleNotFoundError as error:
 
 from h3_prompt_relay.attention import (
     AttentionState,
+    _online_attention_update,
     _segment_costs,
     relay_attention,
     token_segment_ids,
@@ -45,6 +46,37 @@ def make_state(mode="hard"):
 
 
 class PromptRelayAttentionTests(unittest.TestCase):
+    def test_online_softmax_matches_full_attention(self):
+        torch.manual_seed(19)
+        query = torch.randn(1, 2, 5, 4)
+        key = torch.randn(1, 2, 7, 4)
+        value = torch.randn(1, 2, 7, 4)
+        bias = torch.randn(5, 7) * 0.2
+        running_max = torch.full((1, 2, 5, 1), -torch.inf)
+        running_sum = torch.zeros_like(running_max)
+        running_output = torch.zeros(1, 2, 5, 4)
+
+        for start, end in ((0, 3), (3, 7)):
+            running_max, running_sum, running_output = (
+                _online_attention_update(
+                    query,
+                    key[:, :, start:end],
+                    value[:, :, start:end],
+                    bias[:, start:end],
+                    running_max,
+                    running_sum,
+                    running_output,
+                )
+            )
+        actual = running_output / running_sum
+        expected = F.scaled_dot_product_attention(
+            query,
+            key,
+            value,
+            attn_mask=bias[None, None],
+        )
+        torch.testing.assert_close(actual, expected, atol=2e-5, rtol=2e-5)
+
     def test_hard_overlap_enables_both_local_prompts(self):
         state = make_state("hard")
         query = torch.zeros(1, 7, 1, 2)
@@ -124,6 +156,31 @@ class PromptRelayAttentionTests(unittest.TestCase):
             with use_prompt_relay_attention(transformer, state):
                 self.assertIsNot(attention.processor, original)
                 raise RuntimeError("intentional")
+        self.assertIs(attention.processor, original)
+
+    def test_parallel_config_is_forwarded_and_processor_is_restored(self):
+        class OriginalProcessor:
+            _parallel_config = object()
+
+        class FakeAttention:
+            def __init__(self, processor):
+                self.processor = processor
+
+            def set_processor(self, processor):
+                self.processor = processor
+
+        original = OriginalProcessor()
+        attention = FakeAttention(original)
+        transformer = type(
+            "Transformer",
+            (),
+            {"transformer_blocks": [type("Block", (), {"attn": attention})()]},
+        )()
+        with use_prompt_relay_attention(transformer, make_state("gaussian")):
+            self.assertIs(
+                attention.processor._parallel_config,
+                original._parallel_config,
+            )
         self.assertIs(attention.processor, original)
 
 

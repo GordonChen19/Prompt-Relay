@@ -1,15 +1,13 @@
 {
-  "global_prompt": "A continuous wide shot of a red toy robot and a blue toy car on a wooden desk in warm daylight, with a fixed camera and quiet mechanical room ambience.",
+  "global_prompt": "A shot of two stationary warriors in a moonlit Japanese temple courtyard: a samurai wearing bright red armor and a ninja wearing black clothing. The two warriors stand facing each other throughout the shot.",
   "mode": "gaussian",
   "sigma": 0.932,
   "local_prompts": [
-    "The red robot raises its right arm and waves.",
-    "The blue toy car rolls slowly from left to right while the robot continues waving.",
-    "The robot lowers its arm and turns toward the blue car."
+    "The camera begins behind the red-armored samurai, looking over his shoulder toward the black-clad ninja. The camera rapidly moves forward rapidly toward the ninja, sweeps around his side, and ends behind the black-clad ninja, looking over his shoulder toward the red-armored samurai facing him.",
+    "The camera is behind black-clad ninja, looking over his shoulder toward the red-armored samurai facing him."
   ],
   "frame_intervals": [
-    [0, 18],
-    [12, 28],
+    [0, 24],
     [24, 37]
   ]
 }

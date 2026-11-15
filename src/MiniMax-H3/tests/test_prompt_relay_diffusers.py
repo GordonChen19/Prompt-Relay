@@ -17,6 +17,7 @@ except (ImportError, ModuleNotFoundError) as error:
     )
 
 from h3_prompt_relay import PromptRelayConfig, enable_prompt_relay
+from h3_prompt_relay.pipeline import IndexedMiniMaxH3PrepareLayoutStep
 from h3_prompt_relay.attention import (
     prepare_attention_state,
     use_prompt_relay_attention,
@@ -51,6 +52,30 @@ def tiny_model():
 
 
 class DiffusersIntegrationTests(unittest.TestCase):
+    def test_indexed_keyframes_share_target_frame_rope_times(self):
+        layout = IndexedMiniMaxH3PrepareLayoutStep.build_packed_sequence(
+            text_token_tags=torch.tensor([1, 1, 1]),
+            num_latent_frames=7,
+            latent_height=2,
+            latent_width=4,
+            num_audio_latents=3,
+            patch_size=(1, 2, 2),
+            audio_channels=2,
+            audio_tag=2,
+            video_tag=0,
+            keyframe_anchors=(0, 3, 6),
+        )
+        positions, _, video, _, _, condition_rows, _ = layout
+        rows_per_frame = 2
+        target_rows = video[condition_rows:]
+        for anchor_number, target_frame in enumerate((0, 3, 6)):
+            condition_row = 3 + anchor_number * rows_per_frame
+            target_row = target_rows[target_frame * rows_per_frame]
+            self.assertEqual(
+                positions[condition_row, 0].item(),
+                positions[target_row, 0].item(),
+            )
+
     def test_installs_idempotently_for_all_h3_workflows(self):
         for workflow in (None, "t2va", "fl2va", "ref2va"):
             with self.subTest(workflow=workflow):

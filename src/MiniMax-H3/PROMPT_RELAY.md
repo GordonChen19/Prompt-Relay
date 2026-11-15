@@ -23,6 +23,66 @@ python generate_prompt_relay.py \
 
 Omit `--prompt_filepath` and supply `--prompt` to use the native baseline.
 
+### Multi-GPU
+
+Launch one process per GPU and set `--ulysses_size` to the same value:
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+torchrun --standalone --nproc_per_node=4 generate_prompt_relay.py \
+  --model_path "$HOME/MiniMax-H3" \
+  --prompt_filepath prompts.json \
+  --frame_num 124 \
+  --width 1344 \
+  --height 768 \
+  --num_inference_steps 50 \
+  --cpu_offload true \
+  --ulysses_size 4 \
+  --output_path outputs/h3_prompt_relay.mp4
+```
+
+The packed sequence is divided across ranks. Prompt Relay keeps query rows local
+and streams bounded K/V blocks between ranks. Each block's relay penalty is
+evaluated in global row coordinates and merged through a float32 online
+softmax, so the result is mathematically equivalent to attention over the full
+K/V sequence without materializing that sequence on every GPU. After the
+distributed denoising loop, only rank 0 loads and runs the video/audio decoders;
+the other ranks wait at the final barrier. Only rank 0 writes the video and
+metadata. CPU offload reserves 12 GB by default for attention and VAE decoding;
+override this with `--memory_reserve_margin` if needed.
+
+This is sequence/context parallelism: it distributes attention activations and
+work, but does not shard the 62 GB transformer weights. Each rank still loads a
+model replica (CPU offload remains available).
+
+### Indexed keyframes
+
+In addition to the native `--image` and `--last_image` boundary anchors, the
+Prompt Relay runner accepts repeatable intermediate anchors:
+
+```bash
+python generate_prompt_relay.py \
+  --model_path "$HOME/MiniMax-H3" \
+  --prompt_filepath prompts.json \
+  --frame_num 124 \
+  --keyframe images/start.png 0 \
+  --keyframe images/middle.png 18 \
+  --keyframe images/end.png 36 \
+  --output_path outputs/h3_indexed_keyframes.mp4
+```
+
+The indices use H3's internal latent-frame grid, not decoded 24 FPS frames. A
+124-frame output has 37 internal frames, indexed `[0, 37)`. Each image is VAE
+encoded and packed as a fixed conditioning block, and its temporal RoPE
+coordinate is copied from the requested target-video frame. `--image` remains
+an alias for internal frame 0 and `--last_image` for the last internal frame
+when either is combined with `--keyframe`.
+
+This is an inference-time architectural extension. The released model was
+trained for first/last anchors, so adherence to intermediate anchors must be
+evaluated experimentally and is not guaranteed.
+
 ## JSON fields
 
 | Field | Required | Meaning |
@@ -60,7 +120,9 @@ requested output length.
 - Supported Diffusers workflows: T2VA, FL2VA, and Ref2VA when enabled through
   `enable_prompt_relay(pipe)`.
 - The included CLI exposes T2VA and first/last-frame conditioning.
-- Context-parallel attention is rejected because the local processor requires
-  the complete packed request.
+- Multi-GPU context parallelism is supported through `torchrun` and
+  `--ulysses_size`. The custom relay processor uses exact streaming K/V
+  attention rather than Diffusers' native Ulysses kernel because the
+  frame-dependent additive relay bias is query-specific.
 - Prompt Relay is installed only for the denoising invocation and the original
   attention processors are restored afterward, including after exceptions.
