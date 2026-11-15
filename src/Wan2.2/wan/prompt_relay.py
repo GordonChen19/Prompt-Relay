@@ -20,6 +20,8 @@ class PromptRelayConfig:
 
     global_prompt: str
     local_prompts: tuple[str, ...]
+    id: str | None = None
+    file_name: str | None = None
     segment_lengths: tuple[int, ...] = ()
     explicit_frame_intervals: tuple[tuple[int, int], ...] = ()
     mode: str = "gaussian"
@@ -46,6 +48,8 @@ class PromptRelayConfig:
     def from_mapping(cls, data: Mapping[str, Any]) -> "PromptRelayConfig":
         global_prompt = data.get("global_prompt")
         local_prompts = data.get("local_prompts")
+        identifier = data.get("id")
+        file_name = data.get("file_name")
         segment_lengths = data.get("segment_lengths", ())
         frame_intervals = data.get("frame_intervals", ())
         mode = data.get("mode", "gaussian")
@@ -67,6 +71,26 @@ class PromptRelayConfig:
             for prompt in normalized_prompts
         ):
             raise ValueError("local_prompts must be a non-empty array of strings")
+
+        if identifier is not None:
+            if not isinstance(identifier, str) or not identifier.strip():
+                raise ValueError("id must be a non-empty string when provided")
+            identifier = identifier.strip()
+
+        if file_name is not None:
+            if not isinstance(file_name, str) or not file_name.strip():
+                raise ValueError(
+                    "file_name must be a non-empty string when provided"
+                )
+            file_name = file_name.strip()
+            if Path(file_name).name != file_name or any(
+                separator in file_name for separator in ("/", "\\")
+            ):
+                raise ValueError(
+                    "file_name must be a filename, not a directory path"
+                )
+            if Path(file_name).suffix.lower() != ".mp4":
+                raise ValueError("file_name must end with .mp4")
 
         if not isinstance(segment_lengths, Sequence) or isinstance(
             segment_lengths, (str, bytes)
@@ -141,6 +165,8 @@ class PromptRelayConfig:
         return cls(
             global_prompt=global_prompt.strip(),
             local_prompts=normalized_prompts,
+            id=identifier,
+            file_name=file_name,
             segment_lengths=normalized_lengths,
             explicit_frame_intervals=normalized_intervals,
             mode=mode.lower(),

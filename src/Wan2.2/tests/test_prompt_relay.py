@@ -83,6 +83,8 @@ def load_model_module_for_tests():
 class PromptRelayConfigTests(unittest.TestCase):
     def test_loads_json_and_normalizes_prompts(self):
         payload = {
+            "id": " p001 ",
+            "file_name": "p001.mp4",
             "global_prompt": " Global prompt ",
             "local_prompts": [" First action ", "Second action"],
             "segment_lengths": [2, 3],
@@ -95,12 +97,34 @@ class PromptRelayConfigTests(unittest.TestCase):
             config = PromptRelayConfig.from_json(path)
 
         self.assertEqual(config.global_prompt, "Global prompt")
+        self.assertEqual(config.id, "p001")
+        self.assertEqual(config.file_name, "p001.mp4")
         self.assertEqual(config.local_prompts, ("First action", "Second action"))
         self.assertEqual(
             config.full_prompt, "Global prompt First action Second action"
         )
         self.assertEqual(config.mode, "gaussian")
         self.assertEqual(config.frame_intervals(5), ((0, 2), (2, 5)))
+
+    def test_rejects_file_name_containing_a_directory(self):
+        with self.assertRaisesRegex(ValueError, "not a directory path"):
+            PromptRelayConfig.from_mapping(
+                {
+                    "global_prompt": "Global",
+                    "local_prompts": ["one"],
+                    "file_name": "nested/p001.mp4",
+                }
+            )
+
+    def test_rejects_non_mp4_file_name(self):
+        with self.assertRaisesRegex(ValueError, "must end with .mp4"):
+            PromptRelayConfig.from_mapping(
+                {
+                    "global_prompt": "Global",
+                    "local_prompts": ["one"],
+                    "file_name": "p001.mov",
+                }
+            )
 
     def test_equal_intervals_match_existing_ceil_behavior(self):
         config = PromptRelayConfig.from_mapping(

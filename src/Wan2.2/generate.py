@@ -61,6 +61,21 @@ EXAMPLE_PROMPT = {
 }
 
 
+def _prompt_relay_output_filename(
+    prompt_filepath,
+    relay_config,
+    job_index,
+    job_count,
+):
+    if relay_config.file_name is not None:
+        return relay_config.file_name
+
+    filename = f"{Path(prompt_filepath).stem}.mp4"
+    if job_count > 1:
+        filename = f"{job_index + 1:03d}_{filename}"
+    return filename
+
+
 def _validate_args(args):
     # Basic check
     assert args.ckpt_dir is not None, "Please specify the checkpoint directory."
@@ -83,6 +98,24 @@ def _validate_args(args):
         )
         args.prompt_relay_config = args.prompt_relay_jobs[0][1]
         args.prompt = args.prompt_relay_config.full_prompt
+
+        output_names = [
+            _prompt_relay_output_filename(
+                path,
+                config,
+                job_index,
+                len(args.prompt_relay_jobs),
+            )
+            for job_index, (path, config) in enumerate(args.prompt_relay_jobs)
+        ]
+        duplicate_names = sorted(
+            name for name in set(output_names) if output_names.count(name) > 1
+        )
+        if duplicate_names:
+            raise ValueError(
+                "Prompt Relay file_name values must be unique: "
+                + ", ".join(duplicate_names)
+            )
     elif args.prompt is None:
         args.prompt = EXAMPLE_PROMPT[args.task]["prompt"]
 
@@ -376,19 +409,22 @@ def _output_path_for_job(
     prompt,
     *,
     prompt_filepath=None,
+    prompt_relay_config=None,
     job_index=0,
     job_count=1,
 ):
     if args.output_dir is None:
         return args.save_file or _default_output_filename(args, prompt)
 
-    if prompt_filepath is None:
+    if prompt_filepath is None or prompt_relay_config is None:
         filename = _default_output_filename(args, prompt)
     else:
-        stem = Path(prompt_filepath).stem
-        filename = f"{stem}.mp4"
-        if job_count > 1:
-            filename = f"{job_index + 1:03d}_{filename}"
+        filename = _prompt_relay_output_filename(
+            prompt_filepath,
+            prompt_relay_config,
+            job_index,
+            job_count,
+        )
     return str(Path(args.output_dir) / filename)
 
 
@@ -543,6 +579,7 @@ def generate(args):
                     args,
                     prompt,
                     prompt_filepath=prompt_path,
+                    prompt_relay_config=relay_config,
                     job_index=job_index,
                     job_count=len(jobs),
                 )
