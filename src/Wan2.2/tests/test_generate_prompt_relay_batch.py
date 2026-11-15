@@ -14,6 +14,7 @@ TREE = ast.parse(SOURCE)
 
 def load_output_helpers():
     names = {
+        "_conditioning_config_for_prompt_mode",
         "_default_output_filename",
         "_output_path_for_job",
         "_prompt_relay_output_filename",
@@ -80,6 +81,7 @@ def batch_args(**overrides):
         ckpt_dir="checkpoint",
         task="t2v-A14B",
         prompt_filepath=["shot_01.json", "shot_02.json"],
+        prompt_mode="relay",
         use_prompt_extend=False,
         prompt=None,
         output_dir="outputs",
@@ -143,6 +145,19 @@ class PromptRelayBatchCliTests(unittest.TestCase):
         keywords = {keyword.arg: keyword.value for keyword in prompt_filepath.keywords}
         self.assertEqual(keywords["action"].value, "append")
         self.assertIn("--output_dir", arguments)
+        self.assertIn("--prompt_mode", arguments)
+
+    def test_concat_mode_disables_temporal_routing(self):
+        conditioning_config = load_output_helpers()[
+            "_conditioning_config_for_prompt_mode"
+        ]
+        relay_config = object()
+
+        self.assertIs(
+            conditioning_config("relay", relay_config),
+            relay_config,
+        )
+        self.assertIsNone(conditioning_config("concat", relay_config))
 
     def test_output_paths_share_directory_and_have_stable_indices(self):
         output_path_for_job = load_output_helpers()["_output_path_for_job"]

@@ -76,6 +76,14 @@ def _prompt_relay_output_filename(
     return filename
 
 
+def _conditioning_config_for_prompt_mode(prompt_mode, relay_config):
+    if prompt_mode == "relay":
+        return relay_config
+    if prompt_mode == "concat":
+        return None
+    raise ValueError(f"Unsupported prompt mode: {prompt_mode}")
+
+
 def _validate_args(args):
     # Basic check
     assert args.ckpt_dir is not None, "Please specify the checkpoint directory."
@@ -118,6 +126,9 @@ def _validate_args(args):
             )
     elif args.prompt is None:
         args.prompt = EXAMPLE_PROMPT[args.task]["prompt"]
+
+    if args.prompt_mode != "relay" and not args.prompt_relay_jobs:
+        raise ValueError("prompt_mode=concat requires at least one prompt JSON file")
 
     if args.output_dir is not None and args.save_file is not None:
         raise ValueError("Pass output_dir or save_file, not both")
@@ -174,6 +185,16 @@ def _parse_args():
         help=(
             "JSON file containing Prompt Relay prompts. Repeat this option to "
             "generate several videos without reloading the model."
+        ),
+    )
+    parser.add_argument(
+        "--prompt_mode",
+        choices=("relay", "concat"),
+        default="relay",
+        help=(
+            "Use 'relay' for temporal Prompt Relay routing or 'concat' for a "
+            "baseline that uses global_prompt followed by every local prompt "
+            "without temporal routing."
         ),
     )
 
@@ -562,6 +583,10 @@ def generate(args):
                 f"{prompt_path or 'the command-line prompt'}"
             )
             logging.info(f"Input prompt: {prompt}")
+            conditioning_config = _conditioning_config_for_prompt_mode(
+                args.prompt_mode,
+                relay_config,
+            )
             video = wan_t2v.generate(
                 prompt,
                 size=SIZE_CONFIGS[args.size],
@@ -572,7 +597,7 @@ def generate(args):
                 guide_scale=args.sample_guide_scale,
                 seed=args.base_seed,
                 offload_model=args.offload_model,
-                prompt_relay_config=relay_config,
+                prompt_relay_config=conditioning_config,
             )
             if rank == 0:
                 save_file = _output_path_for_job(
