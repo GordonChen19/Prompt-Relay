@@ -5,6 +5,7 @@ import os
 import sys
 import warnings
 from datetime import datetime
+from pathlib import Path
 
 warnings.filterwarnings('ignore')
 
@@ -67,6 +68,7 @@ def _validate_args(args):
     assert args.task in EXAMPLE_PROMPT, f"Unsupport task: {args.task}"
 
     args.prompt_relay_config = None
+    args.prompt_relay_jobs = ()
     if args.prompt_filepath is not None:
         if not args.task.startswith("t2v"):
             raise ValueError("Prompt Relay is currently supported only for T2V")
@@ -75,12 +77,21 @@ def _validate_args(args):
                 "Prompt extension cannot be combined with Prompt Relay because it "
                 "would invalidate the local-prompt token spans"
             )
-        args.prompt_relay_config = PromptRelayConfig.from_json(
-            args.prompt_filepath
+        args.prompt_relay_jobs = tuple(
+            (path, PromptRelayConfig.from_json(path))
+            for path in args.prompt_filepath
         )
+        args.prompt_relay_config = args.prompt_relay_jobs[0][1]
         args.prompt = args.prompt_relay_config.full_prompt
     elif args.prompt is None:
         args.prompt = EXAMPLE_PROMPT[args.task]["prompt"]
+
+    if args.output_dir is not None and args.save_file is not None:
+        raise ValueError("Pass output_dir or save_file, not both")
+    if len(args.prompt_relay_jobs) > 1 and args.output_dir is None:
+        raise ValueError(
+            "output_dir is required when passing multiple prompt files"
+        )
     if args.image is None and "image" in EXAMPLE_PROMPT[args.task]:
         args.image = EXAMPLE_PROMPT[args.task]["image"]
     if args.audio is None and args.enable_tts is False and "audio" in EXAMPLE_PROMPT[args.task]:
@@ -124,8 +135,13 @@ def _parse_args():
     parser.add_argument(
         "--prompt_filepath",
         type=str,
+        action="append",
         default=None,
-        help="JSON file containing the Prompt Relay global and local prompts."
+        metavar="JSON",
+        help=(
+            "JSON file containing Prompt Relay prompts. Repeat this option to "
+            "generate several videos without reloading the model."
+        ),
     )
 
     parser.add_argument(
@@ -183,6 +199,15 @@ def _parse_args():
         type=str,
         default=None,
         help="The file to save the generated video to.")
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default=None,
+        help=(
+            "Directory for generated videos. Required when more than one "
+            "Prompt Relay JSON file is supplied."
+        ),
+    )
     parser.add_argument(
         "--prompt",
         type=str,
@@ -334,6 +359,56 @@ def _init_logging(rank):
         logging.basicConfig(level=logging.ERROR)
 
 
+def _default_output_filename(args, prompt):
+    formatted_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+    formatted_prompt = prompt.replace(" ", "_").replace("/", "_")[:50]
+    formatted_size = (
+        args.size.replace("*", "x") if sys.platform == "win32" else args.size
+    )
+    return (
+        f"{args.task}_{formatted_size}_{args.ulysses_size}_"
+        f"{formatted_prompt}_{formatted_time}.mp4"
+    )
+
+
+def _output_path_for_job(
+    args,
+    prompt,
+    *,
+    prompt_filepath=None,
+    job_index=0,
+    job_count=1,
+):
+    if args.output_dir is None:
+        return args.save_file or _default_output_filename(args, prompt)
+
+    if prompt_filepath is None:
+        filename = _default_output_filename(args, prompt)
+    else:
+        stem = Path(prompt_filepath).stem
+        filename = f"{stem}.mp4"
+        if job_count > 1:
+            filename = f"{job_index + 1:03d}_{filename}"
+    return str(Path(args.output_dir) / filename)
+
+
+def _save_generated_video(video, save_file, args, cfg):
+    output_path = Path(save_file)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    logging.info(f"Saving generated video to {output_path}")
+    save_video(
+        tensor=video[None],
+        save_file=str(output_path),
+        fps=cfg.sample_fps,
+        nrow=1,
+        normalize=True,
+        value_range=(-1, 1),
+    )
+    if "s2v" in args.task:
+        audio_path = "tts.wav" if args.enable_tts else args.audio
+        merge_video_audio(video_path=str(output_path), audio_path=audio_path)
+
+
 def generate(args):
     rank = int(os.getenv("RANK", 0))
     world_size = int(os.getenv("WORLD_SIZE", 1))
@@ -422,7 +497,8 @@ def generate(args):
         args.prompt = input_prompt[0]
         logging.info(f"Extended prompt: {args.prompt}")
 
-    if "t2v" in args.task:
+    is_t2v = args.task.startswith("t2v")
+    if is_t2v:
         logging.info("Creating WanT2V pipeline.")
         wan_t2v = wan.WanT2V(
             config=cfg,
@@ -436,18 +512,44 @@ def generate(args):
             convert_model_dtype=args.convert_model_dtype,
         )
 
-        logging.info(f"Generating video ...")
-        video = wan_t2v.generate(
-            args.prompt,
-            size=SIZE_CONFIGS[args.size],
-            frame_num=args.frame_num,
-            shift=args.sample_shift,
-            sample_solver=args.sample_solver,
-            sampling_steps=args.sample_steps,
-            guide_scale=args.sample_guide_scale,
-            seed=args.base_seed,
-            offload_model=args.offload_model,
-            prompt_relay_config=args.prompt_relay_config)
+        if args.prompt_relay_jobs:
+            jobs = tuple(
+                (path, config.full_prompt, config)
+                for path, config in args.prompt_relay_jobs
+            )
+        else:
+            jobs = ((None, args.prompt, None),)
+
+        for job_index, (prompt_path, prompt, relay_config) in enumerate(jobs):
+            logging.info(
+                f"Generating video {job_index + 1}/{len(jobs)} from "
+                f"{prompt_path or 'the command-line prompt'}"
+            )
+            logging.info(f"Input prompt: {prompt}")
+            video = wan_t2v.generate(
+                prompt,
+                size=SIZE_CONFIGS[args.size],
+                frame_num=args.frame_num,
+                shift=args.sample_shift,
+                sample_solver=args.sample_solver,
+                sampling_steps=args.sample_steps,
+                guide_scale=args.sample_guide_scale,
+                seed=args.base_seed,
+                offload_model=args.offload_model,
+                prompt_relay_config=relay_config,
+            )
+            if rank == 0:
+                save_file = _output_path_for_job(
+                    args,
+                    prompt,
+                    prompt_filepath=prompt_path,
+                    job_index=job_index,
+                    job_count=len(jobs),
+                )
+                _save_generated_video(video, save_file, args, cfg)
+            del video
+            if dist.is_initialized():
+                dist.barrier()
     elif "ti2v" in args.task:
         logging.info("Creating WanTI2V pipeline.")
         wan_ti2v = wan.WanTI2V(
@@ -562,28 +664,11 @@ def generate(args):
             seed=args.base_seed,
             offload_model=args.offload_model)
 
-    if rank == 0:
-        if args.save_file is None:
-            formatted_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-            formatted_prompt = args.prompt.replace(" ", "_").replace("/",
-                                                                     "_")[:50]
-            suffix = '.mp4'
-            args.save_file = f"{args.task}_{args.size.replace('*','x') if sys.platform=='win32' else args.size}_{args.ulysses_size}_{formatted_prompt}_{formatted_time}" + suffix
-
-        logging.info(f"Saving generated video to {args.save_file}")
-        save_video(
-            tensor=video[None],
-            save_file=args.save_file,
-            fps=cfg.sample_fps,
-            nrow=1,
-            normalize=True,
-            value_range=(-1, 1))
-        if "s2v" in args.task:
-            if args.enable_tts is False:
-                merge_video_audio(video_path=args.save_file, audio_path=args.audio)
-            else:
-                merge_video_audio(video_path=args.save_file, audio_path="tts.wav")
-    del video
+    if not is_t2v:
+        if rank == 0:
+            save_file = _output_path_for_job(args, args.prompt)
+            _save_generated_video(video, save_file, args, cfg)
+        del video
 
     torch.cuda.synchronize()
     if dist.is_initialized():
