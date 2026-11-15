@@ -208,6 +208,29 @@ class PromptRelayConfigTests(unittest.TestCase):
 
 @unittest.skipUnless(TORCH_AVAILABLE, "PyTorch is not installed")
 class TemporalPenaltyTests(unittest.TestCase):
+    def test_attention_rejects_nonpositive_chunk_size(self):
+        model = load_model_module_for_tests()
+        q = torch.randn(1, 2, 1, 4)
+        k = torch.randn(1, 2, 1, 4)
+        v = torch.randn(1, 2, 1, 4)
+        segment = PromptRelaySegment(
+            frame_start=0,
+            frame_end=1,
+            token_indices=(1,),
+            tokens_per_frame=1,
+            mode="hard",
+            sigma=1.0,
+        )
+
+        with self.assertRaisesRegex(ValueError, "positive integer"):
+            model.prompt_relay_attention(
+                q,
+                k,
+                v,
+                (segment,),
+                chunk_size=0,
+            )
+
     def test_precomputed_penalty_preserves_attention_result(self):
         model = load_model_module_for_tests()
         torch.manual_seed(7)

@@ -70,6 +70,7 @@ def sp_dit_forward(
     seq_len,
     y=None,
     prompt_relay_segments=None,
+    prompt_relay_query_chunk_size=128,
 ):
     """
     x:              A list of videos each with shape [C, T, H, W].
@@ -148,6 +149,7 @@ def sp_dit_forward(
         prompt_relay_segments=prompt_relay_segments,
         prompt_relay_query_token_offset=prompt_relay_query_token_offset,
         prompt_relay_temporal_penalty=prompt_relay_temporal_penalty,
+        prompt_relay_query_chunk_size=prompt_relay_query_chunk_size,
     )
 
     for block in self.blocks:

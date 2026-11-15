@@ -23,6 +23,9 @@ def prompt_relay_attention(
 ):
     """Compute cross-attention with temporal penalties on local-prompt tokens."""
 
+    if type(chunk_size) is not int or chunk_size <= 0:
+        raise ValueError("chunk_size must be a positive integer")
+
     q = q.transpose(1, 2)
     k = k.transpose(1, 2)
     v = v.transpose(1, 2)
@@ -216,6 +219,7 @@ class WanCrossAttention(WanSelfAttention):
         prompt_relay_segments=None,
         query_token_offset=0,
         prompt_relay_temporal_penalty=None,
+        prompt_relay_query_chunk_size=128,
     ):
         r"""
         Args:
@@ -242,6 +246,7 @@ class WanCrossAttention(WanSelfAttention):
                 v,
                 prompt_relay_segments,
                 query_token_offset=query_token_offset,
+                chunk_size=prompt_relay_query_chunk_size,
                 temporal_penalty=prompt_relay_temporal_penalty,
             )
 
@@ -299,6 +304,7 @@ class WanAttentionBlock(nn.Module):
         prompt_relay_segments=None,
         prompt_relay_query_token_offset=0,
         prompt_relay_temporal_penalty=None,
+        prompt_relay_query_chunk_size=128,
     ):
         r"""
         Args:
@@ -329,6 +335,7 @@ class WanAttentionBlock(nn.Module):
                 prompt_relay_segments=prompt_relay_segments,
                 query_token_offset=prompt_relay_query_token_offset,
                 prompt_relay_temporal_penalty=prompt_relay_temporal_penalty,
+                prompt_relay_query_chunk_size=prompt_relay_query_chunk_size,
             )
             y = self.ffn(
                 self.norm2(x).float() * (1 + e[4].squeeze(2)) + e[3].squeeze(2))
@@ -496,6 +503,7 @@ class WanModel(ModelMixin, ConfigMixin):
         seq_len,
         y=None,
         prompt_relay_segments=None,
+        prompt_relay_query_chunk_size=128,
     ):
         r"""
         Forward pass through the diffusion model
@@ -580,6 +588,7 @@ class WanModel(ModelMixin, ConfigMixin):
             prompt_relay_segments=prompt_relay_segments,
             prompt_relay_query_token_offset=0,
             prompt_relay_temporal_penalty=prompt_relay_temporal_penalty,
+            prompt_relay_query_chunk_size=prompt_relay_query_chunk_size,
         )
 
         for block in self.blocks:

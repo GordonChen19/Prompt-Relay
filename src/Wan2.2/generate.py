@@ -161,6 +161,8 @@ def _validate_args(args):
 
     if args.frame_num is None:
         args.frame_num = cfg.frame_num
+    if args.query_chunk_size <= 0:
+        raise ValueError("query_chunk_size must be positive")
 
     args.base_seed = args.base_seed if args.base_seed >= 0 else random.randint(
         0, sys.maxsize)
@@ -216,6 +218,15 @@ def _parse_args():
         type=int,
         default=None,
         help="How many frames of video are generated. The number should be 4n+1"
+    )
+    parser.add_argument(
+        "--query_chunk_size",
+        type=int,
+        default=128,
+        help=(
+            "Prompt Relay cross-attention query rows processed per chunk. "
+            "Smaller values use less peak memory but are slower."
+        ),
     )
     parser.add_argument(
         "--ckpt_dir",
@@ -598,6 +609,7 @@ def generate(args):
                 seed=args.base_seed,
                 offload_model=args.offload_model,
                 prompt_relay_config=conditioning_config,
+                query_chunk_size=args.query_chunk_size,
             )
             if rank == 0:
                 save_file = _output_path_for_job(

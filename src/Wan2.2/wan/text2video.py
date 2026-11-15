@@ -285,7 +285,8 @@ class WanT2V:
                  seed=-1,
                  offload_model=True,
                  prompt_relay_config=None,
-                 prompt_filepath=None):
+                 prompt_filepath=None,
+                 query_chunk_size=128):
         r"""
         Generates video frames from text prompt using diffusion process.
 
@@ -315,6 +316,9 @@ class WanT2V:
             prompt_relay_config (`PromptRelayConfig`, *optional*):
                 Validated Prompt Relay configuration. The deprecated
                 ``prompt_filepath`` argument remains available for direct callers.
+            query_chunk_size (`int`, *optional*, defaults to 128):
+                Number of video query rows processed in each Prompt Relay
+                cross-attention chunk. Smaller values reduce peak memory.
 
         Returns:
             torch.Tensor:
@@ -331,6 +335,8 @@ class WanT2V:
             )
         if prompt_relay_config is None and prompt_filepath is not None:
             prompt_relay_config = PromptRelayConfig.from_json(prompt_filepath)
+        if type(query_chunk_size) is not int or query_chunk_size <= 0:
+            raise ValueError("query_chunk_size must be a positive integer")
 
         relay_segments = None
         if prompt_relay_config is not None:
@@ -429,6 +435,7 @@ class WanT2V:
                 'context': context,
                 'seq_len': seq_len,
                 'prompt_relay_segments': relay_segments,
+                'prompt_relay_query_chunk_size': query_chunk_size,
             }
             arg_null = {'context': context_null, 'seq_len': seq_len}
 

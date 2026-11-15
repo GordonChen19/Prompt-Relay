@@ -96,6 +96,7 @@ def batch_args(**overrides):
         sample_shift=None,
         sample_guide_scale=None,
         frame_num=None,
+        query_chunk_size=128,
         base_seed=123,
         size="832*480",
     )
@@ -116,6 +117,11 @@ class PromptRelayBatchCliTests(unittest.TestCase):
     def test_multiple_prompt_files_require_output_directory(self):
         args = batch_args(output_dir=None)
         with self.assertRaisesRegex(ValueError, "output_dir is required"):
+            load_validate_args()(args)
+
+    def test_query_chunk_size_must_be_positive(self):
+        args = batch_args(query_chunk_size=0)
+        with self.assertRaisesRegex(ValueError, "must be positive"):
             load_validate_args()(args)
 
     def test_duplicate_configured_filenames_are_rejected(self):
@@ -146,6 +152,12 @@ class PromptRelayBatchCliTests(unittest.TestCase):
         self.assertEqual(keywords["action"].value, "append")
         self.assertIn("--output_dir", arguments)
         self.assertIn("--prompt_mode", arguments)
+        query_chunk_size = arguments["--query_chunk_size"]
+        keywords = {
+            keyword.arg: keyword.value
+            for keyword in query_chunk_size.keywords
+        }
+        self.assertEqual(keywords["default"].value, 128)
 
     def test_concat_mode_disables_temporal_routing(self):
         conditioning_config = load_output_helpers()[
