@@ -93,8 +93,12 @@ def _validate_args(args):
     args.prompt_relay_config = None
     args.prompt_relay_jobs = ()
     if args.prompt_filepath is not None:
-        if not args.task.startswith("t2v"):
-            raise ValueError("Prompt Relay is currently supported only for T2V")
+        if not (
+            args.task.startswith("t2v") or args.task == "i2v-A14B"
+        ):
+            raise ValueError(
+                "Prompt Relay is currently supported for T2V and I2V"
+            )
         if args.use_prompt_extend:
             raise ValueError(
                 "Prompt extension cannot be combined with Prompt Relay because it "
@@ -566,6 +570,7 @@ def generate(args):
         logging.info(f"Extended prompt: {args.prompt}")
 
     is_t2v = args.task.startswith("t2v")
+    is_i2v = args.task == "i2v-A14B"
     if is_t2v:
         logging.info("Creating WanT2V pipeline.")
         wan_t2v = wan.WanT2V(
@@ -725,20 +730,54 @@ def generate(args):
             t5_cpu=args.t5_cpu,
             convert_model_dtype=args.convert_model_dtype,
         )
-        logging.info("Generating video ...")
-        video = wan_i2v.generate(
-            args.prompt,
-            img,
-            max_area=MAX_AREA_CONFIGS[args.size],
-            frame_num=args.frame_num,
-            shift=args.sample_shift,
-            sample_solver=args.sample_solver,
-            sampling_steps=args.sample_steps,
-            guide_scale=args.sample_guide_scale,
-            seed=args.base_seed,
-            offload_model=args.offload_model)
 
-    if not is_t2v:
+        if args.prompt_relay_jobs:
+            jobs = tuple(
+                (path, config.full_prompt, config)
+                for path, config in args.prompt_relay_jobs
+            )
+        else:
+            jobs = ((None, args.prompt, None),)
+
+        for job_index, (prompt_path, prompt, relay_config) in enumerate(jobs):
+            logging.info(
+                f"Generating video {job_index + 1}/{len(jobs)} from "
+                f"{prompt_path or 'the command-line prompt'}"
+            )
+            logging.info(f"Input prompt: {prompt}")
+            conditioning_config = _conditioning_config_for_prompt_mode(
+                args.prompt_mode,
+                relay_config,
+            )
+            video = wan_i2v.generate(
+                prompt,
+                img,
+                max_area=MAX_AREA_CONFIGS[args.size],
+                frame_num=args.frame_num,
+                shift=args.sample_shift,
+                sample_solver=args.sample_solver,
+                sampling_steps=args.sample_steps,
+                guide_scale=args.sample_guide_scale,
+                seed=args.base_seed,
+                offload_model=args.offload_model,
+                prompt_relay_config=conditioning_config,
+                query_chunk_size=args.query_chunk_size,
+            )
+            if rank == 0:
+                save_file = _output_path_for_job(
+                    args,
+                    prompt,
+                    prompt_filepath=prompt_path,
+                    prompt_relay_config=relay_config,
+                    job_index=job_index,
+                    job_count=len(jobs),
+                )
+                _save_generated_video(video, save_file, args, cfg)
+            del video
+            if dist.is_initialized():
+                dist.barrier()
+
+    if not is_t2v and not is_i2v:
         if rank == 0:
             save_file = _output_path_for_job(args, args.prompt)
             _save_generated_video(video, save_file, args, cfg)

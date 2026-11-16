@@ -57,11 +57,20 @@ def load_validate_args():
         frame_num=81,
     )
     namespace = {
-        "EXAMPLE_PROMPT": {"t2v-A14B": {"prompt": "example"}},
+        "EXAMPLE_PROMPT": {
+            "t2v-A14B": {"prompt": "example"},
+            "i2v-A14B": {"prompt": "example", "image": "example.jpg"},
+        },
         "PromptRelayConfig": RelayConfig,
         "Path": Path,
-        "SUPPORTED_SIZES": {"t2v-A14B": ("832*480",)},
-        "WAN_CONFIGS": {"t2v-A14B": config},
+        "SUPPORTED_SIZES": {
+            "t2v-A14B": ("832*480",),
+            "i2v-A14B": ("832*480",),
+        },
+        "WAN_CONFIGS": {
+            "t2v-A14B": config,
+            "i2v-A14B": config,
+        },
         "random": random,
         "sys": sys,
     }
@@ -112,6 +121,13 @@ class PromptRelayBatchCliTests(unittest.TestCase):
         self.assertEqual(len(args.prompt_relay_jobs), 2)
         self.assertEqual(args.prompt_relay_jobs[0][0], "shot_01.json")
         self.assertEqual(args.prompt_relay_jobs[1][0], "shot_02.json")
+        self.assertEqual(args.prompt, "prompt from shot_01.json")
+
+    def test_validation_accepts_i2v_prompt_relay_jobs(self):
+        args = batch_args(task="i2v-A14B", image="start.png")
+        load_validate_args()(args)
+
+        self.assertEqual(len(args.prompt_relay_jobs), 2)
         self.assertEqual(args.prompt, "prompt from shot_01.json")
 
     def test_multiple_prompt_files_require_output_directory(self):
@@ -226,18 +242,25 @@ class PromptRelayBatchCliTests(unittest.TestCase):
 
         self.assertEqual(output, "outputs/prompt_relay_batch/p001.mp4")
 
-    def test_pipeline_is_created_before_batch_loop(self):
+    def test_pipelines_are_created_before_their_batch_loops(self):
         generate = next(
             node
             for node in TREE.body
             if isinstance(node, ast.FunctionDef) and node.name == "generate"
         )
-        pipeline_calls = [
+        t2v_calls = [
             node
             for node in ast.walk(generate)
             if isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)
             and node.func.attr == "WanT2V"
+        ]
+        i2v_calls = [
+            node
+            for node in ast.walk(generate)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "WanI2V"
         ]
         job_loops = [
             node
@@ -248,9 +271,12 @@ class PromptRelayBatchCliTests(unittest.TestCase):
             and node.iter.func.id == "enumerate"
         ]
 
-        self.assertEqual(len(pipeline_calls), 1)
-        self.assertEqual(len(job_loops), 1)
-        self.assertLess(pipeline_calls[0].lineno, job_loops[0].lineno)
+        self.assertEqual(len(t2v_calls), 1)
+        self.assertEqual(len(i2v_calls), 1)
+        self.assertEqual(len(job_loops), 2)
+        job_loops.sort(key=lambda node: node.lineno)
+        self.assertLess(t2v_calls[0].lineno, job_loops[0].lineno)
+        self.assertLess(i2v_calls[0].lineno, job_loops[1].lineno)
 
 
 if __name__ == "__main__":

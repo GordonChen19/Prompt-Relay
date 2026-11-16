@@ -27,6 +27,7 @@ SPEC.loader.exec_module(PROMPT_RELAY)
 PromptRelayConfig = PROMPT_RELAY.PromptRelayConfig
 PromptRelaySegment = PROMPT_RELAY.PromptRelaySegment
 build_temporal_penalty = PROMPT_RELAY.build_temporal_penalty
+build_prompt_relay_segments = PROMPT_RELAY.build_prompt_relay_segments
 
 
 def load_model_module_for_tests():
@@ -81,6 +82,42 @@ def load_model_module_for_tests():
 
 
 class PromptRelayConfigTests(unittest.TestCase):
+    def test_shared_segment_builder_maps_local_tokens_and_frames(self):
+        class TokenIds(list):
+            def tolist(self):
+                return list(self)
+
+        class CharacterTokenizer:
+            def __call__(self, text, **kwargs):
+                return [TokenIds(ord(character) for character in text)]
+
+        config = PromptRelayConfig.from_mapping(
+            {
+                "global_prompt": "g",
+                "local_prompts": ["a", "b"],
+                "frame_intervals": [[0, 3], [2, 5]],
+            }
+        )
+        segments, full_prompt = build_prompt_relay_segments(
+            CharacterTokenizer(),
+            config,
+            latent_frames=5,
+            tokens_per_frame=12,
+            text_len=32,
+        )
+
+        self.assertEqual(full_prompt, "g a b")
+        self.assertEqual(
+            [(segment.frame_start, segment.frame_end) for segment in segments],
+            [(0, 3), (2, 5)],
+        )
+        self.assertEqual(
+            [segment.tokens_per_frame for segment in segments],
+            [12, 12],
+        )
+        self.assertEqual(segments[0].token_indices, (1, 2))
+        self.assertEqual(segments[1].token_indices, (3, 4))
+
     def test_loads_json_and_normalizes_prompts(self):
         payload = {
             "id": " p001 ",

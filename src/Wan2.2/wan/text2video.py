@@ -20,7 +20,7 @@ from .distributed.util import get_world_size
 from .modules.model import WanModel
 from .modules.t5 import T5EncoderModel
 from .modules.vae2_1 import Wan2_1_VAE
-from .prompt_relay import PromptRelayConfig, PromptRelaySegment
+from .prompt_relay import PromptRelayConfig, build_prompt_relay_segments
 from .utils.fm_solvers import (
     FlowDPMSolverMultistepScheduler,
     get_sampling_sigmas,
@@ -213,65 +213,13 @@ class WanT2V:
         w_patches = w_lat // self.patch_size[2]
         tokens_per_frame = int(h_patches) * int(w_patches)
 
-        full_ids = tokenizer(
-            relay_config.full_prompt,
-            add_special_tokens=True,
-            padding=False,
-            return_mask=False,
-        )[0].tolist()
-        if len(full_ids) > self.config.text_len:
-            raise ValueError(
-                "Prompt Relay text uses "
-                f"{len(full_ids)} tokens, exceeding the model limit of "
-                f"{self.config.text_len}"
-            )
-
-        token_spans = []
-        search_start = 0
-        for prompt in relay_config.prefixed_local_prompts:
-            prompt_ids = tokenizer(
-                prompt,
-                padding=False,
-                add_special_tokens=False,
-            )[0].tolist()
-            match = self._find_token_subsequence(
-                full_ids, prompt_ids, start=search_start
-            )
-            if match is None:
-                raise ValueError(
-                    "A local prompt could not be located in the tokenized full "
-                    f"prompt: {prompt.strip()}"
-                )
-            token_spans.append(tuple(range(*match)))
-            search_start = match[1]
-
-        intervals = relay_config.frame_intervals(latent_frames)
-        segments = tuple(
-            PromptRelaySegment(
-                frame_start=frame_start,
-                frame_end=frame_end,
-                token_indices=token_indices,
-                tokens_per_frame=tokens_per_frame,
-                mode=relay_config.mode,
-                sigma=relay_config.sigma,
-            )
-            for (frame_start, frame_end), token_indices in zip(
-                intervals, token_spans
-            )
+        return build_prompt_relay_segments(
+            tokenizer,
+            relay_config,
+            latent_frames=latent_frames,
+            tokens_per_frame=tokens_per_frame,
+            text_len=self.config.text_len,
         )
-        return segments, relay_config.full_prompt
-
-    @staticmethod
-    def _find_token_subsequence(haystack, needle, start=0):
-        """Find a token sequence at or after ``start``."""
-
-        if not needle:
-            return None
-        last_start = len(haystack) - len(needle)
-        for index in range(start, last_start + 1):
-            if haystack[index:index + len(needle)] == needle:
-                return index, index + len(needle)
-        return None
 
     def generate(self,
                  input_prompt,

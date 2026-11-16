@@ -22,6 +22,7 @@ from .distributed.util import get_world_size
 from .modules.model import WanModel
 from .modules.t5 import T5EncoderModel
 from .modules.vae2_1 import Wan2_1_VAE
+from .prompt_relay import PromptRelayConfig, build_prompt_relay_segments
 from .utils.fm_solvers import (
     FlowDPMSolverMultistepScheduler,
     get_sampling_sigmas,
@@ -203,6 +204,28 @@ class WanI2V:
                 getattr(self, required_model_name).to(self.device)
         return getattr(self, required_model_name)
 
+    def _prepare_prompt_relay(
+        self,
+        relay_config,
+        *,
+        latent_frames,
+        lat_h,
+        lat_w,
+    ):
+        """Tokenize and map local prompts to the I2V latent-frame grid."""
+
+        tokens_per_frame = (
+            (lat_h // self.patch_size[1])
+            * (lat_w // self.patch_size[2])
+        )
+        return build_prompt_relay_segments(
+            self.text_encoder.tokenizer,
+            relay_config,
+            latent_frames=latent_frames,
+            tokens_per_frame=tokens_per_frame,
+            text_len=self.config.text_len,
+        )
+
     def generate(self,
                  input_prompt,
                  img,
@@ -214,7 +237,10 @@ class WanI2V:
                  guide_scale=5.0,
                  n_prompt="",
                  seed=-1,
-                 offload_model=True):
+                 offload_model=True,
+                 prompt_relay_config=None,
+                 prompt_filepath=None,
+                 query_chunk_size=128):
         r"""
         Generates video frames from input image and text prompt using diffusion process.
 
@@ -244,6 +270,12 @@ class WanI2V:
                 Random seed for noise generation. If -1, use random seed
             offload_model (`bool`, *optional*, defaults to True):
                 If True, offloads models to CPU during generation to save VRAM
+            prompt_relay_config (`PromptRelayConfig`, *optional*):
+                Validated Prompt Relay configuration for conditional text
+                attention. Image and mask conditioning remain unchanged.
+            query_chunk_size (`int`, *optional*, defaults to 128):
+                Number of video query rows processed in each Prompt Relay
+                cross-attention chunk. Smaller values reduce peak memory.
 
         Returns:
             torch.Tensor:
@@ -253,6 +285,15 @@ class WanI2V:
                 - H: Frame height (from max_area)
                 - W: Frame width from max_area)
         """
+        if prompt_relay_config is not None and prompt_filepath is not None:
+            raise ValueError(
+                "Pass prompt_relay_config or prompt_filepath, not both"
+            )
+        if prompt_relay_config is None and prompt_filepath is not None:
+            prompt_relay_config = PromptRelayConfig.from_json(prompt_filepath)
+        if type(query_chunk_size) is not int or query_chunk_size <= 0:
+            raise ValueError("query_chunk_size must be a positive integer")
+
         # preprocess
         guide_scale = (guide_scale, guide_scale) if isinstance(
             guide_scale, float) else guide_scale
@@ -273,6 +314,20 @@ class WanI2V:
         max_seq_len = ((F - 1) // self.vae_stride[0] + 1) * lat_h * lat_w // (
             self.patch_size[1] * self.patch_size[2])
         max_seq_len = int(math.ceil(max_seq_len / self.sp_size)) * self.sp_size
+
+        relay_segments = None
+        if prompt_relay_config is not None:
+            if not isinstance(prompt_relay_config, PromptRelayConfig):
+                raise TypeError(
+                    "prompt_relay_config must be a PromptRelayConfig instance"
+                )
+            latent_frames = (F - 1) // self.vae_stride[0] + 1
+            relay_segments, input_prompt = self._prepare_prompt_relay(
+                prompt_relay_config,
+                latent_frames=latent_frames,
+                lat_h=lat_h,
+                lat_w=lat_w,
+            )
 
         seed = seed if seed >= 0 else random.randint(0, sys.maxsize)
         seed_g = torch.Generator(device=self.device)
@@ -368,6 +423,8 @@ class WanI2V:
                 'context': [context[0]],
                 'seq_len': max_seq_len,
                 'y': [y],
+                'prompt_relay_segments': relay_segments,
+                'prompt_relay_query_chunk_size': query_chunk_size,
             }
 
             arg_null = {
