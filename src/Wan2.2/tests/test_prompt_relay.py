@@ -82,6 +82,36 @@ def load_model_module_for_tests():
 
 
 class PromptRelayConfigTests(unittest.TestCase):
+
+    def test_visual_relay_images_and_indices(self):
+        config = PromptRelayConfig.from_mapping({
+            "global_prompt": "global",
+            "local_prompts": ["first", "second"],
+            "images": ["start.png", "middle.png", "end.png"],
+            "image_index": [0, 10, 16],
+        })
+        self.assertEqual(config.images, (
+            "start.png", "middle.png", "end.png"))
+        self.assertEqual(config.image_indices, (0, 10, 16))
+        self.assertTrue(config.visual_relay_enabled)
+
+    def test_visual_relay_rejects_mismatched_arrays(self):
+        with self.assertRaisesRegex(ValueError, "equal lengths"):
+            PromptRelayConfig.from_mapping({
+                "global_prompt": "global",
+                "local_prompts": ["local"],
+                "images": ["start.png", "middle.png"],
+                "image_index": [0],
+            })
+
+    def test_visual_relay_rejects_unsorted_indices(self):
+        with self.assertRaisesRegex(ValueError, "strictly increasing"):
+            PromptRelayConfig.from_mapping({
+                "global_prompt": "global",
+                "local_prompts": ["local"],
+                "images": ["a.png", "b.png", "c.png"],
+                "image_index": [0, 10, 5],
+            })
     def test_shared_segment_builder_maps_local_tokens_and_frames(self):
         class TokenIds(list):
             def tolist(self):

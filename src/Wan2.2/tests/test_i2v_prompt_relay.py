@@ -32,11 +32,11 @@ class I2VPromptRelayStructureTests(unittest.TestCase):
                     and isinstance(key.value, str)
                 }
 
-        self.assertIn("y", dictionaries["arg_c"])
-        self.assertIn("prompt_relay_segments", dictionaries["arg_c"])
-        self.assertIn("prompt_relay_query_chunk_size", dictionaries["arg_c"])
-        self.assertIn("y", dictionaries["arg_null"])
-        self.assertNotIn("prompt_relay_segments", dictionaries["arg_null"])
+        self.assertIn("y", dictionaries["common"])
+        source = ast.unparse(generate)
+        self.assertIn("prompt_relay_segments=current_relay", source)
+        self.assertIn("context=[contexts[0]]", source)
+        self.assertIn("context=[null_contexts[0]]", source)
 
     def test_generate_accepts_relay_config_and_query_chunk_size(self):
         wan_i2v = next(

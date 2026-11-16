@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -24,6 +24,8 @@ class PromptRelayConfig:
     file_name: str | None = None
     segment_lengths: tuple[int, ...] = ()
     explicit_frame_intervals: tuple[tuple[int, int], ...] = ()
+    images: tuple[str, ...] = ()
+    image_indices: tuple[int, ...] = ()
     mode: str = "gaussian"
     sigma: float = 0.932
 
@@ -52,6 +54,8 @@ class PromptRelayConfig:
         file_name = data.get("file_name")
         segment_lengths = data.get("segment_lengths", ())
         frame_intervals = data.get("frame_intervals", ())
+        images = data.get("images", ())
+        image_indices = data.get("image_index", ())
         mode = data.get("mode", "gaussian")
         sigma = data.get("sigma", 0.932)
 
@@ -154,6 +158,43 @@ class PromptRelayConfig:
                 "frame_intervals must contain one entry per local prompt"
             )
 
+        if not isinstance(images, Sequence) or isinstance(images, (str, bytes)):
+            raise ValueError("images must be an array of image paths")
+        normalized_images = tuple(images)
+        if any(
+            not isinstance(image, str) or not image.strip()
+            for image in normalized_images
+        ):
+            raise ValueError("images must contain only non-empty path strings")
+        normalized_images = tuple(image.strip() for image in normalized_images)
+
+        if not isinstance(image_indices, Sequence) or isinstance(
+            image_indices, (str, bytes)
+        ):
+            raise ValueError("image_index must be an array of latent-frame indices")
+        normalized_image_indices = tuple(image_indices)
+        if any(
+            isinstance(index, bool) or not isinstance(index, int) or index < 0
+            for index in normalized_image_indices
+        ):
+            raise ValueError(
+                "image_index must contain only non-negative integers"
+            )
+        if bool(normalized_images) != bool(normalized_image_indices):
+            raise ValueError("images and image_index must be provided together")
+        if len(normalized_images) != len(normalized_image_indices):
+            raise ValueError("images and image_index must have equal lengths")
+        if normalized_image_indices:
+            if normalized_image_indices[0] != 0:
+                raise ValueError("the first image_index must be 0 for I2V")
+            if any(
+                left >= right
+                for left, right in zip(
+                    normalized_image_indices, normalized_image_indices[1:]
+                )
+            ):
+                raise ValueError("image_index values must be strictly increasing")
+
         if not isinstance(mode, str) or mode.lower() not in SUPPORTED_RELAY_MODES:
             supported = ", ".join(sorted(SUPPORTED_RELAY_MODES))
             raise ValueError(f"mode must be one of: {supported}")
@@ -169,9 +210,17 @@ class PromptRelayConfig:
             file_name=file_name,
             segment_lengths=normalized_lengths,
             explicit_frame_intervals=normalized_intervals,
+            images=normalized_images,
+            image_indices=normalized_image_indices,
             mode=mode.lower(),
             sigma=float(sigma),
         )
+
+    @property
+    def visual_relay_enabled(self) -> bool:
+        """Whether this job requests temporary intermediate image anchors."""
+
+        return len(self.images) > 1
 
     @property
     def prefixed_local_prompts(self) -> tuple[str, ...]:
@@ -234,6 +283,7 @@ class PromptRelaySegment:
     tokens_per_frame: int
     mode: str
     sigma: float
+    duplicate_frame_indices: tuple[int, ...] = ()
 
     @property
     def midpoint(self) -> int:
@@ -305,6 +355,19 @@ def build_prompt_relay_segments(
     return segments, relay_config.full_prompt
 
 
+def with_duplicate_frame_indices(
+    segments: Sequence[PromptRelaySegment],
+    duplicate_frame_indices: Sequence[int],
+) -> tuple[PromptRelaySegment, ...]:
+    """Map expanded temporary-anchor positions back to output coordinates."""
+
+    indices = tuple(int(value) for value in duplicate_frame_indices)
+    return tuple(
+        replace(segment, duplicate_frame_indices=indices)
+        for segment in segments
+    )
+
+
 def _find_token_subsequence(haystack, needle, start=0):
     if not needle:
         return None
@@ -334,10 +397,19 @@ def build_temporal_penalty(
     if any(segment.tokens_per_frame != tokens_per_frame for segment in segments):
         raise ValueError("All Prompt Relay segments must use the same token grid")
 
-    query_frames = (
+    expanded_query_frames = (
         torch.arange(query_length, device=device, dtype=torch.long)
         + query_token_offset
     ) // tokens_per_frame
+    duplicate_indices = segments[0].duplicate_frame_indices
+    if any(
+        segment.duplicate_frame_indices != duplicate_indices
+        for segment in segments
+    ):
+        raise ValueError("All Prompt Relay segments must use one frame mapping")
+    query_frames = expanded_query_frames.clone()
+    for duplicate_index in duplicate_indices:
+        query_frames -= (expanded_query_frames > duplicate_index).long()
     penalty = torch.zeros(
         query_length, context_length, device=device, dtype=torch.float32
     )

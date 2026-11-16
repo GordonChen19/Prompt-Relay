@@ -150,7 +150,13 @@ def _validate_args(args):
         args.tts_text = EXAMPLE_PROMPT[args.task]["tts_text"]
 
     if args.task == "i2v-A14B":
-        assert args.image is not None, "Please specify the image path for i2v."
+        jobs_supply_images = bool(args.prompt_relay_jobs) and all(
+            getattr(config, "images", ())
+            for _, config in args.prompt_relay_jobs
+        )
+        assert args.image is not None or jobs_supply_images, (
+            "Provide --image or an images array in every I2V prompt JSON"
+        )
 
     cfg = WAN_CONFIGS[args.task]
 
@@ -481,6 +487,26 @@ def _save_generated_video(video, save_file, args, cfg):
         merge_video_audio(video_path=str(output_path), audio_path=audio_path)
 
 
+def _load_prompt_images(prompt_path, relay_config, *, first_only=False):
+    """Load JSON image paths, resolving relative paths beside the JSON file."""
+
+    if relay_config is None or not relay_config.images:
+        return None
+    base = Path(prompt_path).resolve().parent
+    loaded = []
+    configured_paths = (
+        relay_config.images[:1] if first_only else relay_config.images
+    )
+    for configured_path in configured_paths:
+        path = Path(configured_path).expanduser()
+        if not path.is_absolute():
+            path = base / path
+        if not path.is_file():
+            raise ValueError(f"Visual Relay image does not exist: {path}")
+        loaded.append(Image.open(path).convert("RGB"))
+    return loaded
+
+
 def generate(args):
     rank = int(os.getenv("RANK", 0))
     world_size = int(os.getenv("WORLD_SIZE", 1))
@@ -749,9 +775,24 @@ def generate(args):
                 args.prompt_mode,
                 relay_config,
             )
+            configured_images = (
+                _load_prompt_images(
+                    prompt_path,
+                    relay_config,
+                    first_only=args.prompt_mode == "concat",
+                )
+                if prompt_path is not None else None
+            )
+            if configured_images is None:
+                job_image = img
+            elif args.prompt_mode == "relay":
+                job_image = configured_images
+            else:
+                # Concat remains the ordinary first-frame I2V baseline.
+                job_image = configured_images[0]
             video = wan_i2v.generate(
                 prompt,
-                img,
+                job_image,
                 max_area=MAX_AREA_CONFIGS[args.size],
                 frame_num=args.frame_num,
                 shift=args.sample_shift,

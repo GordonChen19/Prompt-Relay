@@ -480,6 +480,35 @@ We compared Wan2.2 with leading closed-source commercial models on our new Wan-B
     <img src="assets/performance.png" alt="" style="width: 90%;" />
 </div>
 
+### Prompt Relay I2V and Visual Relay
+
+For I2V, a Prompt Relay JSON may also provide image paths and final-output
+latent indices:
+
+```json
+{
+  "global_prompt": "A continuous shot.",
+  "mode": "gaussian",
+  "local_prompts": ["First event.", "Second event."],
+  "frame_intervals": [[0, 10], [10, 21]],
+  "images": ["start.png", "middle.png", "end.png"],
+  "image_index": [0, 10, 16]
+}
+```
+
+With `--prompt_mode relay`, multiple images enable Visual Relay in addition to
+text Prompt Relay. The first image is ordinary I2V conditioning. Later images
+are temporary anchors; the internal latent timeline grows by one position per
+temporary anchor and those positions are discarded before decoding. Each
+anchor uses an independent auxiliary denoising view that removes every other
+temporary anchor. Relative image paths are resolved beside the JSON file.
+
+With `--prompt_mode concat`, only the first configured image is used and text
+prompts are concatenated without temporal routing.
+
+The `image_index` values are latent-frame positions, not pixel-frame numbers.
+For example, an 81-frame Wan video has 21 latent frames indexed 0 through 20.
+
 ## Citation
 If you find our work helpful, please cite us.
 
