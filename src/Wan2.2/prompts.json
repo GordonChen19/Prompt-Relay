@@ -1,12 +1,18 @@
 {
-  "global_prompt": "A single continuous cinematic tracking shot of a massive dragon Smooth natural flight dynamics, realistic wing movements, cinematic lighting, strong temporal continuity, and no cuts, teleportation, or sudden scene changes.",
+  "global_prompt": "A single continuous cinematic tracking shot.",
   "mode": "gaussian",
   "local_prompts": [
-    "A massive dragon soars high above a vast mountain range, flapping its enormous wings steadily. The camera tracks alongside the dragon, capturing its powerful wing movements as it glides smoothly through the sky. The dragon maintains a steady altitude while distant mountain peaks pass below.",
-    "The dragon gradually begins descending toward a tall rocky mountain peak. The dragon approaches the rocky peak and gently touches down with its claws. Its legs absorb the landing as its wings gradually fold against its body. The dragon settles into a stable standing position on the mountain peak, looking out across the surrounding mountains."
-  ],
+    "SpongeBob flicks his wrist. The camera zooms towards the patty and continuously tracks the patty as it flies up, past the sill and into the dining room, until the cook and his spatula are completely out of frame. Hold a tight side view as the tilting patty starts to descend. A strip of the blue jamb and wooden sill lingers at the far left. Dining-room tables and rope-latticed windows slide behind the patty. From the lower right, Squidward's turquoise hand holds out the bun, its cut surface dotted with ketchup. A clear gap still separates meat and bread.",
+      "As the patty drops onto the bun, widen the view from the dining-room side and angle back toward the hatch. The patty sits flat on the bread. The impact has left a red streak across Squidward's long nose and two flecks on the cheek beside it. Squidward keeps the open burger level and slides his half-lidded eyes toward the kitchen. Beyond the wooden sill, SpongeBob holds up the empty spatula with a sheepish grin. The pan, spoon and yellow and red bottles on the teal wall are visible behind him again."
+    ],
   "frame_intervals": [
     [0, 10],
-    [10, 21]
-  ]
+    [10, 33]
+  ],
+  "images": [
+  "/home/gchen/Prompt_Relay/src/Wan2.2/E01.png",
+  "/home/gchen/Prompt_Relay/src/Wan2.2/E02.png",
+  "/home/gchen/Prompt_Relay/src/Wan2.2/E03.png"
+],
+  "image_index": [0, 10, 21]
 }
