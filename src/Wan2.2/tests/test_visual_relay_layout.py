@@ -11,6 +11,10 @@ sys.modules[SPEC.name] = VISUAL_RELAY
 SPEC.loader.exec_module(VISUAL_RELAY)
 VisualRelayLayout = VISUAL_RELAY.VisualRelayLayout
 shifted_rope_positions = VISUAL_RELAY.shifted_rope_positions
+ordinary_anchor_attention_regions = (
+    VISUAL_RELAY.ordinary_anchor_attention_regions
+)
+anchor_suffix_attention_frames = VISUAL_RELAY.anchor_suffix_attention_frames
 
 
 class VisualRelayLayoutTests(unittest.TestCase):
@@ -52,6 +56,27 @@ class VisualRelayLayoutTests(unittest.TestCase):
         self.assertEqual(
             retained_positions,
             tuple(float(index) for index in range(21)),
+        )
+
+    def test_ordinary_queries_see_only_neighboring_anchors(self):
+        self.assertEqual(
+            ordinary_anchor_attention_regions(27, (10, 16, 22)),
+            (
+                (0, 10, (10,)),
+                (11, 16, (10, 16)),
+                (17, 22, (16, 22)),
+                (23, 27, (22,)),
+            ),
+        )
+
+    def test_anchor_suffix_excludes_every_other_temporary_anchor(self):
+        visible = anchor_suffix_attention_frames(27, (10, 16, 22), 10)
+        self.assertEqual(visible[0], 10)
+        self.assertNotIn(16, visible)
+        self.assertNotIn(22, visible)
+        self.assertEqual(
+            visible,
+            (10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 23, 24, 25, 26),
         )
 
 

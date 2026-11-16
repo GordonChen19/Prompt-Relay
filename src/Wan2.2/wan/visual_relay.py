@@ -35,6 +35,53 @@ def shifted_rope_positions(
     return tuple(positions)
 
 
+def ordinary_anchor_attention_regions(
+    internal_latent_frames: int,
+    temporary_internal_indices: tuple[int, ...] | list[int],
+) -> tuple[tuple[int, int, tuple[int, ...]], ...]:
+    """Partition ordinary queries by their nearest visible anchor pair.
+
+    Each tuple is ``(query_start, query_end, visible_anchors)`` in expanded
+    latent-frame coordinates. Anchor query frames themselves are excluded.
+    """
+    anchors = tuple(temporary_internal_indices)
+    if internal_latent_frames <= 0:
+        raise ValueError("internal_latent_frames must be positive")
+    if not anchors:
+        return ((0, internal_latent_frames, ()),)
+    if any(left >= right for left, right in zip(anchors, anchors[1:])):
+        raise ValueError("temporary anchor indices must be strictly increasing")
+    if anchors[0] <= 0 or anchors[-1] >= internal_latent_frames:
+        raise ValueError("temporary anchors must be interior latent frames")
+
+    regions = [(0, anchors[0], (anchors[0],))]
+    regions.extend(
+        (left + 1, right, (left, right))
+        for left, right in zip(anchors, anchors[1:])
+    )
+    regions.append(
+        (anchors[-1] + 1, internal_latent_frames, (anchors[-1],))
+    )
+    return tuple(region for region in regions if region[0] < region[1])
+
+
+def anchor_suffix_attention_frames(
+    internal_latent_frames: int,
+    temporary_internal_indices: tuple[int, ...] | list[int],
+    anchor_index: int,
+) -> tuple[int, ...]:
+    """Return an anchor itself and future ordinary frames, excluding anchors."""
+    anchors = tuple(temporary_internal_indices)
+    if anchor_index not in anchors:
+        raise ValueError("anchor_index must identify a temporary anchor")
+    anchor_set = set(anchors)
+    return (anchor_index,) + tuple(
+        frame
+        for frame in range(anchor_index + 1, internal_latent_frames)
+        if frame not in anchor_set
+    )
+
+
 @dataclass(frozen=True)
 class VisualRelayLayout:
     """Map final output coordinates to an expanded temporary-anchor timeline."""

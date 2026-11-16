@@ -12,8 +12,7 @@
   ],
   "images": [
   "/home/gchen/Prompt_Relay/src/Wan2.2/E01.png",
-  "/home/gchen/Prompt_Relay/src/Wan2.2/E02.png",
-  "/home/gchen/Prompt_Relay/src/Wan2.2/E03.png"
+  "/home/gchen/Prompt_Relay/src/Wan2.2/E02.png"
 ],
-  "image_index": [0, 10, 21]
+  "image_index": [0, 10]
 }

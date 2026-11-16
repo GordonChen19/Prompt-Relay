@@ -15,7 +15,11 @@ except ModuleNotFoundError:
 
 import warnings
 
-from ..visual_relay import shifted_rope_positions
+from ..visual_relay import (
+    anchor_suffix_attention_frames,
+    ordinary_anchor_attention_regions,
+    shifted_rope_positions,
+)
 
 __all__ = [
     'flash_attention',
@@ -101,23 +105,55 @@ def visual_relay_shifted_attention(
         shifted_k[:, start:end] = _shift_temporal_rope(
             shifted_k[:, start:end], delta, freqs)
 
-    output = flash_attention(
-        q=shifted_q,
-        k=shifted_k,
-        v=v,
-        k_lens=seq_lens,
-        window_size=window_size,
-        dtype=dtype,
-    )
-    # The working Visual Relay path deliberately keeps native relative RoPE
-    # for an anchor's own one-way self/suffix attention.
+    output = torch.zeros_like(q)
+    anchor_set = set(anchors)
+    for query_start, query_end, visible_anchors in (
+        ordinary_anchor_attention_regions(frames, anchors)
+    ):
+        allowed_frames = tuple(
+            frame
+            for frame in range(frames)
+            if frame not in anchor_set or frame in visible_anchors
+        )
+        region_k = torch.cat([
+            shifted_k[
+                :, frame * tokens_per_frame:(frame + 1) * tokens_per_frame
+            ]
+            for frame in allowed_frames
+        ], dim=1)
+        region_v = torch.cat([
+            v[:, frame * tokens_per_frame:(frame + 1) * tokens_per_frame]
+            for frame in allowed_frames
+        ], dim=1)
+        token_start = query_start * tokens_per_frame
+        token_end = query_end * tokens_per_frame
+        output[:, token_start:token_end] = flash_attention(
+            q=shifted_q[:, token_start:token_end],
+            k=region_k,
+            v=region_v,
+            window_size=window_size,
+            dtype=dtype,
+        )
+    # Keep native relative RoPE for an anchor's one-way self/suffix attention,
+    # but do not let one temporary anchor absorb any later temporary anchor.
     for anchor in anchors:
         start = anchor * tokens_per_frame
         end = start + tokens_per_frame
+        visible_frames = anchor_suffix_attention_frames(
+            frames, anchors, anchor
+        )
+        anchor_k = torch.cat([
+            k[:, frame * tokens_per_frame:(frame + 1) * tokens_per_frame]
+            for frame in visible_frames
+        ], dim=1)
+        anchor_v = torch.cat([
+            v[:, frame * tokens_per_frame:(frame + 1) * tokens_per_frame]
+            for frame in visible_frames
+        ], dim=1)
         output[:, start:end] = flash_attention(
             q=q[:, start:end],
-            k=k[:, start:sequence_length],
-            v=v[:, start:sequence_length],
+            k=anchor_k,
+            v=anchor_v,
             window_size=window_size,
             dtype=dtype,
         )
