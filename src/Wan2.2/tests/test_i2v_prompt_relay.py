@@ -4,7 +4,8 @@ from pathlib import Path
 
 
 I2V_PATH = Path(__file__).parents[1] / "wan" / "image2video.py"
-TREE = ast.parse(I2V_PATH.read_text(encoding="utf-8"))
+SOURCE = I2V_PATH.read_text(encoding="utf-8")
+TREE = ast.parse(SOURCE)
 
 
 class I2VPromptRelayStructureTests(unittest.TestCase):
@@ -54,6 +55,27 @@ class I2VPromptRelayStructureTests(unittest.TestCase):
         self.assertIn("prompt_relay_config", argument_names)
         self.assertIn("prompt_filepath", argument_names)
         self.assertIn("query_chunk_size", argument_names)
+
+    def test_visual_relay_handoff_flushes_solver_history(self):
+        self.assertIn(
+            "_flush_multistep_solver_history(sample_scheduler)", SOURCE
+        )
+        self.assertIn(
+            "b0_schedulers = [copy.deepcopy(sample_scheduler)", SOURCE
+        )
+
+    def test_discarded_anchor_uses_neighbor_predictions(self):
+        handoff = SOURCE.split(
+            "if visual_relay and not guidance_active:", 1
+        )[1].split("next_latent = sample_scheduler.step", 1)[0]
+        self.assertIn("expanded[:, left:left + 1]", handoff)
+        self.assertIn("expanded[:, right:right + 1]", handoff)
+        self.assertNotIn("latent[:, left:left + 1]", handoff)
+
+    def test_i2v_rejects_a_non_aligned_requested_frame_count(self):
+        self.assertIn(
+            "(frame_num - 1) % temporal_stride != 0", SOURCE
+        )
 
 
 if __name__ == "__main__":

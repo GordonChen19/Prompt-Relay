@@ -37,6 +37,26 @@ from .utils.fm_solvers import (
 from .utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 
 
+def _flush_multistep_solver_history(scheduler):
+    """Forget derivatives collected before a conditioning handoff.
+
+    The current sample, timestep schedule, sigmas, and step index stay intact.
+    Only multistep history is cleared so that the first update after removing
+    Visual Relay anchors does not mix two different denoising vector fields.
+    """
+    if hasattr(scheduler, 'model_outputs'):
+        scheduler.model_outputs = [None] * len(scheduler.model_outputs)
+    if hasattr(scheduler, 'timestep_list'):
+        scheduler.timestep_list = [None] * len(scheduler.timestep_list)
+    if hasattr(scheduler, 'lower_order_nums'):
+        scheduler.lower_order_nums = 0
+    if hasattr(scheduler, 'last_sample'):
+        scheduler.last_sample = None
+    solver_p = getattr(scheduler, 'solver_p', None)
+    if solver_p is not None:
+        _flush_multistep_solver_history(solver_p)
+
+
 class WanI2V:
 
     def __init__(
@@ -261,6 +281,17 @@ class WanI2V:
             raise TypeError("prompt_relay_config must be a PromptRelayConfig")
         if type(query_chunk_size) is not int or query_chunk_size <= 0:
             raise ValueError("query_chunk_size must be a positive integer")
+        temporal_stride = self.vae_stride[0]
+        if (
+            isinstance(frame_num, bool)
+            or not isinstance(frame_num, int)
+            or frame_num < 1
+            or (frame_num - 1) % temporal_stride != 0
+        ):
+            raise ValueError(
+                f"frame_num must be 1 + {temporal_stride}n for exact I2V "
+                "latent/decode alignment"
+            )
 
         visual_relay = bool(
             prompt_relay_config is not None
@@ -277,7 +308,7 @@ class WanI2V:
             image_values = image_values[:1]
             image_indices = (0,)
 
-        output_latent_frames = (frame_num - 1) // self.vae_stride[0] + 1
+        output_latent_frames = (frame_num - 1) // temporal_stride + 1
         layout = (
             VisualRelayLayout.build(output_latent_frames, image_indices)
             if visual_relay
@@ -519,7 +550,9 @@ class WanI2V:
 
         sample_scheduler = make_scheduler()
         timesteps = sample_scheduler.timesteps
-        b0_schedulers = [make_scheduler() for _ in b0_latents]
+        # Each independent B0 stream starts from the exact J solver state.
+        # Copies also keep the streams' multistep histories isolated.
+        b0_schedulers = [copy.deepcopy(sample_scheduler) for _ in b0_latents]
 
         @contextmanager
         def noop_no_sync():
@@ -642,11 +675,19 @@ class WanI2V:
                         expanded[:, anchor_internal:anchor_internal + 1] = (
                             0.5
                             * (
-                                latent[:, left:left + 1]
-                                + latent[:, right:right + 1]
+                                expanded[:, left:left + 1]
+                                + expanded[:, right:right + 1]
                             )
                         )
                     prediction = expanded
+
+                if visual_relay and sampling_step == 10:
+                    _flush_multistep_solver_history(sample_scheduler)
+                    logging.info(
+                        "Visual Relay handoff removed %d temporary anchors "
+                        "and flushed multistep solver history",
+                        layout.temporary_count,
+                    )
 
                 next_latent = sample_scheduler.step(
                     prediction.unsqueeze(0),
@@ -675,12 +716,6 @@ class WanI2V:
                             return_dict=False,
                             generator=seed_g,
                         )[0].squeeze(0)
-                if visual_relay and sampling_step == 10:
-                    logging.info(
-                        "Visual Relay handoff removed %d temporary anchors",
-                        layout.temporary_count,
-                    )
-
             if offload_model:
                 self.low_noise_model.cpu()
                 self.high_noise_model.cpu()
