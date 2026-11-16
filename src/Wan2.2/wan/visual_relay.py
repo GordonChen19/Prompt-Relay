@@ -5,6 +5,36 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+def shifted_rope_positions(
+    internal_latent_frames: int,
+    temporary_internal_indices: tuple[int, ...] | list[int],
+    anchor_rope_offset: float = 0.5,
+) -> tuple[float, ...]:
+    """Return compressed temporal coordinates for an expanded J timeline."""
+    anchors = tuple(temporary_internal_indices)
+    if internal_latent_frames <= 0:
+        raise ValueError("internal_latent_frames must be positive")
+    if any(left >= right for left, right in zip(anchors, anchors[1:])):
+        raise ValueError("temporary anchor indices must be strictly increasing")
+    if anchors and (anchors[0] <= 0 or anchors[-1] >= internal_latent_frames):
+        raise ValueError("temporary anchors must be interior latent frames")
+    if not 0.0 <= float(anchor_rope_offset) <= 1.0:
+        raise ValueError("anchor_rope_offset must be in [0, 1]")
+
+    anchor_set = set(anchors)
+    anchors_before = 0
+    positions = []
+    for frame in range(internal_latent_frames):
+        if frame in anchor_set:
+            positions.append(
+                frame - anchors_before - 1 + float(anchor_rope_offset)
+            )
+            anchors_before += 1
+        else:
+            positions.append(float(frame - anchors_before))
+    return tuple(positions)
+
+
 @dataclass(frozen=True)
 class VisualRelayLayout:
     """Map final output coordinates to an expanded temporary-anchor timeline."""

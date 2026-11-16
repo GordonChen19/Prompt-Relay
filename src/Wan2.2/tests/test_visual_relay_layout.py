@@ -10,6 +10,7 @@ VISUAL_RELAY = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = VISUAL_RELAY
 SPEC.loader.exec_module(VISUAL_RELAY)
 VisualRelayLayout = VISUAL_RELAY.VisualRelayLayout
+shifted_rope_positions = VISUAL_RELAY.shifted_rope_positions
 
 
 class VisualRelayLayoutTests(unittest.TestCase):
@@ -35,6 +36,23 @@ class VisualRelayLayoutTests(unittest.TestCase):
         self.assertEqual(layout.compact_anchor_index(0), 10)
         self.assertEqual(layout.compact_anchor_index(1), 16)
         self.assertEqual(layout.history_output_indices(1), (12, 13, 14, 15))
+
+    def test_shifted_rope_places_every_anchor_halfway_between_outputs(self):
+        layout = VisualRelayLayout.build(21, (0, 10, 16))
+        positions = shifted_rope_positions(
+            layout.internal_latent_frames,
+            layout.temporary_internal_indices,
+            anchor_rope_offset=0.5,
+        )
+        self.assertEqual(positions[9:12], (9.0, 9.5, 10.0))
+        self.assertEqual(positions[16:19], (15.0, 15.5, 16.0))
+        retained_positions = tuple(
+            positions[index] for index in layout.retained_internal_indices
+        )
+        self.assertEqual(
+            retained_positions,
+            tuple(float(index) for index in range(21)),
+        )
 
 
 if __name__ == "__main__":

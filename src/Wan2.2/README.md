@@ -502,6 +502,11 @@ are temporary anchors; the internal latent timeline grows by one position per
 temporary anchor and those positions are discarded before decoding. Each
 anchor uses an independent auxiliary denoising view that removes every other
 temporary anchor. Relative image paths are resolved beside the JSON file.
+During Visual Relay, retained frames keep their final-output RoPE coordinates
+and every temporary anchor is placed halfway between its neighboring retained
+frames (anchor RoPE offset `0.5`). Anchor queries attend only to themselves and
+the suffix. This routing ends at the step-10 handoff to ordinary first-image
+I2V; the Gaussian Prompt Relay default remains `sigma: 0.932`.
 
 With `--prompt_mode concat`, only the first configured image is used and text
 prompts are concatenated without temporal routing.

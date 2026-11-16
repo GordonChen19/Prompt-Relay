@@ -7,7 +7,7 @@ from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.models.modeling_utils import ModelMixin
 
 from ..prompt_relay import build_temporal_penalty
-from .attention import flash_attention
+from .attention import flash_attention, visual_relay_shifted_attention
 
 __all__ = ['WanModel']
 
@@ -178,7 +178,15 @@ class WanSelfAttention(nn.Module):
         self.norm_q = WanRMSNorm(dim, eps=eps) if qk_norm else nn.Identity()
         self.norm_k = WanRMSNorm(dim, eps=eps) if qk_norm else nn.Identity()
 
-    def forward(self, x, seq_lens, grid_sizes, freqs):
+    def forward(
+        self,
+        x,
+        seq_lens,
+        grid_sizes,
+        freqs,
+        visual_relay_anchor_indices=None,
+        visual_relay_anchor_rope_offset=0.5,
+    ):
         r"""
         Args:
             x(Tensor): Shape [B, L, num_heads, C / num_heads]
@@ -196,12 +204,27 @@ class WanSelfAttention(nn.Module):
             return q, k, v
 
         q, k, v = qkv_fn(x)
-        x = flash_attention(
-            q=rope_apply(q, grid_sizes, freqs),
-            k=rope_apply(k, grid_sizes, freqs),
-            v=v,
-            k_lens=seq_lens,
-            window_size=self.window_size)
+        q = rope_apply(q, grid_sizes, freqs)
+        k = rope_apply(k, grid_sizes, freqs)
+        if visual_relay_anchor_indices:
+            x = visual_relay_shifted_attention(
+                q=q,
+                k=k,
+                v=v,
+                seq_lens=seq_lens,
+                grid_sizes=grid_sizes,
+                anchor_indices=visual_relay_anchor_indices,
+                freqs=freqs,
+                anchor_rope_offset=visual_relay_anchor_rope_offset,
+                window_size=self.window_size,
+            )
+        else:
+            x = flash_attention(
+                q=q,
+                k=k,
+                v=v,
+                k_lens=seq_lens,
+                window_size=self.window_size)
 
         # output
         x = x.flatten(2)
@@ -305,6 +328,8 @@ class WanAttentionBlock(nn.Module):
         prompt_relay_query_token_offset=0,
         prompt_relay_temporal_penalty=None,
         prompt_relay_query_chunk_size=128,
+        visual_relay_anchor_indices=None,
+        visual_relay_anchor_rope_offset=0.5,
     ):
         r"""
         Args:
@@ -322,7 +347,12 @@ class WanAttentionBlock(nn.Module):
         # self-attention
         y = self.self_attn(
             self.norm1(x).float() * (1 + e[1].squeeze(2)) + e[0].squeeze(2),
-            seq_lens, grid_sizes, freqs)
+            seq_lens,
+            grid_sizes,
+            freqs,
+            visual_relay_anchor_indices=visual_relay_anchor_indices,
+            visual_relay_anchor_rope_offset=visual_relay_anchor_rope_offset,
+        )
         with torch.amp.autocast('cuda', dtype=torch.float32):
             x = x + y * e[2].squeeze(2)
 
@@ -504,6 +534,8 @@ class WanModel(ModelMixin, ConfigMixin):
         y=None,
         prompt_relay_segments=None,
         prompt_relay_query_chunk_size=128,
+        visual_relay_anchor_indices=None,
+        visual_relay_anchor_rope_offset=0.5,
     ):
         r"""
         Forward pass through the diffusion model
@@ -589,6 +621,8 @@ class WanModel(ModelMixin, ConfigMixin):
             prompt_relay_query_token_offset=0,
             prompt_relay_temporal_penalty=prompt_relay_temporal_penalty,
             prompt_relay_query_chunk_size=prompt_relay_query_chunk_size,
+            visual_relay_anchor_indices=visual_relay_anchor_indices,
+            visual_relay_anchor_rope_offset=visual_relay_anchor_rope_offset,
         )
 
         for block in self.blocks:

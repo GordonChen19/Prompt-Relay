@@ -2,7 +2,10 @@
 import torch
 import torch.distributed as dist
 
-from ..modules.attention import flash_attention
+from ..modules.attention import (
+    flash_attention,
+    visual_relay_shifted_attention,
+)
 from .util import all_to_all
 
 
@@ -12,6 +15,10 @@ def distributed_attention(
         v,
         seq_lens,
         window_size=(-1, -1),
+        grid_sizes=None,
+        freqs=None,
+        visual_relay_anchor_indices=None,
+        visual_relay_anchor_rope_offset=0.5,
 ):
     """
     Performs distributed attention based on DeepSpeed Ulysses attention mechanism.
@@ -34,13 +41,31 @@ def distributed_attention(
     v = all_to_all(v, scatter_dim=2, gather_dim=1)
 
     # apply attention
-    x = flash_attention(
-        q,
-        k,
-        v,
-        k_lens=seq_lens,
-        window_size=window_size,
-    )
+    if visual_relay_anchor_indices:
+        if grid_sizes is None or freqs is None:
+            raise ValueError(
+                "shifted Visual Relay distributed attention requires grid "
+                "sizes and RoPE frequencies"
+            )
+        x = visual_relay_shifted_attention(
+            q=q,
+            k=k,
+            v=v,
+            seq_lens=seq_lens,
+            grid_sizes=grid_sizes,
+            anchor_indices=visual_relay_anchor_indices,
+            freqs=freqs,
+            anchor_rope_offset=visual_relay_anchor_rope_offset,
+            window_size=window_size,
+        )
+    else:
+        x = flash_attention(
+            q,
+            k,
+            v,
+            k_lens=seq_lens,
+            window_size=window_size,
+        )
 
     # scatter q/k/v sequence
     x = all_to_all(x, scatter_dim=1, gather_dim=2)

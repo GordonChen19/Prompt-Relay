@@ -601,6 +601,13 @@ class WanI2V:
                     'seq_len': max_seq_len,
                     'y': [current_y],
                 }
+                if guidance_active:
+                    common.update({
+                        'visual_relay_anchor_indices': (
+                            layout.temporary_internal_indices
+                        ),
+                        'visual_relay_anchor_rope_offset': 0.5,
+                    })
                 conditional = model(
                     [main_input],
                     t=timestep,

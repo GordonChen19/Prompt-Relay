@@ -15,10 +15,113 @@ except ModuleNotFoundError:
 
 import warnings
 
+from ..visual_relay import shifted_rope_positions
+
 __all__ = [
     'flash_attention',
     'attention',
+    'visual_relay_shifted_attention',
 ]
+
+
+def _shift_temporal_rope(x, position_delta, freqs):
+    """Shift only temporal RoPE on an already-rotated token tensor."""
+    if position_delta == 0:
+        return x
+    original_dtype = x.dtype
+    complex_dim = x.size(-1) // 2
+    temporal_dim = complex_dim - 2 * (complex_dim // 3)
+    x_complex = torch.view_as_complex(
+        x.float().reshape(*x.shape[:-1], complex_dim, 2))
+    base_phase = torch.angle(freqs[1, :temporal_dim]).to(
+        device=x.device, dtype=torch.float32)
+    multiplier = torch.polar(
+        torch.ones_like(base_phase),
+        float(position_delta) * base_phase,
+    ).to(x_complex.dtype).view(*([1] * (x.ndim - 1)), temporal_dim)
+    shifted_temporal = x_complex[..., :temporal_dim] * multiplier
+    shifted = torch.cat(
+        [shifted_temporal, x_complex[..., temporal_dim:]], dim=-1)
+    return torch.view_as_real(shifted).flatten(-2).to(original_dtype)
+
+
+def visual_relay_shifted_attention(
+    q,
+    k,
+    v,
+    seq_lens,
+    grid_sizes,
+    anchor_indices,
+    freqs,
+    anchor_rope_offset=0.5,
+    window_size=(-1, -1),
+    dtype=torch.bfloat16,
+):
+    """Apply Visual Relay's shifted-anchor RoPE to one expanded J stream.
+
+    Ordinary frames retain their final-output temporal coordinates after all
+    temporary anchors are removed.  An anchor inserted immediately before
+    output frame ``p`` receives coordinate ``p - 1 + anchor_rope_offset``;
+    offset 0.5 therefore places it halfway between output frames p-1 and p.
+    Ordinary queries remain bidirectional, while every anchor query reads only
+    its own anchor and the suffix, matching the working two-image baseline.
+    """
+    anchors = tuple(int(index) for index in anchor_indices)
+    if q.size(0) != 1 or k.size(0) != 1 or v.size(0) != 1:
+        raise ValueError("shifted Visual Relay attention expects one J stream")
+    if window_size != (-1, -1):
+        raise ValueError("shifted Visual Relay requires global self-attention")
+    if not anchors or any(left >= right for left, right in zip(anchors, anchors[1:])):
+        raise ValueError("Visual Relay anchor indices must be strictly increasing")
+    if not 0.0 <= float(anchor_rope_offset) <= 1.0:
+        raise ValueError("anchor_rope_offset must be in [0, 1]")
+
+    frames, height, width = (
+        int(value) for value in grid_sizes[0].tolist())
+    tokens_per_frame = height * width
+    sequence_length = frames * tokens_per_frame
+    if int(seq_lens[0]) != sequence_length:
+        raise ValueError("Visual Relay sequence length disagrees with its grid")
+    if anchors[0] <= 0 or anchors[-1] >= frames:
+        raise ValueError("Visual Relay anchors must be interior latent frames")
+
+    shifted_q = q.clone()
+    shifted_k = k.clone()
+    positions = shifted_rope_positions(
+        frames, anchors, anchor_rope_offset=anchor_rope_offset
+    )
+    for frame, position in enumerate(positions):
+        delta = position - frame
+        if delta == 0:
+            continue
+        start = frame * tokens_per_frame
+        end = start + tokens_per_frame
+        shifted_q[:, start:end] = _shift_temporal_rope(
+            shifted_q[:, start:end], delta, freqs)
+        shifted_k[:, start:end] = _shift_temporal_rope(
+            shifted_k[:, start:end], delta, freqs)
+
+    output = flash_attention(
+        q=shifted_q,
+        k=shifted_k,
+        v=v,
+        k_lens=seq_lens,
+        window_size=window_size,
+        dtype=dtype,
+    )
+    # The working Visual Relay path deliberately keeps native relative RoPE
+    # for an anchor's own one-way self/suffix attention.
+    for anchor in anchors:
+        start = anchor * tokens_per_frame
+        end = start + tokens_per_frame
+        output[:, start:end] = flash_attention(
+            q=q[:, start:end],
+            k=k[:, start:sequence_length],
+            v=v[:, start:sequence_length],
+            window_size=window_size,
+            dtype=dtype,
+        )
+    return output
 
 
 def flash_attention(

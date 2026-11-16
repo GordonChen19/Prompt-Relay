@@ -6,6 +6,17 @@ from pathlib import Path
 I2V_PATH = Path(__file__).parents[1] / "wan" / "image2video.py"
 SOURCE = I2V_PATH.read_text(encoding="utf-8")
 TREE = ast.parse(SOURCE)
+WAN_ROOT = I2V_PATH.parent
+MODEL_SOURCE = (WAN_ROOT / "modules" / "model.py").read_text(encoding="utf-8")
+ATTENTION_SOURCE = (WAN_ROOT / "modules" / "attention.py").read_text(
+    encoding="utf-8"
+)
+SP_SOURCE = (WAN_ROOT / "distributed" / "sequence_parallel.py").read_text(
+    encoding="utf-8"
+)
+ULYSSES_SOURCE = (WAN_ROOT / "distributed" / "ulysses.py").read_text(
+    encoding="utf-8"
+)
 
 
 class I2VPromptRelayStructureTests(unittest.TestCase):
@@ -76,6 +87,17 @@ class I2VPromptRelayStructureTests(unittest.TestCase):
         self.assertIn(
             "(frame_num - 1) % temporal_stride != 0", SOURCE
         )
+
+    def test_visual_relay_uses_shifted_anchor_rope(self):
+        self.assertIn("'visual_relay_anchor_rope_offset': 0.5", SOURCE)
+        self.assertIn("visual_relay_shifted_attention", MODEL_SOURCE)
+        self.assertIn("anchor_rope_offset=visual_relay_anchor_rope_offset", MODEL_SOURCE)
+        self.assertIn("shifted_rope_positions", ATTENTION_SOURCE)
+
+    def test_shifted_anchor_attention_is_available_with_ulysses(self):
+        self.assertIn("visual_relay_anchor_indices", SP_SOURCE)
+        self.assertIn("visual_relay_anchor_indices", ULYSSES_SOURCE)
+        self.assertIn("visual_relay_shifted_attention", ULYSSES_SOURCE)
 
 
 if __name__ == "__main__":
