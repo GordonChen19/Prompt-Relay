@@ -2,9 +2,10 @@
   "global_prompt": "A single continuous cinematic tracking shot.",
   "mode": "gaussian",
   "local_prompts": [
-    "SpongeBob flicks his wrist. The camera zooms towards the patty and continuously tracks the patty as it flies up, past the sill and into the dining room, until the cook and his spatula are completely out of frame. Hold a tight side view as the tilting patty starts to descend. A strip of the blue jamb and wooden sill lingers at the far left. Dining-room tables and rope-latticed windows slide behind the patty. From the lower right, Squidward's turquoise hand holds out the bun, its cut surface dotted with ketchup. A clear gap still separates meat and bread.",
-      "As the patty drops onto the bun, widen the view from the dining-room side and angle back toward the hatch. The patty sits flat on the bread. The impact has left a red streak across Squidward's long nose and two flecks on the cheek beside it. Squidward keeps the open burger level and slides his half-lidded eyes toward the kitchen. Beyond the wooden sill, SpongeBob holds up the empty spatula with a sheepish grin. The pan, spoon and yellow and red bottles on the teal wall are visible behind him again."
-    ],
+    "SpongeBob flicks the patty off his spatula. The camera zooms in and smoothly tracks it flying through the serving window into the dining room, maintaining a tight side view. Squidward's turquoise hand extends from the lower right, holding a bun topped with ketchup.",
+
+    "The patty lands flat on Squidward's bun, splashing ketchup onto his long nose and cheek. The camera widens to reveal Squidward holding the burger level, glancing toward the kitchen with half-lidded eyes. Through the serving window, SpongeBob sheepishly grins with his empty spatula raised."
+  ],
   "frame_intervals": [
     [0, 10],
     [10, 33]
