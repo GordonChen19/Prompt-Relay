@@ -48,6 +48,7 @@ def load_validate_args():
             return SimpleNamespace(
                 full_prompt=f"prompt from {path}",
                 file_name=file_name,
+                images=("configured.png",) if path.startswith("visual") else (),
             )
 
     config = SimpleNamespace(
@@ -129,6 +130,16 @@ class PromptRelayBatchCliTests(unittest.TestCase):
 
         self.assertEqual(len(args.prompt_relay_jobs), 2)
         self.assertEqual(args.prompt, "prompt from shot_01.json")
+
+    def test_i2v_json_images_do_not_load_example_fallback(self):
+        args = batch_args(
+            task="i2v-A14B",
+            image=None,
+            prompt_filepath=["visual_01.json"],
+        )
+        load_validate_args()(args)
+
+        self.assertIsNone(args.image)
 
     def test_multiple_prompt_files_require_output_directory(self):
         args = batch_args(output_dir=None)

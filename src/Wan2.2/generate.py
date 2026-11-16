@@ -140,7 +140,15 @@ def _validate_args(args):
         raise ValueError(
             "output_dir is required when passing multiple prompt files"
         )
-    if args.image is None and "image" in EXAMPLE_PROMPT[args.task]:
+    jobs_supply_images = bool(args.prompt_relay_jobs) and all(
+        getattr(config, "images", ())
+        for _, config in args.prompt_relay_jobs
+    )
+    if (
+        args.image is None
+        and "image" in EXAMPLE_PROMPT[args.task]
+        and not (args.task == "i2v-A14B" and jobs_supply_images)
+    ):
         args.image = EXAMPLE_PROMPT[args.task]["image"]
     if args.audio is None and args.enable_tts is False and "audio" in EXAMPLE_PROMPT[args.task]:
         args.audio = EXAMPLE_PROMPT[args.task]["audio"]
@@ -150,10 +158,6 @@ def _validate_args(args):
         args.tts_text = EXAMPLE_PROMPT[args.task]["tts_text"]
 
     if args.task == "i2v-A14B":
-        jobs_supply_images = bool(args.prompt_relay_jobs) and all(
-            getattr(config, "images", ())
-            for _, config in args.prompt_relay_jobs
-        )
         assert args.image is not None or jobs_supply_images, (
             "Provide --image or an images array in every I2V prompt JSON"
         )
