@@ -107,6 +107,8 @@ def batch_args(**overrides):
         sample_guide_scale=None,
         frame_num=None,
         query_chunk_size=128,
+        auxiliary_blend_alpha=0.5,
+        auxiliary_blend_steps=10,
         base_seed=123,
         size="832*480",
     )
@@ -151,6 +153,12 @@ class PromptRelayBatchCliTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must be positive"):
             load_validate_args()(args)
 
+    def test_auxiliary_blend_options_are_validated(self):
+        with self.assertRaisesRegex(ValueError, "between 0 and 1"):
+            load_validate_args()(batch_args(auxiliary_blend_alpha=1.1))
+        with self.assertRaisesRegex(ValueError, "must be non-negative"):
+            load_validate_args()(batch_args(auxiliary_blend_steps=-1))
+
     def test_duplicate_configured_filenames_are_rejected(self):
         args = batch_args(
             prompt_filepath=["duplicate_1.json", "duplicate_2.json"]
@@ -185,6 +193,18 @@ class PromptRelayBatchCliTests(unittest.TestCase):
             for keyword in query_chunk_size.keywords
         }
         self.assertEqual(keywords["default"].value, 128)
+        self.assertIn("--auxiliary_blend_alpha", arguments)
+        self.assertIn("--auxiliary_blend_steps", arguments)
+        alpha_keywords = {
+            keyword.arg: keyword.value
+            for keyword in arguments["--auxiliary_blend_alpha"].keywords
+        }
+        step_keywords = {
+            keyword.arg: keyword.value
+            for keyword in arguments["--auxiliary_blend_steps"].keywords
+        }
+        self.assertEqual(alpha_keywords["default"].value, 0.5)
+        self.assertEqual(step_keywords["default"].value, 10)
 
     def test_concat_mode_disables_temporal_routing(self):
         conditioning_config = load_output_helpers()[

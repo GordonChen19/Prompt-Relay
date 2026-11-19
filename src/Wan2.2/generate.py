@@ -177,6 +177,10 @@ def _validate_args(args):
         args.frame_num = cfg.frame_num
     if args.query_chunk_size <= 0:
         raise ValueError("query_chunk_size must be positive")
+    if not 0.0 <= args.auxiliary_blend_alpha <= 1.0:
+        raise ValueError("auxiliary_blend_alpha must be between 0 and 1")
+    if args.auxiliary_blend_steps < 0:
+        raise ValueError("auxiliary_blend_steps must be non-negative")
 
     args.base_seed = args.base_seed if args.base_seed >= 0 else random.randint(
         0, sys.maxsize)
@@ -241,6 +245,21 @@ def _parse_args():
             "Prompt Relay cross-attention query rows processed per chunk. "
             "Smaller values use less peak memory but are slower."
         ),
+    )
+    parser.add_argument(
+        "--auxiliary_blend_alpha",
+        type=float,
+        default=0.5,
+        help=(
+            "Recursive velocity blend applied oldest-to-newest for auxiliary "
+            "I2V suffix streams. Set to 0 to disable auxiliary blending."
+        ),
+    )
+    parser.add_argument(
+        "--auxiliary_blend_steps",
+        type=int,
+        default=10,
+        help="Number of initial denoising steps that use auxiliary I2V streams.",
     )
     parser.add_argument(
         "--ckpt_dir",
@@ -807,6 +826,8 @@ def generate(args):
                 offload_model=args.offload_model,
                 prompt_relay_config=conditioning_config,
                 query_chunk_size=args.query_chunk_size,
+                auxiliary_blend_alpha=args.auxiliary_blend_alpha,
+                auxiliary_blend_steps=args.auxiliary_blend_steps,
             )
             if rank == 0:
                 save_file = _output_path_for_job(

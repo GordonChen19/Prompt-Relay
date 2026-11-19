@@ -66,6 +66,8 @@ class I2VPromptRelayStructureTests(unittest.TestCase):
         self.assertIn("prompt_relay_config", argument_names)
         self.assertIn("prompt_filepath", argument_names)
         self.assertIn("query_chunk_size", argument_names)
+        self.assertIn("auxiliary_blend_alpha", argument_names)
+        self.assertIn("auxiliary_blend_steps", argument_names)
 
     def test_intermediate_images_use_in_place_pixel_slots(self):
         self.assertIn(
@@ -106,6 +108,15 @@ class I2VPromptRelayStructureTests(unittest.TestCase):
         for source in (MODEL_SOURCE, ATTENTION_SOURCE, SP_SOURCE, ULYSSES_SOURCE):
             self.assertNotIn("image_conditioned_frame_attention", source)
             self.assertNotIn("image_condition_indices", source)
+
+    def test_auxiliary_streams_share_j_state_and_blend_after_anchor(self):
+        self.assertIn("image_indices[1:-1]", SOURCE)
+        self.assertIn("auxiliary_input = latent[:, anchor_index:]", SOURCE)
+        self.assertIn("prediction[:, anchor_index + 1:]", SOURCE)
+        self.assertIn("auxiliary_prediction[:, 1:]", SOURCE)
+        self.assertIn("sampling_step < auxiliary_blend_steps", SOURCE)
+        self.assertNotIn("auxiliary_scheduler", SOURCE)
+        self.assertNotIn("auxiliary_latent", SOURCE)
 
     def test_distributed_prompt_relay_routing_is_preserved(self):
         self.assertIn("prompt_relay_segments=None", SP_SOURCE)

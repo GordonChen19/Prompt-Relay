@@ -514,10 +514,23 @@ Only the packed mask channel corresponding to that final pixel is enabled:
 
 No temporary latent is inserted. The noisy video retains its requested latent
 length and uses standard global I2V self-attention for every denoising step.
-There is no fractional RoPE offset, temporal compression, auxiliary B stream,
-anchor-velocity replacement, handoff, solver-history reset, or discarded
-frame. Relative image paths are resolved beside the JSON file. The Gaussian
-Prompt Relay default remains `sigma: 0.932`.
+During the first 10 sampling steps, every intermediate configured image also
+creates an auxiliary suffix view. The first image owns J, while the final
+configured image is treated only as a destination and never creates B. Thus
+three images create one auxiliary stream. At every step, each auxiliary view
+is rebuilt directly from the current main J latent, but its image is encoded
+as ordinary first-frame I2V conditioning. It has no persistent latent or
+scheduler. Its CFG velocity is mixed only into J frames strictly after its
+anchor. Auxiliary streams are applied oldest-to-newest with `alpha=0.5`,
+giving geometrically decaying weights to older streams. Only J is advanced by
+the scheduler and decoded.
+
+Use `--auxiliary_blend_alpha` to change the recursive blend or set it to `0`
+to recover the in-place-only baseline. Use `--auxiliary_blend_steps` to change
+the default 10-step lifetime. There is no fractional RoPE offset, temporal
+compression, handoff, solver-history reset, extra latent, or discarded frame.
+Relative image paths are resolved beside the JSON file. The Gaussian Prompt
+Relay default remains `sigma: 0.932`.
 
 With `--prompt_mode concat`, only the first configured image is used and text
 prompts are concatenated without temporal routing.
