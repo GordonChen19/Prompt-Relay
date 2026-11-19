@@ -480,7 +480,7 @@ We compared Wan2.2 with leading closed-source commercial models on our new Wan-B
     <img src="assets/performance.png" alt="" style="width: 90%;" />
 </div>
 
-### Prompt Relay I2V and Visual Relay
+### Prompt Relay I2V with sparse image conditioning
 
 For I2V, a Prompt Relay JSON may also provide image paths and final-output
 latent indices:
@@ -496,20 +496,28 @@ latent indices:
 }
 ```
 
-With `--prompt_mode relay`, multiple images enable Visual Relay in addition to
-text Prompt Relay. The first image is ordinary I2V conditioning. Later images
-are temporary anchors; the internal latent timeline grows by one position per
-temporary anchor and those positions are discarded before decoding. Each
-anchor uses an independent auxiliary denoising view that removes every other
-temporary anchor. Relative image paths are resolved beside the JSON file.
-During Visual Relay, retained frames keep their final-output RoPE coordinates
-and every temporary anchor is placed halfway between its neighboring retained
-frames (anchor RoPE offset `0.5`). Anchor queries attend to themselves and
-future ordinary frames, excluding every other temporary-anchor K/V block.
-Ordinary frame queries can read only their nearest temporary anchor before and
-nearest temporary anchor after; other temporary-anchor K/V blocks are excluded.
-This routing ends at the step-10 handoff to ordinary first-image I2V; the
-Gaussian Prompt Relay default remains `sigma: 0.932`.
+With `--prompt_mode relay`, multiple images enable sparse in-place image
+conditioning in addition to text Prompt Relay. The first image uses ordinary
+I2V conditioning. For every later image at latent index `p`, the image is
+placed at pixel-time position `4*p`, which is the final pixel of that latent's
+normal four-pixel VAE chunk:
+
+```text
+[0, 0, 0, image]
+```
+
+Only the packed mask channel corresponding to that final pixel is enabled:
+
+```text
+[0, 0, 0, 1]
+```
+
+No temporary latent is inserted. The noisy video retains its requested latent
+length and uses standard global I2V self-attention for every denoising step.
+There is no fractional RoPE offset, temporal compression, auxiliary B stream,
+anchor-velocity replacement, handoff, solver-history reset, or discarded
+frame. Relative image paths are resolved beside the JSON file. The Gaussian
+Prompt Relay default remains `sigma: 0.932`.
 
 With `--prompt_mode concat`, only the first configured image is used and text
 prompts are concatenated without temporal routing.

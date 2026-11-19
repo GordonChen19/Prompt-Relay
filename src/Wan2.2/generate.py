@@ -506,7 +506,7 @@ def _load_prompt_images(prompt_path, relay_config, *, first_only=False):
         if not path.is_absolute():
             path = base / path
         if not path.is_file():
-            raise ValueError(f"Visual Relay image does not exist: {path}")
+            raise ValueError(f"I2V conditioning image does not exist: {path}")
         loaded.append(Image.open(path).convert("RGB"))
     return loaded
 

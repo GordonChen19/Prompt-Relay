@@ -59,7 +59,6 @@ def load_model_module_for_tests():
 
     attention = types.ModuleType(f"{package_name}.modules.attention")
     attention.flash_attention = lambda *args, **kwargs: None
-    attention.visual_relay_shifted_attention = lambda *args, **kwargs: None
 
     module_path = Path(__file__).parents[1] / "wan" / "modules" / "model.py"
     spec = importlib.util.spec_from_file_location(

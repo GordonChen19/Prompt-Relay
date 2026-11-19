@@ -1,5 +1,4 @@
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
-import copy
 import gc
 import logging
 import math
@@ -26,35 +25,13 @@ from .modules.vae2_1 import Wan2_1_VAE
 from .prompt_relay import (
     PromptRelayConfig,
     build_prompt_relay_segments,
-    with_duplicate_frame_indices,
 )
-from .visual_relay import VisualRelayLayout
 from .utils.fm_solvers import (
     FlowDPMSolverMultistepScheduler,
     get_sampling_sigmas,
     retrieve_timesteps,
 )
 from .utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
-
-
-def _flush_multistep_solver_history(scheduler):
-    """Forget derivatives collected before a conditioning handoff.
-
-    The current sample, timestep schedule, sigmas, and step index stay intact.
-    Only multistep history is cleared so that the first update after removing
-    Visual Relay anchors does not mix two different denoising vector fields.
-    """
-    if hasattr(scheduler, 'model_outputs'):
-        scheduler.model_outputs = [None] * len(scheduler.model_outputs)
-    if hasattr(scheduler, 'timestep_list'):
-        scheduler.timestep_list = [None] * len(scheduler.timestep_list)
-    if hasattr(scheduler, 'lower_order_nums'):
-        scheduler.lower_order_nums = 0
-    if hasattr(scheduler, 'last_sample'):
-        scheduler.last_sample = None
-    solver_p = getattr(scheduler, 'solver_p', None)
-    if solver_p is not None:
-        _flush_multistep_solver_history(solver_p)
 
 
 class WanI2V:
@@ -269,7 +246,7 @@ class WanI2V:
         prompt_filepath=None,
         query_chunk_size=128,
     ):
-        """Generate standard I2V, Prompt Relay I2V, or multi-anchor Visual Relay."""
+        """Generate standard or sparse multi-image Prompt Relay I2V."""
 
         if prompt_relay_config is not None and prompt_filepath is not None:
             raise ValueError("Pass prompt_relay_config or prompt_filepath, not both")
@@ -293,12 +270,12 @@ class WanI2V:
                 "latent/decode alignment"
             )
 
-        visual_relay = bool(
+        multi_image_conditioning = bool(
             prompt_relay_config is not None
             and prompt_relay_config.visual_relay_enabled
         )
         image_values = list(img) if isinstance(img, (list, tuple)) else [img]
-        if visual_relay:
+        if multi_image_conditioning:
             if len(image_values) != len(prompt_relay_config.images):
                 raise ValueError(
                     "loaded images do not match the images array in prompts.json"
@@ -309,16 +286,11 @@ class WanI2V:
             image_indices = (0,)
 
         output_latent_frames = (frame_num - 1) // temporal_stride + 1
-        layout = (
-            VisualRelayLayout.build(output_latent_frames, image_indices)
-            if visual_relay
-            else None
-        )
-        model_latent_frames = (
-            layout.internal_latent_frames if layout else output_latent_frames
-        )
-        if visual_relay and sampling_steps <= 10:
-            raise ValueError("Visual Relay requires more than 10 sampling steps")
+        if any(index >= output_latent_frames for index in image_indices):
+            raise ValueError(
+                "image_index values must be smaller than the output latent length"
+            )
+        model_latent_frames = output_latent_frames
 
         guide_scale = (
             (guide_scale, guide_scale)
@@ -362,37 +334,9 @@ class WanI2V:
                 lat_h=lat_h,
                 lat_w=lat_w,
             )
-        duplicate_indices = (
-            layout.temporary_internal_indices if layout else ()
-        )
-        main_relay = with_duplicate_frame_indices(
-            relay_segments or (), duplicate_indices
-        )
-        handoff_relay = tuple(relay_segments or ())
-
-        def active_prompt(output_index):
-            if prompt_relay_config is None:
-                return input_prompt
-            intervals = prompt_relay_config.frame_intervals(
-                output_latent_frames
-            )
-            active = [
-                prompt
-                for prompt, (start, end) in zip(
-                    prompt_relay_config.local_prompts, intervals
-                )
-                if start <= output_index < end
-            ]
-            return " ".join(
-                [prompt_relay_config.global_prompt, *active]
-            ).strip()
+        main_relay = tuple(relay_segments or ())
 
         text_prompts = [input_prompt]
-        if visual_relay:
-            text_prompts.extend(
-                active_prompt(index)
-                for index in prompt_relay_config.image_indices[1:]
-            )
         if n_prompt == "":
             n_prompt = self.sample_neg_prompt
         null_prompts = [n_prompt] * len(text_prompts)
@@ -446,57 +390,31 @@ class WanI2V:
             encoded = self.vae.encode([video])[0]
             return torch.cat([first_frame_mask(latent_frames), encoded])
 
-        handoff_y = standard_conditioning(
-            resized[0], output_latent_frames
-        )
-
-        if visual_relay:
-            image_by_output = {
-                index: resized[position]
-                for position, index in enumerate(
-                    prompt_relay_config.image_indices
-                )
-            }
-            chunks = [resized[0][:, None]]
-            for output_index in range(1, output_latent_frames):
-                if output_index in image_by_output:
-                    chunks.append(image_by_output[output_index][:, None])
-                chunks.append(
-                    torch.zeros(
-                        3,
-                        self.vae_stride[0],
-                        height,
-                        width,
-                        device=self.device,
-                    )
-                )
-            joint_video = torch.cat(chunks, dim=1)
-            joint_encoded = self.vae.encode(
-                [joint_video],
-                single_frame_indices=layout.temporary_internal_indices,
-                single_frame_four_history=True,
-            )[0]
+        if multi_image_conditioning:
+            pixel_frames = 1 + temporal_stride * (output_latent_frames - 1)
+            joint_video = torch.zeros(
+                3, pixel_frames, height, width, device=self.device
+            )
+            joint_video[:, 0] = resized[0]
+            for position, output_index in enumerate(image_indices[1:], start=1):
+                pixel_index = temporal_stride * output_index
+                joint_video[:, pixel_index] = resized[position]
+            joint_encoded = self.vae.encode([joint_video])[0]
             if joint_encoded.size(1) != model_latent_frames:
                 raise RuntimeError(
-                    "multi-anchor VAE encoding produced the wrong length"
+                    "multi-image VAE conditioning produced the wrong length"
                 )
             joint_mask = first_frame_mask(model_latent_frames)
-            for anchor in layout.temporary_internal_indices:
-                joint_mask[:, anchor].fill_(1)
-            joint_y = torch.cat([joint_mask, joint_encoded])
-            auxiliary_y = []
-            for position, output_index in enumerate(
-                prompt_relay_config.image_indices[1:], start=1
-            ):
-                suffix_frames = output_latent_frames - output_index + 2
-                auxiliary_y.append(
-                    standard_conditioning(
-                        resized[position], suffix_frames
-                    )
-                )
+            for output_index in image_indices[1:]:
+                # The image occupies only the final pixel of this latent's
+                # normal four-pixel VAE chunk: [0, 0, 0, image]. Match that
+                # support with packed mask channels [0, 0, 0, 1].
+                joint_mask[3, output_index].fill_(1)
+            conditioning_y = torch.cat([joint_mask, joint_encoded])
         else:
-            joint_y = handoff_y
-            auxiliary_y = []
+            conditioning_y = standard_conditioning(
+                resized[0], output_latent_frames
+            )
 
         seed = seed if seed >= 0 else random.randint(0, sys.maxsize)
         seed_g = torch.Generator(device=self.device)
@@ -510,19 +428,6 @@ class WanI2V:
             generator=seed_g,
             device=self.device,
         )
-        b0_latents = [
-            torch.randn(
-                16,
-                1,
-                lat_h,
-                lat_w,
-                dtype=torch.float32,
-                generator=seed_g,
-                device=self.device,
-            )
-            for _ in range(layout.temporary_count if layout else 0)
-        ]
-
         def make_scheduler():
             if sample_solver == 'unipc':
                 scheduler = FlowUniPCMultistepScheduler(
@@ -550,9 +455,6 @@ class WanI2V:
 
         sample_scheduler = make_scheduler()
         timesteps = sample_scheduler.timesteps
-        # Each independent B0 stream starts from the exact J solver state.
-        # Copies also keep the streams' multistep histories isolated.
-        b0_schedulers = [copy.deepcopy(sample_scheduler) for _ in b0_latents]
 
         @contextmanager
         def noop_no_sync():
@@ -565,12 +467,6 @@ class WanI2V:
             self.high_noise_model, 'no_sync', noop_no_sync
         )
         boundary = self.boundary * self.num_train_timesteps
-        retained_indices = (
-            layout.retained_internal_indices
-            if layout
-            else tuple(range(output_latent_frames))
-        )
-
         with (
             torch.amp.autocast('cuda', dtype=self.param_dtype),
             torch.no_grad(),
@@ -586,116 +482,29 @@ class WanI2V:
                     if timestep_value.item() >= boundary
                     else guide_scale[0]
                 )
-                guidance_active = visual_relay and sampling_step < 10
-                if guidance_active:
-                    main_input = latent
-                    current_y = joint_y
-                    current_relay = main_relay
-                else:
-                    main_input = latent[:, retained_indices]
-                    current_y = handoff_y
-                    current_relay = handoff_relay
-
                 timestep = torch.stack([timestep_value]).to(self.device)
                 common = {
                     'seq_len': max_seq_len,
-                    'y': [current_y],
+                    'y': [conditioning_y],
                 }
-                if guidance_active:
-                    common.update({
-                        'visual_relay_anchor_indices': (
-                            layout.temporary_internal_indices
-                        ),
-                        'visual_relay_anchor_rope_offset': 0.5,
-                    })
                 conditional = model(
-                    [main_input],
+                    [latent],
                     t=timestep,
                     context=[contexts[0]],
-                    prompt_relay_segments=current_relay,
+                    prompt_relay_segments=main_relay,
                     prompt_relay_query_chunk_size=query_chunk_size,
                     **common,
                 )[0]
                 unconditional = model(
-                    [main_input],
+                    [latent],
                     t=timestep,
                     context=[null_contexts[0]],
                     **common,
                 )[0]
 
-                b0_predictions_cond = []
-                b0_predictions_uncond = []
-                if guidance_active:
-                    for anchor_number, anchor_internal in enumerate(
-                        layout.temporary_internal_indices
-                    ):
-                        selected = layout.auxiliary_internal_indices(
-                            anchor_number
-                        )
-                        own_position = selected.index(anchor_internal)
-                        suffix_indices = selected[own_position:]
-                        b_input = torch.cat(
-                            [
-                                b0_latents[anchor_number],
-                                latent[:, suffix_indices],
-                            ],
-                            dim=1,
-                        )
-                        b_timestep = torch.stack(
-                            [timestep_value]
-                        ).to(self.device)
-                        b_common = {
-                            'seq_len': max_seq_len,
-                            'y': [auxiliary_y[anchor_number]],
-                        }
-                        b_cond = model(
-                            [b_input],
-                            t=b_timestep,
-                            context=[contexts[anchor_number + 1]],
-                            **b_common,
-                        )[0]
-                        b_uncond = model(
-                            [b_input],
-                            t=b_timestep,
-                            context=[null_contexts[anchor_number + 1]],
-                            **b_common,
-                        )[0]
-                        conditional[:, anchor_internal:anchor_internal + 1] = (
-                            b_cond[:, 1:2]
-                        )
-                        unconditional[:, anchor_internal:anchor_internal + 1] = (
-                            b_uncond[:, 1:2]
-                        )
-                        b0_predictions_cond.append(b_cond[:, :1])
-                        b0_predictions_uncond.append(b_uncond[:, :1])
-                        del b_cond, b_uncond, b_input
-
                 prediction = unconditional + scale * (
                     conditional - unconditional
                 )
-                if visual_relay and not guidance_active:
-                    expanded = torch.empty_like(latent)
-                    expanded[:, retained_indices] = prediction
-                    for anchor_internal in layout.temporary_internal_indices:
-                        left = max(anchor_internal - 1, 0)
-                        right = min(anchor_internal + 1, latent.size(1) - 1)
-                        expanded[:, anchor_internal:anchor_internal + 1] = (
-                            0.5
-                            * (
-                                expanded[:, left:left + 1]
-                                + expanded[:, right:right + 1]
-                            )
-                        )
-                    prediction = expanded
-
-                if visual_relay and sampling_step == 10:
-                    _flush_multistep_solver_history(sample_scheduler)
-                    logging.info(
-                        "Visual Relay handoff removed %d temporary anchors "
-                        "and flushed multistep solver history",
-                        layout.temporary_count,
-                    )
-
                 next_latent = sample_scheduler.step(
                     prediction.unsqueeze(0),
                     timestep_value,
@@ -705,33 +514,12 @@ class WanI2V:
                 )[0].squeeze(0)
                 del conditional, unconditional, prediction
                 latent = next_latent
-
-                if guidance_active:
-                    for anchor_number, scheduler in enumerate(b0_schedulers):
-                        b0_prediction = (
-                            b0_predictions_uncond[anchor_number]
-                            + scale
-                            * (
-                                b0_predictions_cond[anchor_number]
-                                - b0_predictions_uncond[anchor_number]
-                            )
-                        )
-                        b0_latents[anchor_number] = scheduler.step(
-                            b0_prediction.unsqueeze(0),
-                            timestep_value,
-                            b0_latents[anchor_number].unsqueeze(0),
-                            return_dict=False,
-                            generator=seed_g,
-                        )[0].squeeze(0)
             if offload_model:
                 self.low_noise_model.cpu()
                 self.high_noise_model.cpu()
                 torch.cuda.empty_cache()
 
-            retained = latent[:, retained_indices]
-            if retained.size(1) != output_latent_frames:
-                raise RuntimeError("Visual Relay retained the wrong output length")
-            videos = self.vae.decode([retained]) if self.rank == 0 else None
+            videos = self.vae.decode([latent]) if self.rank == 0 else None
 
         del latent, sample_scheduler
         if offload_model:

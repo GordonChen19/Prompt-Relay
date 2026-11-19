@@ -14,36 +14,6 @@ __all__ = [
 CACHE_T = 2
 
 
-def _encoding_chunk_plan(pixel_frames, single_frame_indices=None):
-    """Map input pixels to latents with optional one-frame anchor chunks.
-
-    A boundary index refers to a latent, not a pixel. Each replaces a normal
-    four-pixel chunk with one pixel, so the input must be shorter by three
-    pixels per boundary. No input frame may be silently dropped.
-    """
-    indices = tuple(() if single_frame_indices is None else single_frame_indices)
-    if (pixel_frames < 1
-            or any(type(i) is not int or i <= 0 for i in indices)
-            or len(set(indices)) != len(indices)):
-        raise ValueError("anchor indices must be unique positive latent indices")
-    expanded_length = pixel_frames + 3 * len(indices)
-    if (expanded_length - 1) % 4:
-        raise ValueError(
-            "pixel count does not match 1/4-frame encoding chunks: got %d "
-            "pixels with single-frame indices %s" % (pixel_frames, indices))
-    latent_frames = 1 + (expanded_length - 1) // 4
-    if any(i >= latent_frames for i in indices):
-        raise ValueError("anchor boundary exceeds the latent timeline")
-    start = 0
-    plan = []
-    for i in range(latent_frames):
-        single = i in indices
-        end = start + (1 if i == 0 or single else 4)
-        plan.append((start, end, single))
-        start = end
-    return plan
-
-
 class CausalConv3d(nn.Conv3d):
     """
     Causal 3d convolusion.
@@ -128,15 +98,7 @@ class Resample(nn.Module):
         else:
             self.resample = nn.Identity()
 
-    def forward(self, x, feat_cache=None, feat_idx=[0],
-                single_frame_boundary=False, single_frame_four_history=False,
-                temporal_stage=None):
-        expected_single_t = (2 if single_frame_four_history
-                             and temporal_stage == 1 else 1)
-        if single_frame_boundary and (
-                self.mode != 'downsample3d' or feat_cache is None
-                or x.size(2) != expected_single_t):
-            raise ValueError("temporal boundary requires one cached encoder frame")
+    def forward(self, x, feat_cache=None, feat_idx=[0]):
         b, c, t, h, w = x.size()
         if self.mode == 'upsample3d':
             if feat_cache is not None:
@@ -181,41 +143,18 @@ class Resample(nn.Module):
         if self.mode == 'downsample3d':
             if feat_cache is not None:
                 idx = feat_idx[0]
-                history_enabled = single_frame_four_history
-                if (feat_cache[idx] is None
-                        or (single_frame_boundary and not history_enabled)):
-                    # Only the temporal resampler takes its first-frame path.
-                    # Other encoder convolution caches remain warm. Seed this
-                    # resampler's next continuation from the current anchor.
+                if feat_cache[idx] is None:
                     feat_cache[idx] = x.clone()
                     feat_idx[0] += 1
                 else:
-                    previous = feat_cache[idx]
-                    retained_history = (4 if single_frame_four_history
-                                        and temporal_stage == 0 else 1)
-                    if retained_history > 1:
-                        # Retain two pre-convolution feature slices at this
-                        # stage. Ordinary chunks still consume only the most
-                        # recent slice, preserving their original operation.
-                        cache_x = torch.cat([previous, x], dim=2)[
-                            :, :, -retained_history:].clone()
-                    else:
-                        cache_x = x[:, :, -1:, :, :].clone()
-                    if (single_frame_boundary and single_frame_four_history
-                            and temporal_stage == 0):
-                        history = previous[:, :, -4:]
-                        if history.size(2) < 4:
-                            history = torch.cat([
-                                torch.zeros_like(history[:, :, :1]).expand(
-                                    -1, -1, 4 - history.size(2), -1, -1),
-                                history
-                            ], dim=2)
-                    elif (single_frame_boundary and single_frame_four_history
-                          and temporal_stage == 1):
-                        history = previous[:, :, -1:]
-                    else:
-                        history = previous[:, :, -1:]
-                    x = self.time_conv(torch.cat([history, x], dim=2))
+
+                    cache_x = x[:, :, -1:, :, :].clone()
+                    # if cache_x.shape[2] < 2 and feat_cache[idx] is not None and feat_cache[idx]!='Rep':
+                    #     # cache last frame of last two chunk
+                    #     cache_x = torch.cat([feat_cache[idx][:, :, -1, :, :].unsqueeze(2).to(cache_x.device), cache_x], dim=2)
+
+                    x = self.time_conv(
+                        torch.cat([feat_cache[idx][:, :, -1:, :, :], x], 2))
                     feat_cache[idx] = cache_x
                     feat_idx[0] += 1
         return x
@@ -376,11 +315,7 @@ class Encoder3d(nn.Module):
             RMS_norm(out_dim, images=False), nn.SiLU(),
             CausalConv3d(out_dim, z_dim, 3, padding=1))
 
-    def forward(self, x, feat_cache=None, feat_idx=[0],
-                single_frame_boundary=False,
-                single_frame_four_history=False):
-        if single_frame_boundary and (feat_cache is None or x.size(2) != 1):
-            raise ValueError("single-frame boundary requires a cached one-frame chunk")
+    def forward(self, x, feat_cache=None, feat_idx=[0]):
         if feat_cache is not None:
             idx = feat_idx[0]
             cache_x = x[:, :, -CACHE_T:, :, :].clone()
@@ -398,16 +333,8 @@ class Encoder3d(nn.Module):
             x = self.conv1(x)
 
         ## downsamples
-        temporal_stage = 0
         for layer in self.downsamples:
-            if (feat_cache is not None and isinstance(layer, Resample)
-                    and layer.mode == 'downsample3d'):
-                x = layer(x, feat_cache, feat_idx,
-                          single_frame_boundary=single_frame_boundary,
-                          single_frame_four_history=single_frame_four_history,
-                          temporal_stage=temporal_stage)
-                temporal_stage += 1
-            elif feat_cache is not None:
+            if feat_cache is not None:
                 x = layer(x, feat_cache, feat_idx)
             else:
                 x = layer(x)
@@ -586,13 +513,7 @@ class WanVAE_(nn.Module):
         x_recon = self.decode(z)
         return x_recon, mu, log_var
 
-    def encode(self, x, scale, single_frame_indices=None,
-               single_frame_four_history=False):
-        if single_frame_four_history and not single_frame_indices:
-            raise ValueError("history mixing requires an interior single-frame boundary")
-        if single_frame_indices:
-            return self._encode_single_frame_boundaries(
-                x, scale, single_frame_indices, single_frame_four_history)
+    def encode(self, x, scale):
         self.clear_cache()
         ## cache
         t = x.shape[2]
@@ -619,34 +540,6 @@ class WanVAE_(nn.Module):
             mu = (mu - scale[0]) * scale[1]
         self.clear_cache()
         return mu
-
-    def _encode_single_frame_boundaries(self, x, scale, single_frame_indices,
-                                        single_frame_four_history=False):
-        """Retain causal convolution history across compact anchor chunks."""
-        plan = _encoding_chunk_plan(x.shape[2], single_frame_indices)
-        self.clear_cache()
-        try:
-            chunks = []
-            for start, end, boundary in plan:
-                self._enc_conv_idx = [0]
-                chunk = self.encoder(
-                    x[:, :, start:end], feat_cache=self._enc_feat_map,
-                    feat_idx=self._enc_conv_idx,
-                    single_frame_boundary=boundary,
-                    single_frame_four_history=single_frame_four_history)
-                if chunk.shape[2] != 1:
-                    raise RuntimeError("each encoder chunk must produce one latent frame")
-                chunks.append(chunk)
-            out = torch.cat(chunks, dim=2)
-            mu, log_var = self.conv1(out).chunk(2, dim=1)
-            if isinstance(scale[0], torch.Tensor):
-                mu = (mu - scale[0].view(1, self.z_dim, 1, 1, 1)) * scale[1].view(
-                    1, self.z_dim, 1, 1, 1)
-            else:
-                mu = (mu - scale[0]) * scale[1]
-            return mu
-        finally:
-            self.clear_cache()
 
     def decode(self, z, scale):
         self.clear_cache()
@@ -751,24 +644,16 @@ class Wan2_1_VAE:
             z_dim=z_dim,
         ).eval().requires_grad_(False).to(device)
 
-    def encode(self, videos, single_frame_indices=None,
-               single_frame_four_history=False):
+    def encode(self, videos):
         """
         videos: A list of videos each with shape [C, T, H, W].
-        single_frame_indices: Optional latent indices of interior single-frame
-            chunks, applied to each input video. Encoder convolution history
-            is retained while temporal downsampling is bypassed at those chunks.
-        single_frame_four_history: At a single-frame anchor, use four cached
-            slices at the first temporal downsampler and one at the second.
         """
         with amp.autocast(dtype=self.dtype):
             return [
-                self.model.encode(
-                    u.unsqueeze(0), self.scale,
-                    single_frame_indices=single_frame_indices,
-                    single_frame_four_history=single_frame_four_history).float().squeeze(0)
+                self.model.encode(u.unsqueeze(0), self.scale).float().squeeze(0)
                 for u in videos
             ]
+
     def decode(self, zs):
         with amp.autocast(dtype=self.dtype):
             return [

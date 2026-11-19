@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -283,7 +283,6 @@ class PromptRelaySegment:
     tokens_per_frame: int
     mode: str
     sigma: float
-    duplicate_frame_indices: tuple[int, ...] = ()
 
     @property
     def midpoint(self) -> int:
@@ -355,19 +354,6 @@ def build_prompt_relay_segments(
     return segments, relay_config.full_prompt
 
 
-def with_duplicate_frame_indices(
-    segments: Sequence[PromptRelaySegment],
-    duplicate_frame_indices: Sequence[int],
-) -> tuple[PromptRelaySegment, ...]:
-    """Map expanded temporary-anchor positions back to output coordinates."""
-
-    indices = tuple(int(value) for value in duplicate_frame_indices)
-    return tuple(
-        replace(segment, duplicate_frame_indices=indices)
-        for segment in segments
-    )
-
-
 def _find_token_subsequence(haystack, needle, start=0):
     if not needle:
         return None
@@ -397,19 +383,10 @@ def build_temporal_penalty(
     if any(segment.tokens_per_frame != tokens_per_frame for segment in segments):
         raise ValueError("All Prompt Relay segments must use the same token grid")
 
-    expanded_query_frames = (
+    query_frames = (
         torch.arange(query_length, device=device, dtype=torch.long)
         + query_token_offset
     ) // tokens_per_frame
-    duplicate_indices = segments[0].duplicate_frame_indices
-    if any(
-        segment.duplicate_frame_indices != duplicate_indices
-        for segment in segments
-    ):
-        raise ValueError("All Prompt Relay segments must use one frame mapping")
-    query_frames = expanded_query_frames.clone()
-    for duplicate_index in duplicate_indices:
-        query_frames -= (expanded_query_frames > duplicate_index).long()
     penalty = torch.zeros(
         query_length, context_length, device=device, dtype=torch.float32
     )

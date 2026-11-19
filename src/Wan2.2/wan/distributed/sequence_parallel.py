@@ -71,8 +71,6 @@ def sp_dit_forward(
     y=None,
     prompt_relay_segments=None,
     prompt_relay_query_chunk_size=128,
-    visual_relay_anchor_indices=None,
-    visual_relay_anchor_rope_offset=0.5,
 ):
     """
     x:              A list of videos each with shape [C, T, H, W].
@@ -152,8 +150,6 @@ def sp_dit_forward(
         prompt_relay_query_token_offset=prompt_relay_query_token_offset,
         prompt_relay_temporal_penalty=prompt_relay_temporal_penalty,
         prompt_relay_query_chunk_size=prompt_relay_query_chunk_size,
-        visual_relay_anchor_indices=visual_relay_anchor_indices,
-        visual_relay_anchor_rope_offset=visual_relay_anchor_rope_offset,
     )
 
     for block in self.blocks:
@@ -176,8 +172,6 @@ def sp_attn_forward(
     seq_lens,
     grid_sizes,
     freqs,
-    visual_relay_anchor_indices=None,
-    visual_relay_anchor_rope_offset=0.5,
     dtype=torch.bfloat16,
 ):
     b, s, n, d = *x.shape[:2], self.num_heads, self.head_dim
@@ -203,10 +197,6 @@ def sp_attn_forward(
         half(v),
         seq_lens,
         window_size=self.window_size,
-        grid_sizes=grid_sizes,
-        freqs=freqs,
-        visual_relay_anchor_indices=visual_relay_anchor_indices,
-        visual_relay_anchor_rope_offset=visual_relay_anchor_rope_offset,
     )
 
     # output

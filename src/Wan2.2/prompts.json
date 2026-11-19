@@ -3,7 +3,6 @@
   "mode": "gaussian",
   "local_prompts": [
     "SpongeBob flicks the patty off his spatula. The camera zooms in and smoothly tracks it flying through the serving window into the dining room, maintaining a tight side view. Squidward's turquoise hand extends from the lower right, holding a bun topped with ketchup.",
-
     "The patty lands flat on Squidward's bun, splashing ketchup onto his long nose and cheek. The camera widens to reveal Squidward holding the burger level, glancing toward the kitchen with half-lidded eyes. Through the serving window, SpongeBob sheepishly grins with his empty spatula raised."
   ],
   "frame_intervals": [
@@ -11,8 +10,9 @@
     [10, 21]
   ],
   "images": [
-  "/home/gchen/Prompt_Relay/src/Wan2.2/E01.png",
-  "/home/gchen/Prompt_Relay/src/Wan2.2/E02.png"
-],
-  "image_index": [0, 10]
+    "/home/gchen/Prompt_Relay/src/Wan2.2/E01.png",
+    "/home/gchen/Prompt_Relay/src/Wan2.2/E02.png",
+    "/home/gchen/Prompt_Relay/src/Wan2.2/E03.png"
+  ],
+  "image_index": [0, 10, 15]
 }
