@@ -1,6 +1,7 @@
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import argparse
 import logging
+import math
 import os
 import sys
 import warnings
@@ -177,10 +178,12 @@ def _validate_args(args):
         args.frame_num = cfg.frame_num
     if args.query_chunk_size <= 0:
         raise ValueError("query_chunk_size must be positive")
-    if not 0.0 <= args.auxiliary_blend_alpha <= 1.0:
-        raise ValueError("auxiliary_blend_alpha must be between 0 and 1")
-    if args.auxiliary_blend_steps < 0:
-        raise ValueError("auxiliary_blend_steps must be non-negative")
+    if not math.isfinite(args.multiframe_guidance_scale):
+        raise ValueError("multiframe_guidance_scale must be finite")
+    if args.multiframe_guidance_scale < 0.0:
+        raise ValueError("multiframe_guidance_scale must be non-negative")
+    if args.multiframe_guidance_steps < 0:
+        raise ValueError("multiframe_guidance_steps must be non-negative")
 
     args.base_seed = args.base_seed if args.base_seed >= 0 else random.randint(
         0, sys.maxsize)
@@ -247,19 +250,20 @@ def _parse_args():
         ),
     )
     parser.add_argument(
-        "--auxiliary_blend_alpha",
+        "--multiframe_guidance_scale",
         type=float,
-        default=0.5,
+        default=1.0,
         help=(
-            "Recursive velocity blend applied oldest-to-newest for auxiliary "
-            "I2V suffix streams. Set to 0 to disable auxiliary blending."
+            "Guide an Img1-only full-video I2V prediction toward the "
+            "multi-image prediction. 0 is Img1-only, 1 is the normal "
+            "multi-image result, and values above 1 extrapolate."
         ),
     )
     parser.add_argument(
-        "--auxiliary_blend_steps",
+        "--multiframe_guidance_steps",
         type=int,
         default=10,
-        help="Number of initial denoising steps that use auxiliary I2V streams.",
+        help="Number of initial denoising steps using multiframe guidance.",
     )
     parser.add_argument(
         "--ckpt_dir",
@@ -826,8 +830,8 @@ def generate(args):
                 offload_model=args.offload_model,
                 prompt_relay_config=conditioning_config,
                 query_chunk_size=args.query_chunk_size,
-                auxiliary_blend_alpha=args.auxiliary_blend_alpha,
-                auxiliary_blend_steps=args.auxiliary_blend_steps,
+                multiframe_guidance_scale=args.multiframe_guidance_scale,
+                multiframe_guidance_steps=args.multiframe_guidance_steps,
             )
             if rank == 0:
                 save_file = _output_path_for_job(

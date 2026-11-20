@@ -1,4 +1,5 @@
 import ast
+import math
 import random
 import sys
 import unittest
@@ -72,6 +73,7 @@ def load_validate_args():
             "t2v-A14B": config,
             "i2v-A14B": config,
         },
+        "math": math,
         "random": random,
         "sys": sys,
     }
@@ -107,8 +109,8 @@ def batch_args(**overrides):
         sample_guide_scale=None,
         frame_num=None,
         query_chunk_size=128,
-        auxiliary_blend_alpha=0.5,
-        auxiliary_blend_steps=10,
+        multiframe_guidance_scale=1.0,
+        multiframe_guidance_steps=10,
         base_seed=123,
         size="832*480",
     )
@@ -153,11 +155,11 @@ class PromptRelayBatchCliTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must be positive"):
             load_validate_args()(args)
 
-    def test_auxiliary_blend_options_are_validated(self):
-        with self.assertRaisesRegex(ValueError, "between 0 and 1"):
-            load_validate_args()(batch_args(auxiliary_blend_alpha=1.1))
+    def test_multiframe_guidance_options_are_validated(self):
         with self.assertRaisesRegex(ValueError, "must be non-negative"):
-            load_validate_args()(batch_args(auxiliary_blend_steps=-1))
+            load_validate_args()(batch_args(multiframe_guidance_scale=-0.1))
+        with self.assertRaisesRegex(ValueError, "must be non-negative"):
+            load_validate_args()(batch_args(multiframe_guidance_steps=-1))
 
     def test_duplicate_configured_filenames_are_rejected(self):
         args = batch_args(
@@ -193,18 +195,18 @@ class PromptRelayBatchCliTests(unittest.TestCase):
             for keyword in query_chunk_size.keywords
         }
         self.assertEqual(keywords["default"].value, 128)
-        self.assertIn("--auxiliary_blend_alpha", arguments)
-        self.assertIn("--auxiliary_blend_steps", arguments)
-        alpha_keywords = {
+        self.assertIn("--multiframe_guidance_scale", arguments)
+        self.assertIn("--multiframe_guidance_steps", arguments)
+        guidance_scale_keywords = {
             keyword.arg: keyword.value
-            for keyword in arguments["--auxiliary_blend_alpha"].keywords
+            for keyword in arguments["--multiframe_guidance_scale"].keywords
         }
-        step_keywords = {
+        guidance_step_keywords = {
             keyword.arg: keyword.value
-            for keyword in arguments["--auxiliary_blend_steps"].keywords
+            for keyword in arguments["--multiframe_guidance_steps"].keywords
         }
-        self.assertEqual(alpha_keywords["default"].value, 0.5)
-        self.assertEqual(step_keywords["default"].value, 10)
+        self.assertEqual(guidance_scale_keywords["default"].value, 1.0)
+        self.assertEqual(guidance_step_keywords["default"].value, 10)
 
     def test_concat_mode_disables_temporal_routing(self):
         conditioning_config = load_output_helpers()[

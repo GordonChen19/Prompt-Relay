@@ -7,7 +7,6 @@ import random
 import sys
 import types
 from contextlib import contextmanager
-from dataclasses import replace
 from functools import partial
 
 import numpy as np
@@ -246,8 +245,8 @@ class WanI2V:
         prompt_relay_config=None,
         prompt_filepath=None,
         query_chunk_size=128,
-        auxiliary_blend_alpha=0.5,
-        auxiliary_blend_steps=10,
+        multiframe_guidance_scale=1.0,
+        multiframe_guidance_steps=10,
     ):
         """Generate standard or sparse multi-image Prompt Relay I2V."""
 
@@ -262,18 +261,21 @@ class WanI2V:
         if type(query_chunk_size) is not int or query_chunk_size <= 0:
             raise ValueError("query_chunk_size must be a positive integer")
         if (
-            isinstance(auxiliary_blend_alpha, bool)
-            or not isinstance(auxiliary_blend_alpha, (int, float))
-            or not 0.0 <= float(auxiliary_blend_alpha) <= 1.0
+            isinstance(multiframe_guidance_scale, bool)
+            or not isinstance(multiframe_guidance_scale, (int, float))
+            or not math.isfinite(multiframe_guidance_scale)
+            or multiframe_guidance_scale < 0.0
         ):
-            raise ValueError("auxiliary_blend_alpha must be between 0 and 1")
+            raise ValueError(
+                "multiframe_guidance_scale must be a finite non-negative number"
+            )
         if (
-            isinstance(auxiliary_blend_steps, bool)
-            or not isinstance(auxiliary_blend_steps, int)
-            or auxiliary_blend_steps < 0
+            isinstance(multiframe_guidance_steps, bool)
+            or not isinstance(multiframe_guidance_steps, int)
+            or multiframe_guidance_steps < 0
         ):
-            raise ValueError("auxiliary_blend_steps must be non-negative")
-        auxiliary_blend_alpha = float(auxiliary_blend_alpha)
+            raise ValueError("multiframe_guidance_steps must be non-negative")
+        multiframe_guidance_scale = float(multiframe_guidance_scale)
         temporal_stride = self.vae_stride[0]
         if (
             isinstance(frame_num, bool)
@@ -432,41 +434,15 @@ class WanI2V:
                 resized[0], output_latent_frames
             )
 
-        auxiliary_streams = []
+        first_image_conditioning_y = None
         if (
             multi_image_conditioning
-            and auxiliary_blend_alpha > 0.0
-            and auxiliary_blend_steps > 0
+            and multiframe_guidance_scale != 1.0
+            and multiframe_guidance_steps > 0
         ):
-            # The first image owns J and the final configured image is a
-            # destination constraint, so only intermediate images start B.
-            for image_position, anchor_index in enumerate(
-                image_indices[1:-1], start=1
-            ):
-                # An intermediate image at the final latent has no suffix.
-                if anchor_index + 1 >= output_latent_frames:
-                    continue
-                suffix_frames = output_latent_frames - anchor_index
-                shifted_relay = tuple(
-                    replace(
-                        segment,
-                        frame_start=segment.frame_start - anchor_index,
-                        frame_end=segment.frame_end - anchor_index,
-                    )
-                    for segment in main_relay
-                )
-                auxiliary_streams.append((
-                    anchor_index,
-                    standard_conditioning(
-                        resized[image_position], suffix_frames
-                    ),
-                    shifted_relay,
-                    int(
-                        math.ceil(
-                            suffix_frames * tokens_per_frame / self.sp_size
-                        )
-                    ) * self.sp_size,
-                ))
+            first_image_conditioning_y = standard_conditioning(
+                resized[0], output_latent_frames
+            )
 
         seed = seed if seed >= 0 else random.randint(0, sys.maxsize)
         seed_g = torch.Generator(device=self.device)
@@ -558,56 +534,43 @@ class WanI2V:
                     conditional - unconditional
                 )
                 del conditional, unconditional
-                if sampling_step < auxiliary_blend_steps:
-                    # Rebuild every auxiliary stream from the current J suffix.
-                    # Applying streams in ascending anchor order yields the
-                    # recursive geometric weights requested by Visual Relay.
-                    for (
-                        anchor_index,
-                        auxiliary_y,
-                        auxiliary_relay,
-                        auxiliary_seq_len,
-                    ) in auxiliary_streams:
-                        auxiliary_input = latent[:, anchor_index:]
-                        auxiliary_common = {
-                            'seq_len': auxiliary_seq_len,
-                            'y': [auxiliary_y],
-                        }
-                        auxiliary_conditional = model(
-                            [auxiliary_input],
-                            t=timestep,
-                            context=[contexts[0]],
-                            prompt_relay_segments=auxiliary_relay,
-                            prompt_relay_query_chunk_size=query_chunk_size,
-                            **auxiliary_common,
-                        )[0]
-                        auxiliary_unconditional = model(
-                            [auxiliary_input],
-                            t=timestep,
-                            context=[null_contexts[0]],
-                            **auxiliary_common,
-                        )[0]
-                        auxiliary_prediction = (
-                            auxiliary_unconditional
-                            + scale
-                            * (
-                                auxiliary_conditional
-                                - auxiliary_unconditional
-                            )
+                if (
+                    first_image_conditioning_y is not None
+                    and sampling_step < multiframe_guidance_steps
+                ):
+                    first_image_common = {
+                        'seq_len': max_seq_len,
+                        'y': [first_image_conditioning_y],
+                    }
+                    first_image_conditional = model(
+                        [latent],
+                        t=timestep,
+                        context=[contexts[0]],
+                        prompt_relay_segments=main_relay,
+                        prompt_relay_query_chunk_size=query_chunk_size,
+                        **first_image_common,
+                    )[0]
+                    first_image_unconditional = model(
+                        [latent],
+                        t=timestep,
+                        context=[null_contexts[0]],
+                        **first_image_common,
+                    )[0]
+                    first_image_prediction = (
+                        first_image_unconditional
+                        + scale
+                        * (
+                            first_image_conditional
+                            - first_image_unconditional
                         )
-                        del auxiliary_conditional, auxiliary_unconditional
-                        # This stream does not modify its own anchor velocity;
-                        # it contributes only to frames strictly after it.
-                        prediction[:, anchor_index + 1:] = (
-                            (1.0 - auxiliary_blend_alpha)
-                            * prediction[:, anchor_index + 1:]
-                            + auxiliary_blend_alpha
-                            * auxiliary_prediction[:, 1:]
-                        )
-                        del (
-                            auxiliary_prediction,
-                            auxiliary_input,
-                        )
+                    )
+                    del first_image_conditional, first_image_unconditional
+                    prediction = (
+                        first_image_prediction
+                        + multiframe_guidance_scale
+                        * (prediction - first_image_prediction)
+                    )
+                    del first_image_prediction
                 next_latent = sample_scheduler.step(
                     prediction.unsqueeze(0),
                     timestep_value,

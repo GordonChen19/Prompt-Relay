@@ -66,8 +66,8 @@ class I2VPromptRelayStructureTests(unittest.TestCase):
         self.assertIn("prompt_relay_config", argument_names)
         self.assertIn("prompt_filepath", argument_names)
         self.assertIn("query_chunk_size", argument_names)
-        self.assertIn("auxiliary_blend_alpha", argument_names)
-        self.assertIn("auxiliary_blend_steps", argument_names)
+        self.assertIn("multiframe_guidance_scale", argument_names)
+        self.assertIn("multiframe_guidance_steps", argument_names)
 
     def test_intermediate_images_use_in_place_pixel_slots(self):
         self.assertIn(
@@ -95,7 +95,7 @@ class I2VPromptRelayStructureTests(unittest.TestCase):
             "(frame_num - 1) % temporal_stride != 0", SOURCE
         )
 
-    def test_in_place_conditioning_uses_standard_attention(self):
+    def test_in_place_conditioning_has_no_fractional_rope_attention(self):
         self.assertNotIn("visual_relay_anchor_rope_offset", SOURCE)
         self.assertNotIn("visual_relay_shifted_attention", SOURCE)
 
@@ -104,19 +104,28 @@ class I2VPromptRelayStructureTests(unittest.TestCase):
             self.assertNotIn("visual_relay_anchor_indices", source)
             self.assertNotIn("visual_relay_shifted_attention", source)
 
-    def test_image_conditioning_does_not_add_self_attention_masking(self):
+    def test_retired_anchor_mask_implementation_stays_removed(self):
         for source in (MODEL_SOURCE, ATTENTION_SOURCE, SP_SOURCE, ULYSSES_SOURCE):
             self.assertNotIn("image_conditioned_frame_attention", source)
             self.assertNotIn("image_condition_indices", source)
 
-    def test_auxiliary_streams_share_j_state_and_blend_after_anchor(self):
-        self.assertIn("image_indices[1:-1]", SOURCE)
-        self.assertIn("auxiliary_input = latent[:, anchor_index:]", SOURCE)
-        self.assertIn("prediction[:, anchor_index + 1:]", SOURCE)
-        self.assertIn("auxiliary_prediction[:, 1:]", SOURCE)
-        self.assertIn("sampling_step < auxiliary_blend_steps", SOURCE)
-        self.assertNotIn("auxiliary_scheduler", SOURCE)
-        self.assertNotIn("auxiliary_latent", SOURCE)
+    def test_self_attention_remains_standard_and_bidirectional(self):
+        for source in (MODEL_SOURCE, ATTENTION_SOURCE, SP_SOURCE, ULYSSES_SOURCE):
+            self.assertNotIn("segment_lookahead_attention", source)
+            self.assertNotIn("image_anchor_indices", source)
+        self.assertNotIn("segment_lookahead_attention", SOURCE)
+
+    def test_intermediate_suffix_streams_are_removed(self):
+        self.assertNotIn("auxiliary_streams", SOURCE)
+        self.assertNotIn("auxiliary_input", SOURCE)
+        self.assertNotIn("auxiliary_prediction", SOURCE)
+        self.assertNotIn("auxiliary_blend", SOURCE)
+
+    def test_multiframe_guidance_uses_full_length_img1_baseline(self):
+        self.assertIn("first_image_conditioning_y = standard_conditioning", SOURCE)
+        self.assertIn("first_image_prediction", SOURCE)
+        self.assertIn("prediction - first_image_prediction", SOURCE)
+        self.assertIn("sampling_step < multiframe_guidance_steps", SOURCE)
 
     def test_distributed_prompt_relay_routing_is_preserved(self):
         self.assertIn("prompt_relay_segments=None", SP_SOURCE)

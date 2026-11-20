@@ -513,22 +513,28 @@ Only the packed mask channel corresponding to that final pixel is enabled:
 ```
 
 No temporary latent is inserted. The noisy video retains its requested latent
-length and uses standard global I2V self-attention for every denoising step.
-During the first 10 sampling steps, every intermediate configured image also
-creates an auxiliary suffix view. The first image owns J, while the final
-configured image is treated only as a destination and never creates B. Thus
-three images create one auxiliary stream. At every step, each auxiliary view
-is rebuilt directly from the current main J latent, but its image is encoded
-as ordinary first-frame I2V conditioning. It has no persistent latent or
-scheduler. Its CFG velocity is mixed only into J frames strictly after its
-anchor. Auxiliary streams are applied oldest-to-newest with `alpha=0.5`,
-giving geometrically decaying weights to older streams. Only J is advanced by
-the scheduler and decoded.
+length. Video self-attention remains Wan's standard global bidirectional
+attention: every video token may directly attend to earlier and later video
+tokens, including all image anchors. Prompt Relay continues to affect only
+text cross-attention.
+No intermediate-image suffix streams are created. Only full-length J
+predictions are evaluated, and only the main J latent is advanced by the
+scheduler and decoded.
 
-Use `--auxiliary_blend_alpha` to change the recursive blend or set it to `0`
-to recover the in-place-only baseline. Use `--auxiliary_blend_steps` to change
-the default 10-step lifetime. There is no fractional RoPE offset, temporal
-compression, handoff, solver-history reset, extra latent, or discarded frame.
+An optional full-length Img1-only I2V baseline can guide the multi-image
+prediction during the initial denoising steps:
+
+```text
+v = v_img1 + multiframe_guidance_scale * (v_multi - v_img1)
+```
+
+Set `--multiframe_guidance_scale 1` for the normal multi-image result (and no
+extra model evaluations), `0` for the Img1-only prediction during the guidance
+window, or a value between them to trade regular I2V behavior against later
+anchors. `--multiframe_guidance_steps` defaults to 10. Both predictions use
+the same noisy latent, timestep, text CFG, and Prompt Relay context.
+There is no fractional RoPE offset, temporal compression, handoff,
+solver-history reset, extra latent, or discarded frame.
 Relative image paths are resolved beside the JSON file. The Gaussian Prompt
 Relay default remains `sigma: 0.932`.
 

@@ -2,8 +2,8 @@
   "global_prompt": "A single continuous cinematic tracking shot.",
   "mode": "gaussian",
   "local_prompts": [
-    "SpongeBob flicks the patty off his spatula. The camera zooms in and smoothly tracks it flying through the serving window into the dining room, maintaining a tight side view. Squidward's turquoise hand extends from the lower right, holding a bun topped with ketchup.",
-    "The patty lands flat on Squidward's bun, splashing ketchup onto his long nose and cheek. The camera widens to reveal Squidward holding the burger level, glancing toward the kitchen with half-lidded eyes. Through the serving window, SpongeBob sheepishly grins with his empty spatula raised."
+    "SpongeBob tosses the Krabby Patty into the air with his spatula, sending it through the serving window into the dining room.",
+    "The patty lands flat on the bun, splashing ketchup onto Squidward's nose."
   ],
   "frame_intervals": [
     [0, 10],
