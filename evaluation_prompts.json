@@ -1,0 +1,119 @@
+[
+  {
+    "id": "p001",
+    "file_name": "p001.mp4",
+    "global_prompt": "A photorealistic workplace scene set in a modern corporate office, captured in one continuous long take without any cuts. The office features an elevator entrance, a coat rack, workstations, desks, and neutral corporate interiors. Realistic body language, smooth camera movement, and consistent character identities, wardrobe, lighting, and spatial continuity throughout.",
+    "local_prompts": [
+      "The elevator doors open, and a professional woman with a coat on walks out of the elevator into the office.",
+      "The woman approaches a coat rack, stops beside it, takes off her outer coat and hangs it on the coat rack.",
+      "A man wearing a navy business suit walks past the woman in the opposite direction, and the camera smoothly shifts to follow him from behind.",
+      "The man walks to his workstation, pulls out his office chair, and sits down.",
+      "The man picks up a cup of tea from his desk and takes a sip."
+    ]
+  },
+  {
+    "id": "p002",
+    "file_name": "p002.mp4",
+    "global_prompt": "A photorealistic cinematic travel vlog filmed entirely from a handheld, front-facing selfie perspective. The same young man holds the camera at arm's length, looking directly into the lens with his face centered in the frame. The camera maintains consistent selfie framing, realistic handheld movement, and natural arm-length perspective throughout. The man's identity, facial features, hairstyle, and clothing remain identical across all locations.",
+    "local_prompts": [
+      "A man films himself on a busy Hong Kong street at night, with neon signs, skyscrapers, and pedestrians behind him.",
+      "The man raises his hand toward the camera until his palm completely covers the lens, blocking the Hong Kong street, making it pitch black.",
+      "The man pulls his hand away, revealing the Grand Canyon with vast red rock cliffs and deep valleys behind him as he continues filming himself.",
+      "The man raises his hand toward the camera until his palm completely covers the lens, obscuring the Grand Canyon, making it pitch black.",
+      "The man removes his hand, revealing a snowy Icelandic landscape with colorful northern lights glowing in the night sky behind him.",
+      "The man raises his hand toward the camera until his palm completely covers the lens, blocking the northern lights and snowy landscape, making it pitch black.",
+      "The man pulls his hand away, revealing thousands of glowing golden sky lanterns floating into the night sky behind him as he continues filming himself."
+    ]
+  },
+  {
+    "id": "p003",
+    "file_name": "p003.mp4",
+    "global_prompt": "A photorealistic cinematic sequence featuring seamless camera. The camera movement is fluid and continuous, using smooth zooms, tracking shots, and perspective transitions without abrupt cuts.",
+    "local_prompts": [
+      "A large eagle soars high through the sky, flapping its wings as the camera follows its flight.",
+      "The camera zooms into the eagle's eye, where a reflected cyberpunk city expands to fill the frame, seamlessly revealing the neon-lit metropolis.",
+      "The camera flies through a neon-lit cyberpunk city with moving cars, wet streets, and towering skyscrapers.",
+      "The camera approaches and tracks a moving car, sliding alongside it to reveal a man wearing dark sunglasses behind the driver's window.",
+      "The camera pulls back to reveal that the cyberpunk city scene is playing on the screen of an old television.",
+      "The camera zooms out to reveal a cozy vintage living room with warm lighting, old furniture, and people watching the television."
+    ]
+  },
+  {
+    "id": "p004",
+    "file_name": "p004.mp4",
+    "global_prompt": "A photorealistic continuous video that takes place in the same vast field of tall green grass at sunset, captured in a continuous low-angle handheld tracking shot.",
+    "local_prompts": [
+      "A rugged caveman wearing animal furs walks through tall green grass at sunset while the camera tracks alongside him.",
+      "The camera rapidly pans downward past the caveman's hairy legs until motion-blurred green grass completely fills the frame.",
+      "The camera rapidly pans upward from the grass, revealing a Spartan soldier wearing bronze greaves, a red tunic, and carrying a large round shield.",
+      "The camera rapidly pans downward past the Spartan's shield and armored legs until motion-blurred green grass completely fills the frame.",
+      "The camera rapidly pans upward from the grass, revealing a medieval knight in shining plate armor riding a horse.",
+      "The camera rapidly pans downward past the medieval knight's horse and its moving legs until motion-blurred grass completely fills the frame.",
+      "The camera pans upward from the grass, revealing a World War II soldier wearing a steel helmet, olive-drab uniform, and carrying a rifle."
+    ]
+  },
+  {
+    "id": "p005",
+    "file_name": "p005.mp4",
+    "global_prompt": "A photorealistic cinematic golf scene set on a beautiful golf course during golden hour, captured in one continuous shot without cuts. The camera uses smooth tilts, low-angle tracking movements, and natural reframing to follow the action.",
+    "local_prompts": [
+      "A close-up shows a male golfer's face as he looks downward with a focused expression on a sunlit golf course.",
+      "The camera tilts downward from the golfer's face to reveal his shoes, golf club, and a white golf ball resting on the grass.",
+      "The golfer lightly taps the white golf ball with his club, causing it to begin rolling across the green.",
+      "The camera tracks the golf ball as it rolls across the putting green, approaching the hole and gradually slowing down.",
+      "The golf ball stops just a few centimeters short of the hole without falling in.",
+      "A small brown squirrel enters the frame and approaches the stationary golf ball beside the hole.",
+      "The squirrel pushes the golf ball with its front paws, causing the ball to roll into the hole."
+    ]
+  },
+  {
+    "id": "p006",
+    "file_name": "p006.mp4",
+    "global_prompt": "A photorealistic cinematic family scene set in a cozy suburban home on a sunny morning, captured in one continuous handheld tracking shot without cuts. Natural character interactions, realistic animal movements, fluid camera tracking, warm morning sunlight, and consistent spatial continuity throughout.",
+    "local_prompts": [
+      "The camera follows a golden retriever weaving between the legs of family members gathered around a busy breakfast table.",
+      "The dog stands on its hind legs, placing its front paws against the edge of the table.",
+      "A young schoolboy gently pats the dog's head and feeds it a strip of bacon.",
+      "The boy gets up from the breakfast table, and the camera follows him as he picks up his school backpack.",
+      "The camera tracks the boy as he runs out the front door toward a waiting yellow school bus and climbs aboard.",
+      "The camera turns around to reveal the golden retriever standing sadly in the front doorway, watching the school bus drive away."
+    ]
+  },
+  {
+    "id": "p007",
+    "file_name": "p007.mp4",
+    "global_prompt": "A cinematic anime-style comedy scene set inside a quiet, spacious library with towering bookshelves, wooden reading tables, and warm afternoon sunlight filtering through tall windows. The camera uses smooth continuous movements. Expressive anime facial reactions, exaggerated comedic timing, detailed backgrounds, and consistent character appearances throughout. The sequence unfolds as one continuous cinematic shot without visible cuts.",
+    "local_prompts": [
+      "The camera zooms out from a large NO FOOD ALLOWED sign on the wall of a quiet library.",
+      "The camera continues zooming out, revealing a side view of a young girl sitting at a library table.",
+      "The girl reaches into her backpack and pulls out a bag of potato chips.",
+      "The girl suddenly freezes mid-bite, holding a potato chip near her mouth with a shocked expression.",
+      "The camera pans left to reveal a group of stern police officers wearing dark sunglasses and holding metal handcuffs behind the girl."
+    ]
+  },
+  {
+    "id": "p008",
+    "file_name": "p008.mp4",
+    "global_prompt": "A photorealistic cinematic Formula 1 racing sequence at a modern Grand Prix circuit during daylight. g the red car's front-right tire. The entire sequence unfolds through smooth, continuous camera movements and visually seamless transitions without abrupt cuts.",
+    "local_prompts": [
+      "The camera pulls backward from a close-up inside a Formula 1 driver's helmet, revealing the driver gripping the steering wheel of a red racing car.",
+      "The camera zooms out of the driver's cockpit, revealing a red and a blue Formula 1 car racing side by side.",
+      "The red and blue Formula 1 cars collide, damaging both vehicles and puncturing the red car's front-right tire.",
+      "The camera pulls back to reveal the racing footage playing on a television surrounded by red-uniformed pit crew members inside a Formula 1 garage.",
+      "The red pit crew jumps up, grabs replacement tires and wheel guns, and rushes out of the garage as the camera follows them."
+    ]
+  },
+  {
+    "id": "p009",
+    "file_name": "p009.mp4",
+    "global_prompt": "A photorealistic cinematic fantasy-action sequence filmed entirely from a first-person perspective in a bustling modern city during daylight. The camera represents the eyes of a pedestrian walking along a crowded sidewalk, with natural handheld head movements and realistic human eye-level framing. Tall buildings, busy roads, pedestrians, storefronts, and moving traffic create a lively urban environment.",
+    "local_prompts": [
+      "The camera turns toward a building as a masked robber bursts outside carrying a duffel bag full of stolen money.",
+      "The robber runs toward a parked black car, opens the driver's door, and climbs inside with the stolen money.",
+      "The robber drives away from the curb as the first-person camera follows it.",
+      "A giant dragon flies overhead between city skyscrapers as the first-person camera looks upward.",
+      "The dragon lands directly on the getaway car, completely flattening it beneath its massive body.",
+      "The dragon stands over the crushed car, spreads its wings, and opens its glowing jaws as it breathe fire."
+    ]
+  }
+]
