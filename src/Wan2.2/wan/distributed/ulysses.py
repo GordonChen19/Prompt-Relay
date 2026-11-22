@@ -41,7 +41,6 @@ def distributed_attention(
         k_lens=seq_lens,
         window_size=window_size,
     )
-
     # scatter q/k/v sequence
     x = all_to_all(x, scatter_dim=1, gather_dim=2)
     return x

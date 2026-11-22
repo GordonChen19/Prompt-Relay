@@ -1,7 +1,6 @@
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import argparse
 import logging
-import math
 import os
 import sys
 import warnings
@@ -178,13 +177,6 @@ def _validate_args(args):
         args.frame_num = cfg.frame_num
     if args.query_chunk_size <= 0:
         raise ValueError("query_chunk_size must be positive")
-    if not math.isfinite(args.multiframe_guidance_scale):
-        raise ValueError("multiframe_guidance_scale must be finite")
-    if args.multiframe_guidance_scale < 0.0:
-        raise ValueError("multiframe_guidance_scale must be non-negative")
-    if args.multiframe_guidance_steps < 0:
-        raise ValueError("multiframe_guidance_steps must be non-negative")
-
     args.base_seed = args.base_seed if args.base_seed >= 0 else random.randint(
         0, sys.maxsize)
     # Size check
@@ -248,22 +240,6 @@ def _parse_args():
             "Prompt Relay cross-attention query rows processed per chunk. "
             "Smaller values use less peak memory but are slower."
         ),
-    )
-    parser.add_argument(
-        "--multiframe_guidance_scale",
-        type=float,
-        default=1.0,
-        help=(
-            "Guide an Img1-only full-video I2V prediction toward the "
-            "multi-image prediction. 0 is Img1-only, 1 is the normal "
-            "multi-image result, and values above 1 extrapolate."
-        ),
-    )
-    parser.add_argument(
-        "--multiframe_guidance_steps",
-        type=int,
-        default=10,
-        help="Number of initial denoising steps using multiframe guidance.",
     )
     parser.add_argument(
         "--ckpt_dir",
@@ -514,24 +490,18 @@ def _save_generated_video(video, save_file, args, cfg):
         merge_video_audio(video_path=str(output_path), audio_path=audio_path)
 
 
-def _load_prompt_images(prompt_path, relay_config, *, first_only=False):
-    """Load JSON image paths, resolving relative paths beside the JSON file."""
+def _load_prompt_image(prompt_path, relay_config):
+    """Load only the ordinary first-frame I2V image from a prompt JSON."""
 
     if relay_config is None or not relay_config.images:
         return None
     base = Path(prompt_path).resolve().parent
-    loaded = []
-    configured_paths = (
-        relay_config.images[:1] if first_only else relay_config.images
-    )
-    for configured_path in configured_paths:
-        path = Path(configured_path).expanduser()
-        if not path.is_absolute():
-            path = base / path
-        if not path.is_file():
-            raise ValueError(f"I2V conditioning image does not exist: {path}")
-        loaded.append(Image.open(path).convert("RGB"))
-    return loaded
+    path = Path(relay_config.images[0]).expanduser()
+    if not path.is_absolute():
+        path = base / path
+    if not path.is_file():
+        raise ValueError(f"I2V conditioning image does not exist: {path}")
+    return Image.open(path).convert("RGB")
 
 
 def generate(args):
@@ -802,21 +772,11 @@ def generate(args):
                 args.prompt_mode,
                 relay_config,
             )
-            configured_images = (
-                _load_prompt_images(
-                    prompt_path,
-                    relay_config,
-                    first_only=args.prompt_mode == "concat",
-                )
+            configured_image = (
+                _load_prompt_image(prompt_path, relay_config)
                 if prompt_path is not None else None
             )
-            if configured_images is None:
-                job_image = img
-            elif args.prompt_mode == "relay":
-                job_image = configured_images
-            else:
-                # Concat remains the ordinary first-frame I2V baseline.
-                job_image = configured_images[0]
+            job_image = img if configured_image is None else configured_image
             video = wan_i2v.generate(
                 prompt,
                 job_image,
@@ -830,8 +790,6 @@ def generate(args):
                 offload_model=args.offload_model,
                 prompt_relay_config=conditioning_config,
                 query_chunk_size=args.query_chunk_size,
-                multiframe_guidance_scale=args.multiframe_guidance_scale,
-                multiframe_guidance_steps=args.multiframe_guidance_steps,
             )
             if rank == 0:
                 save_file = _output_path_for_job(

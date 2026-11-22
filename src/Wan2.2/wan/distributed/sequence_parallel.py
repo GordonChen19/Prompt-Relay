@@ -101,7 +101,7 @@ def sp_dit_forward(
 
     # time embeddings
     if t.dim() == 1:
-        t = t.expand(t.size(0), seq_len)
+        t = t[:, None].expand(t.size(0), seq_len)
     with torch.amp.autocast('cuda', dtype=torch.float32):
         bt = t.size(0)
         t = t.flatten()

@@ -245,10 +245,8 @@ class WanI2V:
         prompt_relay_config=None,
         prompt_filepath=None,
         query_chunk_size=128,
-        multiframe_guidance_scale=1.0,
-        multiframe_guidance_steps=10,
     ):
-        """Generate standard or sparse multi-image Prompt Relay I2V."""
+        """Generate ordinary first-frame I2V with optional Prompt Relay text."""
 
         if prompt_relay_config is not None and prompt_filepath is not None:
             raise ValueError("Pass prompt_relay_config or prompt_filepath, not both")
@@ -260,22 +258,6 @@ class WanI2V:
             raise TypeError("prompt_relay_config must be a PromptRelayConfig")
         if type(query_chunk_size) is not int or query_chunk_size <= 0:
             raise ValueError("query_chunk_size must be a positive integer")
-        if (
-            isinstance(multiframe_guidance_scale, bool)
-            or not isinstance(multiframe_guidance_scale, (int, float))
-            or not math.isfinite(multiframe_guidance_scale)
-            or multiframe_guidance_scale < 0.0
-        ):
-            raise ValueError(
-                "multiframe_guidance_scale must be a finite non-negative number"
-            )
-        if (
-            isinstance(multiframe_guidance_steps, bool)
-            or not isinstance(multiframe_guidance_steps, int)
-            or multiframe_guidance_steps < 0
-        ):
-            raise ValueError("multiframe_guidance_steps must be non-negative")
-        multiframe_guidance_scale = float(multiframe_guidance_scale)
         temporal_stride = self.vae_stride[0]
         if (
             isinstance(frame_num, bool)
@@ -288,26 +270,7 @@ class WanI2V:
                 "latent/decode alignment"
             )
 
-        multi_image_conditioning = bool(
-            prompt_relay_config is not None
-            and prompt_relay_config.visual_relay_enabled
-        )
-        image_values = list(img) if isinstance(img, (list, tuple)) else [img]
-        if multi_image_conditioning:
-            if len(image_values) != len(prompt_relay_config.images):
-                raise ValueError(
-                    "loaded images do not match the images array in prompts.json"
-                )
-            image_indices = prompt_relay_config.image_indices
-        else:
-            image_values = image_values[:1]
-            image_indices = (0,)
-
         output_latent_frames = (frame_num - 1) // temporal_stride + 1
-        if any(index >= output_latent_frames for index in image_indices):
-            raise ValueError(
-                "image_index values must be smaller than the output latent length"
-            )
         model_latent_frames = output_latent_frames
 
         guide_scale = (
@@ -315,11 +278,8 @@ class WanI2V:
             if isinstance(guide_scale, float)
             else guide_scale
         )
-        images = [
-            TF.to_tensor(value).sub_(0.5).div_(0.5).to(self.device)
-            for value in image_values
-        ]
-        height, width = images[0].shape[1:]
+        image = TF.to_tensor(img).sub_(0.5).div_(0.5).to(self.device)
+        height, width = image.shape[1:]
         aspect_ratio = height / width
         lat_h = round(
             np.sqrt(max_area * aspect_ratio)
@@ -374,14 +334,11 @@ class WanI2V:
                 value.to(self.device) for value in null_contexts
             ]
 
-        resized = [
-            torch.nn.functional.interpolate(
-                value[None].cpu(),
-                size=(height, width),
-                mode='bicubic',
-            )[0].to(self.device)
-            for value in images
-        ]
+        resized = torch.nn.functional.interpolate(
+            image[None].cpu(),
+            size=(height, width),
+            mode='bicubic',
+        )[0].to(self.device)
 
         def first_frame_mask(latent_frames):
             mask = torch.zeros(
@@ -408,41 +365,9 @@ class WanI2V:
             encoded = self.vae.encode([video])[0]
             return torch.cat([first_frame_mask(latent_frames), encoded])
 
-        if multi_image_conditioning:
-            pixel_frames = 1 + temporal_stride * (output_latent_frames - 1)
-            joint_video = torch.zeros(
-                3, pixel_frames, height, width, device=self.device
-            )
-            joint_video[:, 0] = resized[0]
-            for position, output_index in enumerate(image_indices[1:], start=1):
-                pixel_index = temporal_stride * output_index
-                joint_video[:, pixel_index] = resized[position]
-            joint_encoded = self.vae.encode([joint_video])[0]
-            if joint_encoded.size(1) != model_latent_frames:
-                raise RuntimeError(
-                    "multi-image VAE conditioning produced the wrong length"
-                )
-            joint_mask = first_frame_mask(model_latent_frames)
-            for output_index in image_indices[1:]:
-                # The image occupies only the final pixel of this latent's
-                # normal four-pixel VAE chunk: [0, 0, 0, image]. Match that
-                # support with packed mask channels [0, 0, 0, 1].
-                joint_mask[3, output_index].fill_(1)
-            conditioning_y = torch.cat([joint_mask, joint_encoded])
-        else:
-            conditioning_y = standard_conditioning(
-                resized[0], output_latent_frames
-            )
-
-        first_image_conditioning_y = None
-        if (
-            multi_image_conditioning
-            and multiframe_guidance_scale != 1.0
-            and multiframe_guidance_steps > 0
-        ):
-            first_image_conditioning_y = standard_conditioning(
-                resized[0], output_latent_frames
-            )
+        conditioning_y = standard_conditioning(resized, output_latent_frames)
+        del image, resized
+        torch.cuda.empty_cache()
 
         seed = seed if seed >= 0 else random.randint(0, sys.maxsize)
         seed_g = torch.Generator(device=self.device)
@@ -501,7 +426,7 @@ class WanI2V:
             no_sync_low(),
             no_sync_high(),
         ):
-            for sampling_step, timestep_value in enumerate(tqdm(timesteps)):
+            for timestep_value in tqdm(timesteps):
                 model = self._prepare_model_for_timestep(
                     timestep_value, boundary, offload_model
                 )
@@ -529,48 +454,10 @@ class WanI2V:
                     context=[null_contexts[0]],
                     **common,
                 )[0]
-
                 prediction = unconditional + scale * (
                     conditional - unconditional
                 )
                 del conditional, unconditional
-                if (
-                    first_image_conditioning_y is not None
-                    and sampling_step < multiframe_guidance_steps
-                ):
-                    first_image_common = {
-                        'seq_len': max_seq_len,
-                        'y': [first_image_conditioning_y],
-                    }
-                    first_image_conditional = model(
-                        [latent],
-                        t=timestep,
-                        context=[contexts[0]],
-                        prompt_relay_segments=main_relay,
-                        prompt_relay_query_chunk_size=query_chunk_size,
-                        **first_image_common,
-                    )[0]
-                    first_image_unconditional = model(
-                        [latent],
-                        t=timestep,
-                        context=[null_contexts[0]],
-                        **first_image_common,
-                    )[0]
-                    first_image_prediction = (
-                        first_image_unconditional
-                        + scale
-                        * (
-                            first_image_conditional
-                            - first_image_unconditional
-                        )
-                    )
-                    del first_image_conditional, first_image_unconditional
-                    prediction = (
-                        first_image_prediction
-                        + multiframe_guidance_scale
-                        * (prediction - first_image_prediction)
-                    )
-                    del first_image_prediction
                 next_latent = sample_scheduler.step(
                     prediction.unsqueeze(0),
                     timestep_value,

@@ -56,32 +56,26 @@ This is sequence/context parallelism: it distributes attention activations and
 work, but does not shard the 62 GB transformer weights. Each rank still loads a
 model replica (CPU offload remains available).
 
-### Indexed keyframes
+### Native first/last keyframes
 
-In addition to the native `--image` and `--last_image` boundary anchors, the
-Prompt Relay runner accepts repeatable intermediate anchors:
+The Prompt Relay runner preserves MiniMax-H3's native FL2VA boundary anchors:
 
 ```bash
 python generate_prompt_relay.py \
   --model_path "$HOME/MiniMax-H3" \
   --prompt_filepath prompts.json \
   --frame_num 124 \
-  --keyframe images/start.png 0 \
-  --keyframe images/middle.png 18 \
-  --keyframe images/end.png 36 \
-  --output_path outputs/h3_indexed_keyframes.mp4
+  --image images/start.png \
+  --last_image images/end.png \
+  --output_path outputs/h3_first_last.mp4
 ```
 
-The indices use H3's internal latent-frame grid, not decoded 24 FPS frames. A
-124-frame output has 37 internal frames, indexed `[0, 37)`. Each image is VAE
-encoded and packed as a fixed conditioning block, and its temporal RoPE
-coordinate is copied from the requested target-video frame. `--image` remains
-an alias for internal frame 0 and `--last_image` for the last internal frame
-when either is combined with `--keyframe`.
-
-This is an inference-time architectural extension. The released model was
-trained for first/last anchors, so adherence to intermediate anchors must be
-evaluated experimentally and is not guaranteed.
+`--image` anchors the first generated frame and `--last_image` anchors the
+last; either may be supplied alone. Arbitrary intermediate keyframes are not
+supported. Encoding, noise augmentation, RoPE placement, and packed-sequence
+construction are delegated unchanged to the official FL2VA pipeline. If
+`--height` and `--width` are omitted, the native pipeline resolves the canvas
+from the boundary image; provide both to request an explicit canvas.
 
 ## JSON fields
 

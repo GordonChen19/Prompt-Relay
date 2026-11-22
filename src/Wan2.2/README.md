@@ -480,10 +480,10 @@ We compared Wan2.2 with leading closed-source commercial models on our new Wan-B
     <img src="assets/performance.png" alt="" style="width: 90%;" />
 </div>
 
-### Prompt Relay I2V with sparse image conditioning
+### Prompt Relay I2V
 
-For I2V, a Prompt Relay JSON may also provide image paths and final-output
-latent indices:
+Prompt Relay I2V uses Wan's ordinary first-frame image conditioning. A prompt
+JSON may provide the first-frame image path for convenience:
 
 ```json
 {
@@ -491,58 +491,18 @@ latent indices:
   "mode": "gaussian",
   "local_prompts": ["First event.", "Second event."],
   "frame_intervals": [[0, 10], [10, 21]],
-  "images": ["start.png", "middle.png", "end.png"],
-  "image_index": [0, 10, 16]
+  "images": ["start.png"],
+  "image_index": [0]
 }
 ```
 
-With `--prompt_mode relay`, multiple images enable sparse in-place image
-conditioning in addition to text Prompt Relay. The first image uses ordinary
-I2V conditioning. For every later image at latent index `p`, the image is
-placed at pixel-time position `4*p`, which is the final pixel of that latent's
-normal four-pixel VAE chunk:
-
-```text
-[0, 0, 0, image]
-```
-
-Only the packed mask channel corresponding to that final pixel is enabled:
-
-```text
-[0, 0, 0, 1]
-```
-
-No temporary latent is inserted. The noisy video retains its requested latent
-length. Video self-attention remains Wan's standard global bidirectional
-attention: every video token may directly attend to earlier and later video
-tokens, including all image anchors. Prompt Relay continues to affect only
-text cross-attention.
-No intermediate-image suffix streams are created. Only full-length J
-predictions are evaluated, and only the main J latent is advanced by the
-scheduler and decoded.
-
-An optional full-length Img1-only I2V baseline can guide the multi-image
-prediction during the initial denoising steps:
-
-```text
-v = v_img1 + multiframe_guidance_scale * (v_multi - v_img1)
-```
-
-Set `--multiframe_guidance_scale 1` for the normal multi-image result (and no
-extra model evaluations), `0` for the Img1-only prediction during the guidance
-window, or a value between them to trade regular I2V behavior against later
-anchors. `--multiframe_guidance_steps` defaults to 10. Both predictions use
-the same noisy latent, timestep, text CFG, and Prompt Relay context.
-There is no fractional RoPE offset, temporal compression, handoff,
-solver-history reset, extra latent, or discarded frame.
-Relative image paths are resolved beside the JSON file. The Gaussian Prompt
-Relay default remains `sigma: 0.932`.
-
-With `--prompt_mode concat`, only the first configured image is used and text
-prompts are concatenated without temporal routing.
-
-The `image_index` values are latent-frame positions, not pixel-frame numbers.
-For example, an 81-frame Wan video has 21 latent frames indexed 0 through 20.
+Only the first entry of `images` is used; `image_index` remains accepted for
+backward-compatible JSON validation but does not create intermediate visual
+anchors. You can instead pass the ordinary `--image` argument. Prompt Relay
+modifies only text cross-attention, while
+video self-attention, I2V conditioning, CFG, and scheduler updates retain the
+standard Wan2.2 behavior. Relative image paths are resolved beside the JSON
+file. The Gaussian Prompt Relay default remains `sigma: 0.932`.
 
 ## Citation
 If you find our work helpful, please cite us.

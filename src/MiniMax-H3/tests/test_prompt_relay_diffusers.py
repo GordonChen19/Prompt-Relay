@@ -17,7 +17,6 @@ except (ImportError, ModuleNotFoundError) as error:
     )
 
 from h3_prompt_relay import PromptRelayConfig, enable_prompt_relay
-from h3_prompt_relay.pipeline import IndexedMiniMaxH3PrepareLayoutStep
 from h3_prompt_relay.attention import (
     prepare_attention_state,
     use_prompt_relay_attention,
@@ -52,8 +51,8 @@ def tiny_model():
 
 
 class DiffusersIntegrationTests(unittest.TestCase):
-    def test_indexed_keyframes_share_target_frame_rope_times(self):
-        layout = IndexedMiniMaxH3PrepareLayoutStep.build_packed_sequence(
+    def test_native_first_and_last_keyframes_use_official_rope_times(self):
+        layout = MiniMaxH3PrepareLayoutStep.build_packed_sequence(
             text_token_tags=torch.tensor([1, 1, 1]),
             num_latent_frames=7,
             latent_height=2,
@@ -63,18 +62,25 @@ class DiffusersIntegrationTests(unittest.TestCase):
             audio_channels=2,
             audio_tag=2,
             video_tag=0,
-            keyframe_anchors=(0, 3, 6),
+            keyframe_anchors=("first", "last"),
         )
         positions, _, video, _, _, condition_rows, _ = layout
         rows_per_frame = 2
         target_rows = video[condition_rows:]
-        for anchor_number, target_frame in enumerate((0, 3, 6)):
-            condition_row = 3 + anchor_number * rows_per_frame
-            target_row = target_rows[target_frame * rows_per_frame]
-            self.assertEqual(
-                positions[condition_row, 0].item(),
-                positions[target_row, 0].item(),
-            )
+        first_condition_row = 3
+        first_target_row = target_rows[0]
+        self.assertEqual(
+            positions[first_condition_row, 0].item(),
+            positions[first_target_row, 0].item(),
+        )
+
+        # The pinned official implementation places the last anchor at the
+        # reference endpoint: text origin + sum(1,4,4,4,4,1,4)*5/3 - 5/3.
+        last_condition_row = 3 + rows_per_frame
+        expected_last_time = 3 + (sum((1, 4, 4, 4, 4, 1, 4)) - 1) * 5 / 3
+        self.assertAlmostEqual(
+            positions[last_condition_row, 0].item(), expected_last_time
+        )
 
     def test_installs_idempotently_for_all_h3_workflows(self):
         for workflow in (None, "t2va", "fl2va", "ref2va"):
@@ -85,6 +91,7 @@ class DiffusersIntegrationTests(unittest.TestCase):
                 names = {parameter.name for parameter in pipe.blocks.inputs}
                 self.assertIn("prompt_relay_config", names)
                 self.assertIn("query_chunk_size", names)
+                self.assertNotIn("indexed_keyframes", names)
 
     def test_real_transformer_routes_and_restores_attention(self):
         torch.manual_seed(11)

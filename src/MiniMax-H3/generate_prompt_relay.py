@@ -24,19 +24,19 @@ def parse_args(argv=None):
     prompts.add_argument("--prompt_filepath", type=Path)
     parser.add_argument("--image", help="Optional first keyframe")
     parser.add_argument("--last_image", help="Optional last keyframe")
-    parser.add_argument(
-        "--keyframe",
-        action="append",
-        nargs=2,
-        metavar=("IMAGE", "LATENT_FRAME"),
-        help=(
-            "Indexed keyframe; repeat for multiple anchors. LATENT_FRAME uses "
-            "the internal H3 frame grid."
-        ),
-    )
     parser.add_argument("--frame_num", type=int, default=124)
-    parser.add_argument("--height", type=int, default=768)
-    parser.add_argument("--width", type=int, default=1344)
+    parser.add_argument(
+        "--height",
+        type=int,
+        default=None,
+        help="Optional explicit canvas height; provide together with --width",
+    )
+    parser.add_argument(
+        "--width",
+        type=int,
+        default=None,
+        help="Optional explicit canvas width; provide together with --height",
+    )
     parser.add_argument("--num_inference_steps", type=int, default=50)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--query_chunk_size", type=int, default=128)
@@ -69,7 +69,14 @@ def parse_args(argv=None):
         parser.error("query_chunk_size must be positive")
     if args.ulysses_size < 1:
         parser.error("ulysses_size must be positive")
-    if args.height <= 0 or args.width <= 0 or args.height % 32 or args.width % 32:
+    if (args.height is None) != (args.width is None):
+        parser.error("height and width must be provided together")
+    if args.height is not None and (
+        args.height <= 0
+        or args.width <= 0
+        or args.height % 32
+        or args.width % 32
+    ):
         parser.error("height and width must be positive multiples of 32")
     return args
 
@@ -125,7 +132,7 @@ def main(argv=None):
         relay_config = PromptRelayConfig.from_json(args.prompt_filepath)
         relay_config.frame_intervals(internal_frames)
 
-    workflow = "fl2va" if args.image or args.last_image or args.keyframe else "t2va"
+    workflow = "fl2va" if args.image or args.last_image else "t2va"
     manager = ComponentsManager()
     pipe = ModularPipeline.from_pretrained(
         args.model_path,
@@ -194,12 +201,13 @@ def main(argv=None):
 
     inputs = {
         "num_frames": frames,
-        "height": args.height,
-        "width": args.width,
         "num_inference_steps": args.num_inference_steps,
         "generator": torch.Generator().manual_seed(args.seed),
         "query_chunk_size": args.query_chunk_size,
     }
+    if args.height is not None:
+        inputs["height"] = args.height
+        inputs["width"] = args.width
     if relay_config is not None:
         inputs["prompt_relay_config"] = relay_config.to_mapping()
     else:
@@ -208,35 +216,6 @@ def main(argv=None):
         inputs["image"] = load_image(args.image)
     if args.last_image:
         inputs["last_image"] = load_image(args.last_image)
-    if args.keyframe:
-        indexed_keyframes = []
-        if args.image:
-            indexed_keyframes.append((load_image(args.image), 0))
-        for path, raw_index in args.keyframe:
-            try:
-                index = int(raw_index)
-            except ValueError as error:
-                raise ValueError(
-                    f"Keyframe index must be an integer, got {raw_index!r}"
-                ) from error
-            indexed_keyframes.append((load_image(path), index))
-        if args.last_image:
-            indexed_keyframes.append(
-                (load_image(args.last_image), internal_frames - 1)
-            )
-        indices = [index for _, index in indexed_keyframes]
-        if any(index < 0 or index >= internal_frames for index in indices):
-            raise ValueError(
-                f"Keyframe indices must be in [0, {internal_frames}), got {indices}"
-            )
-        if len(set(indices)) != len(indices):
-            raise ValueError(f"Keyframe indices must be unique, got {indices}")
-        indexed_keyframes.sort(key=lambda item: item[1])
-        inputs["indexed_keyframes"] = indexed_keyframes
-        # Keep the native FL2VA branches selected; IndexedKeyframeStep replaces
-        # the native first/last list immediately after canvas resolution.
-        inputs["image"] = indexed_keyframes[0][0]
-        inputs.pop("last_image", None)
 
     rank_zero = not distributed or dist.get_rank() == 0
     requested_outputs = (

@@ -66,22 +66,15 @@ class I2VPromptRelayStructureTests(unittest.TestCase):
         self.assertIn("prompt_relay_config", argument_names)
         self.assertIn("prompt_filepath", argument_names)
         self.assertIn("query_chunk_size", argument_names)
-        self.assertIn("multiframe_guidance_scale", argument_names)
-        self.assertIn("multiframe_guidance_steps", argument_names)
+        self.assertNotIn("multiframe_kv_attention_scale", argument_names)
 
-    def test_intermediate_images_use_in_place_pixel_slots(self):
-        self.assertIn(
-            "model_latent_frames = output_latent_frames", SOURCE
-        )
-        self.assertIn(
-            "pixel_index = temporal_stride * output_index", SOURCE
-        )
-        self.assertIn("joint_video[:, pixel_index] = resized[position]", SOURCE)
-        self.assertIn("joint_encoded = self.vae.encode([joint_video])[0]", SOURCE)
-
-    def test_intermediate_images_enable_only_final_mask_channel(self):
-        self.assertIn("joint_mask[3, output_index].fill_(1)", SOURCE)
-        self.assertNotIn("joint_mask[:, output_index].fill_(1)", SOURCE)
+    def test_i2v_uses_only_standard_first_frame_conditioning(self):
+        self.assertIn("conditioning_y = standard_conditioning", SOURCE)
+        self.assertNotIn("multi_image_conditioning", SOURCE)
+        self.assertNotIn("image_indices", SOURCE)
+        self.assertNotIn("joint_video", SOURCE)
+        self.assertNotIn("joint_encoded", SOURCE)
+        self.assertNotIn("joint_mask", SOURCE)
 
     def test_in_place_conditioning_has_no_temporary_anchor_denoising(self):
         self.assertNotIn("VisualRelayLayout", SOURCE)
@@ -121,11 +114,22 @@ class I2VPromptRelayStructureTests(unittest.TestCase):
         self.assertNotIn("auxiliary_prediction", SOURCE)
         self.assertNotIn("auxiliary_blend", SOURCE)
 
-    def test_multiframe_guidance_uses_full_length_img1_baseline(self):
-        self.assertIn("first_image_conditioning_y = standard_conditioning", SOURCE)
-        self.assertIn("first_image_prediction", SOURCE)
-        self.assertIn("prediction - first_image_prediction", SOURCE)
-        self.assertIn("sampling_step < multiframe_guidance_steps", SOURCE)
+    def test_cross_stream_kv_attention_is_removed(self):
+        for source in (SOURCE, MODEL_SOURCE, SP_SOURCE, ULYSSES_SOURCE):
+            self.assertNotIn("cross_stream_kv_scale", source)
+            self.assertNotIn("multiframe_kv_attention_scale", source)
+        self.assertNotIn("[latent, latent]", SOURCE)
+
+    def test_paired_timestep_batch_expands_over_sequence_axis(self):
+        expected = "t = t[:, None].expand(t.size(0), seq_len)"
+        self.assertIn(expected, MODEL_SOURCE)
+        self.assertIn(expected, SP_SOURCE)
+
+    def test_first_frame_conditioning_temporaries_are_freed_before_denoising(self):
+        cleanup = "del image, resized"
+        self.assertIn(cleanup, SOURCE)
+        self.assertIn("torch.cuda.empty_cache()", SOURCE)
+        self.assertLess(SOURCE.index(cleanup), SOURCE.index("latent = torch.randn"))
 
     def test_distributed_prompt_relay_routing_is_preserved(self):
         self.assertIn("prompt_relay_segments=None", SP_SOURCE)
