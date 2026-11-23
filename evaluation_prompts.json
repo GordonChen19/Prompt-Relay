@@ -26,7 +26,7 @@
   {
     "id": "p003",
     "file_name": "p003.mp4",
-    "global_prompt": "A photorealistic cinematic sequence featuring seamless camera. The camera movement is fluid and continuous, using smooth zooms, tracking shots, and perspective transitions without abrupt cuts.",
+    "global_prompt": "A photorealistic cinematic sequence with seamless continuous camera movement, smooth zooms, tracking shots, and fluid perspective transitions without abrupt cuts.",
     "local_prompts": [
       "A large eagle soars high through the sky, flapping its wings as the camera follows its flight.",
       "The camera zooms into the eagle's eye, where a reflected cyberpunk city expands to fill the frame, seamlessly revealing the neon-lit metropolis.",
@@ -39,7 +39,7 @@
   {
     "id": "p004",
     "file_name": "p004.mp4",
-    "global_prompt": "A photorealistic continuous video that takes place in the same vast field of tall green grass at sunset, captured in a continuous low-angle handheld tracking shot.",
+    "global_prompt": "A photorealistic scene in a vast field of tall green grass at sunset, filmed as a continuous low-angle handheld tracking shot.",
     "local_prompts": [
       "A rugged caveman wearing animal furs walks through tall green grass at sunset while the camera tracks alongside him.",
       "The camera rapidly pans downward past the caveman's hairy legs until motion-blurred green grass completely fills the frame.",
@@ -51,7 +51,7 @@
   {
     "id": "p005",
     "file_name": "p005.mp4",
-    "global_prompt": "A photorealistic cinematic golf scene set on a beautiful golf course during golden hour, captured in one continuous shot without cuts. The camera uses smooth tilts, low-angle tracking movements, and natural reframing to follow the action.",
+    "global_prompt": "A photorealistic cinematic golf scene at golden hour, filmed continuously with smooth tilts, low-angle tracking, and natural reframing.",
     "local_prompts": [
       "A close-up shows a male golfer's face as he looks downward with a focused expression on a sunlit golf course.",
       "The camera tilts downward from the golfer's face to reveal his shoes, golf club, and a white golf ball resting on the grass.",
@@ -77,7 +77,7 @@
   {
     "id": "p007",
     "file_name": "p007.mp4",
-    "global_prompt": "A cinematic anime-style comedy scene set inside a quiet, spacious library with towering bookshelves, wooden reading tables, and warm afternoon sunlight filtering through tall windows. The camera uses smooth continuous movements.",
+    "global_prompt": "A cinematic anime-style comedy inside a quiet library with towering bookshelves, wooden tables, warm afternoon sunlight, and smooth continuous camera movement.",
     "local_prompts": [
       "The camera zooms out from a large NO FOOD ALLOWED sign on the wall of a quiet library.",
       "The camera continues zooming out, revealing a side view of a young girl sitting at a library table.",
@@ -89,7 +89,7 @@
   {
     "id": "p008",
     "file_name": "p008.mp4",
-    "global_prompt": "A photorealistic cinematic Formula 1 racing sequence at a modern Grand Prix circuit during daylight. The entire sequence unfolds through smooth, continuous camera movements and visually seamless transitions without abrupt cuts.",
+    "global_prompt": "A photorealistic Formula 1 race at a modern Grand Prix circuit in daylight, filmed with smooth continuous camera movement and seamless transitions.",
     "local_prompts": [
       "The camera pulls backward from a close-up of a Formula 1 driver's helmet, revealing the driver gripping the steering wheel of a red racing car.",
       "The camera zooms out of the driver's cockpit, revealing a red and a blue Formula 1 car racing side by side.",
@@ -101,7 +101,7 @@
   {
     "id": "p009",
     "file_name": "p009.mp4",
-    "global_prompt": "A photorealistic cinematic fantasy-action sequence filmed entirely from a first-person perspective in a bustling modern city during daylight. The camera represents the eyes of a pedestrian walking along a crowded sidewalk, with natural handheld head movements and realistic human eye-level framing. Tall buildings, busy roads, pedestrians, storefronts, and moving traffic create a lively urban environment.",
+    "global_prompt": "A photorealistic first-person fantasy-action sequence on a crowded city street in daylight, with handheld movement, tall buildings, pedestrians, and traffic.",
     "local_prompts": [
       "The camera turns toward a building as a masked robber bursts outside carrying a duffel bag full of stolen money, with money flying out.",
       "The robber runs toward a parked black car, opens the driver's door, and climbs inside with the stolen money.",
@@ -119,7 +119,7 @@
     "The singer adjusts her earpiece, turns toward the camera, and walks out of the dressing room.",
     "The camera tracks the singer walking through a backstage corridor toward the concert stage.",
     "A staff member hands the singer a microphone as she approaches the stage.",
-    "The singer joins the dancers onstage while the camera circles behind them, revealing the cheering audience.",
+    "The singer joins the dancers onstage while the camera circles behind them, revealing the cheering audience."
   ]
 },
 {
@@ -153,7 +153,7 @@
   "local_prompts": [
     "The camera tracks backward in front of a speeding police car with flashing emergency lights and a uniformed officer driving.",
     "The camera pulls back from the police car, revealing a busy city road surrounded by skyscrapers and traffic.",
-    "The camera rapidly tilts downward from the police car toward the asphalt, lowering to ground level to reveal a tiny snail sliding along the road at the same speed as the police car.",
+    "The camera tilts rapidly from the police car to the asphalt, revealing a tiny snail sliding along the road at the same speed.",
     "The camera pans up to reveal a helicopter flying overhead, shining its searchlight down onto the police car and snail below."
   ]
 },
@@ -172,7 +172,7 @@
 {
   "id": "p015",
   "file_name": "p015.mp4",
-  "global_prompt": "A photorealistic cinematic comedy sequence set outside an elegant fine-dining restaurant during the evening, captured in one continuous shot without cuts. The restaurant features luxurious glass doors, warm golden lighting, and a formally dressed doorman standing at the entrance.",
+  "global_prompt": "A photorealistic evening comedy outside an elegant fine-dining restaurant with glass doors, warm golden light, and a formally dressed doorman, filmed continuously.",
   "local_prompts": [
     "The camera tracks a man wearing a baggy white T-shirt and loose blue jeans approaching the entrance of an elegant restaurant.",
     "A stern doorman with sunglasses blocks the casually dressed man's entry and shakes his head disapprovingly at his clothing.",
@@ -185,7 +185,7 @@
 {
   "id": "p016",
   "file_name": "p016.mp4",
-  "global_prompt": "A photorealistic cinematic fantasy sequence set inside a prestigious art gallery with elegant marble floors, white walls, ornate golden picture frames, and soft museum lighting. The entire scene unfolds in one continuous tracking shot without cuts.",
+  "global_prompt": "A photorealistic fantasy in an art gallery with marble floors, white walls, golden frames, and soft museum lighting, filmed in one continuous tracking shot.",
   "local_prompts": [
     "The camera tracks a visitor walking through an elegant art gallery filled with classical paintings.",
     "The camera pans away from the visitor and locks onto a large portrait of a man wearing a Victorian suit.",
@@ -209,7 +209,7 @@
 {
   "id": "p018",
   "file_name": "p018.mp4",
-  "global_prompt": "A photorealistic cinematic fantasy-comedy sequence set along a winding dirt path through a medieval countryside, surrounded by green fields and ancient stone castles. The entire sequence unfolds in one continuous tracking shot without cuts.",
+  "global_prompt": "A photorealistic fantasy-comedy on a winding dirt path through a medieval countryside with green fields and stone castles, filmed in one continuous tracking shot.",
   "local_prompts": [
     "The camera tracks a tiny brown mouse running rapidly along a dirt path through a medieval countryside.",
     "The camera moves behind the mouse, revealing a knight in shining armor running after it.",
