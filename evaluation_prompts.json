@@ -94,7 +94,7 @@
   {
     "id": "p008",
     "file_name": "p008.mp4",
-    "global_prompt": "A photorealistic cinematic Formula 1 racing sequence at a modern Grand Prix circuit during daylight. g the red car's front-right tire. The entire sequence unfolds through smooth, continuous camera movements and visually seamless transitions without abrupt cuts.",
+    "global_prompt": "A photorealistic cinematic Formula 1 racing sequence at a modern Grand Prix circuit during daylight. The entire sequence unfolds through smooth, continuous camera movements and visually seamless transitions without abrupt cuts.",
     "local_prompts": [
       "The camera pulls backward from a close-up inside a Formula 1 driver's helmet, revealing the driver gripping the steering wheel of a red racing car.",
       "The camera zooms out of the driver's cockpit, revealing a red and a blue Formula 1 car racing side by side.",
@@ -110,7 +110,7 @@
     "local_prompts": [
       "The camera turns toward a building as a masked robber bursts outside carrying a duffel bag full of stolen money.",
       "The robber runs toward a parked black car, opens the driver's door, and climbs inside with the stolen money.",
-      "The robber drives away from the curb as the first-person camera follows it.",
+      "The robber drives away from the curb.",
       "A giant dragon flies overhead between city skyscrapers as the first-person camera looks upward.",
       "The dragon lands directly on the getaway car, completely flattening it beneath its massive body.",
       "The dragon stands over the crushed car, spreads its wings, and opens its glowing jaws as it breathe fire."
