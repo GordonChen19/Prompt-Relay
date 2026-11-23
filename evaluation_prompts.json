@@ -17,7 +17,7 @@
     "global_prompt": "A photorealistic cinematic travel vlog filmed entirely from a handheld, front-facing selfie perspective. The same young man holds the camera at arm's length, looking directly into the lens with his face centered in the frame. The camera maintains consistent selfie framing, realistic handheld movement, and natural arm-length perspective throughout. The man's identity, facial features, hairstyle, and clothing remain identical across all locations.",
     "local_prompts": [
       "A man films himself on a busy Hong Kong street at night, with neon signs, skyscrapers, and pedestrians behind him.",
-      "The man raises his hand toward the camera until his palm completely covers the lens, blocking the Hong Kong street, making it pitch black.",
+      "The man raises his hand toward the camera and completely covers the lens with his palm, blocking the Hong Kong street.",
       "The man pulls his hand away, revealing the Grand Canyon with vast red rock cliffs and deep valleys behind him as he continues filming himself.",
       "The man raises his hand toward the camera until his palm completely covers the lens, obscuring the Grand Canyon, making it pitch black.",
       "The man removes his hand, revealing a snowy Icelandic landscape with colorful northern lights glowing in the night sky behind him.",
@@ -72,8 +72,7 @@
     "global_prompt": "A photorealistic cinematic family scene set in a cozy suburban home on a sunny morning, captured in one continuous handheld tracking shot without cuts. Natural character interactions, realistic animal movements, fluid camera tracking, warm morning sunlight, and consistent spatial continuity throughout.",
     "local_prompts": [
       "The camera follows a golden retriever weaving between the legs of family members gathered around a busy breakfast table.",
-      "The dog stands on its hind legs, placing its front paws against the edge of the table.",
-      "A young schoolboy gently pats the dog's head and feeds it a strip of bacon.",
+      "The dog stands on its hind legs, placing its front paws against the edge of the table next to a young schoolboy.",
       "The boy gets up from the breakfast table, and the camera follows him as he picks up his school backpack.",
       "The camera tracks the boy as he runs out the front door toward a waiting yellow school bus and climbs aboard.",
       "The camera turns around to reveal the golden retriever standing sadly in the front doorway, watching the school bus drive away."
@@ -88,7 +87,7 @@
       "The camera continues zooming out, revealing a side view of a young girl sitting at a library table.",
       "The girl reaches into her backpack and pulls out a bag of potato chips.",
       "The girl suddenly freezes mid-bite, holding a potato chip near her mouth with a shocked expression.",
-      "The camera pans left to reveal a group of stern police officers wearing dark sunglasses and holding metal handcuffs behind the girl."
+      "The camera pans left to reveal a group of stern police officers wearing dark sunglasses and holding metal handcuffs."
     ]
   },
   {
@@ -111,9 +110,190 @@
       "The camera turns toward a building as a masked robber bursts outside carrying a duffel bag full of stolen money.",
       "The robber runs toward a parked black car, opens the driver's door, and climbs inside with the stolen money.",
       "The robber drives away from the curb.",
-      "A giant dragon flies overhead between city skyscrapers as the first-person camera looks upward.",
-      "The dragon lands directly on the getaway car, completely flattening it beneath its massive body.",
+      "A giant dragon flies overhead between city skyscrapers and lands directly on the getaway car, completely flattening it beneath its massive body.",
       "The dragon stands over the crushed car, spreads its wings, and opens its glowing jaws as it breathe fire."
     ]
-  }
+  },
+  {
+    "id": "p009",
+    "file_name": "p009.mp4",
+    "global_prompt": "A photorealistic cinematic fantasy-action sequence filmed entirely from a first-person perspective in a bustling modern city during daylight. The camera represents the eyes of a pedestrian walking along a crowded sidewalk, with natural handheld head movements and realistic human eye-level framing. Tall buildings, busy roads, pedestrians, storefronts, and moving traffic create a lively urban environment.",
+    "local_prompts": [
+      "The camera turns toward a building as a masked robber bursts outside carrying a duffel bag full of stolen money.",
+      "The robber runs toward a parked black car, opens the driver's door, and climbs inside with the stolen money.",
+      "The robber drives away from the curb.",
+      "A giant dragon flies overhead between city skyscrapers and lands directly on the getaway car, completely flattening it beneath its massive body.",
+      "The dragon stands over the crushed car, spreads its wings, and opens its glowing jaws as it breathe fire."
+    ]
+  },
+
+{
+  "id": "p010",
+  "file_name": "p010.mp4",
+  "global_prompt": "A photorealistic cinematic one-take sequence following a female pop singer from her backstage dressing room to a spectacular live concert. The camera moves continuously through red velvet curtains, a brightly lit dressing room, narrow backstage corridors, and finally onto a massive concert stage. The singer wears a glamorous sparkling performance outfit, with consistent hairstyle and appearance throughout. Backstage staff, professional dancers, colorful stage lights, and a cheering audience create a lively concert atmosphere. The camera uses smooth tracking shots, natural pans, fluid orbiting movements, and a dramatic final pullback. Maintain realistic character interactions, spatial continuity, and consistent lighting transitions without any visible cuts.",
+  "local_prompts": [
+    "The camera passes through red curtains into a dressing room, revealing a female singer standing before an illuminated mirror.",
+    "The singer adjusts her earpiece, turns toward the camera, and walks out of the dressing room.",
+    "The camera tracks the singer walking through a backstage corridor toward the concert stage.",
+    "A staff member hands the singer a microphone as she approaches the stage.",
+    "The singer joins the dancers onstage while the camera circles behind them, revealing the cheering audience.",
+  ]
+},
+
+{
+  "id": "p011",
+  "file_name": "p011.mp4",
+  "global_prompt": "A photorealistic cinematic action-comedy sequence set on a busy city street during daylight, captured in one continuous shot without cuts. A masked robber carrying a large black duffel bag stuffed with stolen cash bursts out of a bank and attempts to escape through a crowded sidewalk toward a parked black getaway car. The camera dynamically tracks his movements until he unexpectedly slips on a banana peel, sending his money bag flying through the air. The camera follows the bag as it lands in front of a uniformed police officer, who retrieves it and approaches the fallen robber. The sequence features realistic physical interactions, expressive comedic reactions, natural pedestrian movement, and fluid camera transitions. Maintain consistent character appearances, object identities, environment, and spatial continuity throughout.",
+  "local_prompts": [
+    "A masked robber bursts out of a bank carrying a large black duffel bag stuffed with stolen money.",
+    "The camera tracks the robber sprinting through a crowded sidewalk.",
+    "The robber slips on a banana peel, falls backward, and accidentally throws his money bag into the air.",
+    "The camera follows the flying money bag as it lands at the feet of a uniformed police officer.",
+    "The police officer picks up the money bag and turns toward the fallen robber."
+  ]
+},
+
+{
+  "id": "p012",
+  "file_name": "p012.mp4",
+  "global_prompt": "A photorealistic cinematic fantasy-comedy sequence set on a peaceful farm during golden hour, captured in one continuous shot without cuts. The scene begins with a black crow flying across vast golden wheat fields toward a lonely scarecrow wearing a worn straw hat, patched clothes, and a burlap face. The camera initially tracks the flying crow before smoothly transitioning to follow the scarecrow as it unexpectedly comes alive, panics, and runs away from the bird. The crow chases the terrified scarecrow across the farmland toward an old wooden farmhouse. The scarecrow rushes inside and slams the door shut to escape. The sequence features expressive physical comedy, natural bird flight, exaggerated but believable scarecrow movements, smooth cinematic camera tracking, and warm sunset lighting. Maintain consistent character appearances, farm geography, and spatial continuity throughout.",
+  "local_prompts": [
+    "The camera tracks a black crow flying over golden wheat fields toward a distant scarecrow.",
+    "The crow descends and lands on the scarecrow's shoulder as the camera follows its movement.",
+    "The scarecrow becomes startled, runs frantically, flails its arms in fright. through the wheat field while the crow chases it from behind.",
+    "The scarecrow rushes into a farmhouse and slams the wooden door shut before the crow can enter.",
+    "The scarecrow leans against the door in relief, but jumps in fright when the crow appears at the window looking though."
+  ]
+},
+
+
+{
+  "id": "p013",
+  "file_name": "p013.mp4",
+  "global_prompt": "A photorealistic cinematic action-comedy sequence set on a busy modern city road during daylight, captured in one continuous shot without cuts. A police car speeds through the city with its emergency lights flashing, driven by a uniformed police officer. The camera initially tracks backward directly in front of the moving police car, then gradually pulls away to reveal the surrounding road, skyscrapers, and moving traffic. The camera subsequently tilts downward toward the asphalt, revealing a tiny snail racing along the road at exactly the same speed as the police car. The absurd contrast between the fast-moving police vehicle and the impossibly fast snail creates a comedic surprise. Dynamic tracking movements, realistic motion blur, consistent spatial continuity, and detailed city environments throughout.",
+  "local_prompts": [
+    "The camera tracks backward in front of a speeding police car with flashing emergency lights and a uniformed officer driving.",
+    "The camera pulls back from the police car, revealing a busy city road surrounded by skyscrapers and traffic.",
+    "The camera rapidly tilts downward from the police car toward the asphalt, lowering to ground level to reveal a tiny snail sliding along the road at the same speed as the police car.",
+    "The camera pans up to reveal a helicopter flying overhead, shining its searchlight down onto the police car and snail below."
+  ]
+},
+
+
+{
+  "id": "p014",
+  "file_name": "p014.mp4",
+  "global_prompt": "A photorealistic cinematic comedy sequence set at a busy airport security checkpoint, captured in one continuous shot without cuts. A stern airport security officer in a dark blue uniform conducts a pat-down search of a colorful clown wearing a bright red nose, oversized shoes, a yellow jacket, and baggy trousers with multiple pockets. The officer searches the clown's pockets, unexpectedly discovering a colorful ball, an impossibly long ribbon, and finally a live white rabbit. The scene features escalating visual comedy, exaggerated reactions, realistic object interactions, and smooth camera movements. The camera maintains clear views of the officer's hands, the clown's pockets, and each surprising discovery. Maintain consistent character appearances, clothing, props, and airport surroundings throughout.",
+  "local_prompts": [
+    "The camera follows a colorful clown walking through airport security before a stern officer stops him.",
+    "The clown raises his arms while the security officer begins patting down his jacket and pockets.",
+    "The officer pulls a bright red juggling ball from one of the clown's pockets.",
+    "The officer pulls an impossibly long colorful ribbon from another pocket, creating a pile of ribbon on the floor.",
+    "The officer reaches into another pocket and pulls out a live white rabbit."
+  ]
+},
+
+
+{
+  "id": "p015",
+  "file_name": "p015.mp4",
+  "global_prompt": "A photorealistic cinematic comedy sequence set outside an elegant fine-dining restaurant during the evening, captured in one continuous shot without cuts. The restaurant features luxurious glass doors, warm golden lighting, and a formally dressed doorman standing at the entrance. A young man wearing a baggy white T-shirt, loose blue jeans, and sneakers attempts to enter but is denied entry because of his casual clothing. After the disappointed man walks away, the doorman notices something near his feet. The camera tilts downward to reveal a tiny mouse wearing a perfectly tailored black suit, white shirt, and bow tie. Despite its tiny size, the mouse is treated like an important guest and is politely welcomed into the restaurant. The sequence uses smooth tracking shots, expressive reactions, exaggerated visual comedy, and a dramatic ground-level reveal. Maintain consistent character appearances, clothing, restaurant geography, and natural camera continuity throughout.",
+  "local_prompts": [
+    "The camera tracks a man wearing a baggy white T-shirt and loose blue jeans approaching the entrance of an elegant restaurant.",
+    "A stern doorman with sunglasses blocks the casually dressed man's entry and shakes his head disapprovingly at his clothing.",
+    "The disappointed man turns around and walks away as the camera pans back toward the doorman.",
+    "The doorman looks down in surprise, and the camera tilts downward toward the ground.",
+    "The camera reveals a tiny mouse wearing a formal black suit and bow tie standing upright at the restaurant entrance.",
+    "The camera pans up. The doorman smiles and opens the restaurant door."
+  ]
+},
+
+
+{
+  "id": "p016",
+  "file_name": "p016.mp4",
+  "global_prompt": "A photorealistic cinematic fantasy sequence set inside a prestigious art gallery with elegant marble floors, white walls, ornate golden picture frames, and soft museum lighting. The entire scene unfolds in one continuous tracking shot without cuts. The camera initially follows a visitor walking through the gallery before smoothly shifting its focus to a large classical oil portrait depicting a distinguished man wearing a dark Victorian suit. After the visitor leaves, the painted man mysteriously comes alive, looks around, and physically climbs out of the painting into the real gallery. The camera then follows the man as he runs through the museum. The transition from a flat painted figure to a fully three-dimensional human is seamless and visually convincing. Maintain consistent character appearance, realistic physical interactions, fluid camera movement, and spatial continuity throughout.",
+  "local_prompts": [
+    "The camera tracks a visitor walking through an elegant art gallery filled with classical paintings.",
+    "The camera pans away from the visitor and locks onto a large portrait of a man wearing a Victorian suit.",
+    "Another visitor approaches the portrait, examines it briefly, and walks out of the frame.",
+    "The man inside the painting comes alive, moving his eyes and looking around the empty gallery.",
+    "The painted man reaches out of the canvas, grips the frame, and begins climbing out of the painting.",
+    "The man steps completely out of the painting onto the gallery floor and looks around.",
+    "The camera tracks the man running away from the painting through the art gallery."
+  ]
+},
+
+
+
+{
+  "id": "p017",
+  "file_name": "p017.mp4",
+  "global_prompt": "A photorealistic cinematic romantic sequence depicting a boy and girl growing up together, from childhood to adolescence and finally adulthood on their wedding day. The entire sequence unfolds in one continuous shot with smooth vertical camera movements and seamless transitions through the sky. Each time the camera tilts upward, soft white clouds completely fill the frame, concealing a passage of time. As the camera tilts downward, the same boy and girl are revealed at an older age in a different stage of their lives. The sequence begins with two children playing in a sunny park, transitions to the same pair as teenagers, and finally reveals them as adults, with the man wearing a formal suit and the woman wearing a beautiful white wedding dress as they drive away together in a decorated wedding car. Warm natural lighting, emotional storytelling, realistic character aging, consistent facial identities, and fluid camera movement. Maintain a continuous cinematic style without visible cuts.",
+  "local_prompts": [
+    "The camera tracks a young boy and girl running and playing together in a sunny park.",
+    "The camera tilts upward from the children until the sky and white clouds completely fill the frame.",
+    "The camera tilts downward to reveal the same boy and girl as teenagers walking together with school backpacks.",
+    "The camera tilts upward from the teenagers until drifting white clouds fill the frame.",
+    "The camera tilts downward to reveal the couple as adults, wearing a black suit and white wedding dress while riding in a decorated wedding car."
+  ]
+},
+
+
+{
+  "id": "p018",
+  "file_name": "p018.mp4",
+  "global_prompt": "A photorealistic cinematic fantasy-comedy sequence set along a winding dirt path through a medieval countryside, surrounded by green fields and ancient stone castles. The entire sequence unfolds in one continuous tracking shot without cuts. The camera initially tracks a tiny mouse running frantically along the path, then repeatedly swings around and moves backward along the chase to reveal progressively larger characters pursuing one another: a medieval knight in shining steel armor chasing the mouse, a massive lion chasing the knight, and finally an enormous dragon chasing the lion. Each camera movement smoothly transfers attention from the smaller character to its larger pursuer, creating an escalating and absurd chase. Dynamic low-angle tracking shots, realistic animal movements, dramatic scale differences, natural motion blur, and consistent spatial continuity throughout.",
+  "eval_local_prompts": [
+    "The camera tracks a tiny brown mouse running rapidly along a dirt path through a medieval countryside.",
+    "The camera moves behind the mouse, revealing a knight in shining armor running after it.",
+    "The camera moves behind the knight, revealing a massive lion chasing him.",
+    "The camera moves behind the lion, revealing an enormous dragon running after it.",
+    "The camera pulls back to reveal the mouse, knight, lion, and dragon running in a single line along the same path."
+  ]
+},
+
+
+{
+  "id": "p019",
+  "file_name": "p019.mp4",
+  "global_prompt": "A photorealistic cinematic superhero comedy sequence set in a bustling modern city during daylight, captured in one continuous shot without cuts. A massive explosion erupts in the distance between towering skyscrapers, sending a dark cloud of smoke into the sky. Superman, wearing his iconic blue suit and flowing red cape, calmly emerges from a nearby building. Instead of flying toward the emergency, he casually raises his arm to hail a yellow taxi. The taxi stops beside him, and he climbs into the back seat before the vehicle drives toward the distant explosion. The camera uses smooth tracking movements, dramatic pans, and natural reframing to follow the action. Realistic urban environments, dynamic lighting, cinematic smoke effects, natural character movements, and consistent spatial continuity throughout.",
+  "local_prompts": [
+    "A massive explosion erupts between distant city skyscrapers, sending a large cloud of black smoke into the sky.",
+    "The camera pans toward a nearby building, revealing Superman walking out in his blue suit and red cape.",
+    "Superman stops beside the road and raises his arm to hail a taxi.",
+    "A yellow taxi pulls over and stops beside Superman.",
+    "Superman opens the taxi's rear door and climbs into the back seat.",
+    "The camera follows the yellow taxi driving away toward the distant explosion."
+  ]
+},
+
+
+{
+  "id": "p026",
+  "file_name": "p026.mp4",
+  "global_prompt": "A photorealistic cinematic surreal comedy sequence beginning inside a cozy suburban family home during the evening. A father and daughter relax on a couch watching television, while a young boy runs around the living room playing with a toy airplane. The mother prepares dinner in the adjoining kitchen. The camera smoothly tracks through the domestic environment, capturing ordinary family activities before gradually pulling backward through the living room. As the camera continues retreating, it reveals that the entire furnished house is actually a glass-walled enclosure inside an enormous zoo. Outside the glass, bears and penguins stand like zoo visitors, observing the human family with fascination. The family continues behaving naturally, unaware that they are being watched. The sequence unfolds in one continuous cinematic shot without cuts, featuring seamless camera movement, realistic character interactions, a dramatic change in scale, and a surprising final reveal.",
+  "local_prompts": [
+    "A father and daughter sit on a sofa watching television inside a cozy family living room.",
+    "The camera tracks a young boy running around the living room while playing with a toy airplane.",
+    "The camera pans toward the mother cooking dinner at the kitchen stove.",
+    "The camera continues pulling back, revealing that the entire family home is contained inside a large glass zoo enclosure.",
+    "The camera pulls farther back to reveal bears and penguins standing outside the enclosure, staring at the human family like zoo visitors."
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ]

@@ -489,6 +489,7 @@ JSON may provide the first-frame image path for convenience:
 {
   "global_prompt": "A continuous shot.",
   "mode": "gaussian",
+  "interval_expansion": 2,
   "local_prompts": ["First event.", "Second event."],
   "frame_intervals": [[0, 10], [10, 21]],
   "images": ["start.png"],
@@ -503,6 +504,9 @@ modifies only text cross-attention, while
 video self-attention, I2V conditioning, CFG, and scheduler updates retain the
 standard Wan2.2 behavior. Relative image paths are resolved beside the JSON
 file. The Gaussian Prompt Relay default remains `sigma: 0.932`.
+Every resolved prompt interval is expanded by two latent frames on each side by
+default and clamped to the video timeline. Set `interval_expansion` to any
+non-negative integer, or to `0` for the previous unexpanded intervals.
 
 ## Citation
 If you find our work helpful, please cite us.

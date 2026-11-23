@@ -1,12 +1,14 @@
 {
-  "global_prompt": "A single continuous cinematic tracking shot.",
   "mode": "gaussian",
+  "global_prompt": "A photorealistic cinematic sequence featuring seamless camera. The camera movement is fluid and continuous, using smooth zooms, tracking shots, and perspective transitions without abrupt cuts.",
   "local_prompts": [
-    "SpongeBob tosses the Krabby Patty into the air with his spatula, sending it through the serving window into the dining room.",
-    "The patty lands flat on the bun, splashing ketchup onto Squidward's nose."
-  ],
-  "frame_intervals": [
-    [0, 10],
-    [10, 21]
+      "A large eagle soars high through the sky, flapping its wings as the camera follows its flight.",
+      "The camera zooms into the eagle's eye, where a reflected cyberpunk city expands to fill the frame, seamlessly revealing the neon-lit metropolis.",
+      "The camera flies through a neon-lit cyberpunk city with moving cars, wet streets, and towering skyscrapers.",
+      "The camera approaches and tracks a moving car, sliding alongside it to reveal a man wearing dark sunglasses behind the driver's window.",
+      "The camera pulls back to reveal that the cyberpunk city scene is playing on the screen of an old television.",
+      "The camera zooms out to reveal a cozy vintage living room with warm lighting, old furniture, and people watching the television."
   ]
 }
+
+

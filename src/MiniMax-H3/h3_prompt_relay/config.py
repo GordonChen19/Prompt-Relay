@@ -22,6 +22,7 @@ class PromptRelayConfig:
     explicit_frame_intervals: tuple[tuple[int, int], ...] = ()
     mode: str = "gaussian"
     sigma: float = 0.932
+    interval_expansion: int = 2
 
     @classmethod
     def from_json(cls, path: str | Path) -> "PromptRelayConfig":
@@ -47,6 +48,7 @@ class PromptRelayConfig:
         frame_intervals = data.get("frame_intervals", ())
         mode = data.get("mode", "gaussian")
         sigma = data.get("sigma", 0.932)
+        interval_expansion = data.get("interval_expansion", 2)
 
         if not isinstance(global_prompt, str) or not global_prompt.strip():
             raise ValueError("global_prompt must be a non-empty string")
@@ -133,6 +135,12 @@ class PromptRelayConfig:
             raise ValueError("sigma must be a positive number")
         if not math.isfinite(float(sigma)) or float(sigma) <= 0:
             raise ValueError("sigma must be a positive finite number")
+        if (
+            isinstance(interval_expansion, bool)
+            or not isinstance(interval_expansion, int)
+            or interval_expansion < 0
+        ):
+            raise ValueError("interval_expansion must be a non-negative integer")
 
         return cls(
             global_prompt=global_prompt.strip(),
@@ -141,6 +149,7 @@ class PromptRelayConfig:
             explicit_frame_intervals=normalized_intervals,
             mode=mode.lower(),
             sigma=float(sigma),
+            interval_expansion=interval_expansion,
         )
 
     @property
@@ -161,7 +170,7 @@ class PromptRelayConfig:
         return self.full_prompt_and_spans[0]
 
     def frame_intervals(self, internal_frames: int) -> tuple[tuple[int, int], ...]:
-        """Resolve half-open intervals on the H3 transformer-frame timeline."""
+        """Resolve and symmetrically expand H3 transformer-frame intervals."""
 
         if internal_frames <= 0:
             raise ValueError("internal_frames must be positive")
@@ -171,9 +180,9 @@ class PromptRelayConfig:
                     "frame_intervals cannot extend beyond the number of internal "
                     f"frames ({internal_frames})"
                 )
-            return self.explicit_frame_intervals
+            intervals = self.explicit_frame_intervals
 
-        if self.segment_lengths:
+        elif self.segment_lengths:
             total = sum(self.segment_lengths)
             if total != internal_frames:
                 raise ValueError(
@@ -183,17 +192,23 @@ class PromptRelayConfig:
             boundaries = [0]
             for length in self.segment_lengths:
                 boundaries.append(boundaries[-1] + length)
-            return tuple(zip(boundaries, boundaries[1:]))
-
-        if len(self.local_prompts) > internal_frames:
-            raise ValueError(
-                "There cannot be more local prompts than internal frames "
-                f"({len(self.local_prompts)} prompts, {internal_frames} frames)"
+            intervals = tuple(zip(boundaries, boundaries[1:]))
+        else:
+            if len(self.local_prompts) > internal_frames:
+                raise ValueError(
+                    "There cannot be more local prompts than internal frames "
+                    f"({len(self.local_prompts)} prompts, {internal_frames} frames)"
+                )
+            step = math.ceil(internal_frames / len(self.local_prompts))
+            intervals = tuple(
+                (step * index, min(step * (index + 1), internal_frames))
+                for index in range(len(self.local_prompts))
             )
-        step = math.ceil(internal_frames / len(self.local_prompts))
+
+        expansion = self.interval_expansion
         return tuple(
-            (step * index, min(step * (index + 1), internal_frames))
-            for index in range(len(self.local_prompts))
+            (max(0, start - expansion), min(internal_frames, end + expansion))
+            for start, end in intervals
         )
 
     def to_mapping(self) -> dict[str, Any]:
@@ -202,6 +217,7 @@ class PromptRelayConfig:
             "local_prompts": list(self.local_prompts),
             "mode": self.mode,
             "sigma": self.sigma,
+            "interval_expansion": self.interval_expansion,
         }
         if self.explicit_frame_intervals:
             data["frame_intervals"] = [

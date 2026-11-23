@@ -1,0 +1,179 @@
+{
+  "_about": [
+    "Which methods generate_suite.py runs, and how. Edit 'paths' once per machine (see README, step A5).",
+    "Paths may start with ~. Relative paths are relative to the repo root (the folder holding src/, baselines/ and vbench_eval/).",
+    "Placeholders in python/code_dir/script/args: any key of 'paths' or 'settings', {drivers} (vbench_eval/drivers), and",
+    "  for batch methods {job_files} (the job files of the videos in one batch, one argument each);",
+    "  for per-video methods {output}, {prompt_file} (Prompt Relay's JSON for this method), {job_file}, {prompt_joined},",
+    "  {image_args} (one '--image P --image_latent_index L --image_prompt TEXT' group per image, any number of images),",
+    "  {global_prompt}, {local_1}, {local_2}, ..., {image_1}, {image_2}, ..., {image_latent_2}, ...",
+    "runs_on: 'text' = every entry (images not used); 'first_image' = entries with an image (uses image 1);",
+    "  'images' = entries with 2 or more images, one per local prompt; 'two_images' = exactly 2 images and 2 prompts.",
+    "timeline: where the events sit, recorded next to each video so evaluation scores the right frames:",
+    "  'wan' / 'h3' = the prompt's Prompt Relay timing on that model's latents; 'image_latents' = event k starts",
+    "  where image k is placed; 'own' = the method's driver records it.",
+    "batch: true = the driver loads the model once and makes many videos (--batch_size, or 'batch_size' here).",
+    "parallel: 'wan' = sharded over --gpus_per_job GPUs (FSDP + Ulysses, no offloading; on 1 GPU it offloads as",
+    "  'wan_offload_model' says); 'none' = always one GPU (the first of its group)."
+  ],
+  "paths": {
+    "wan_python": "/home/gchen/.conda/envs/LAVA/bin/python",
+    "h3_python": "/home/gchen/.conda/envs/ycwang_h3/bin/python",
+    "switchcraft_python": "/home/gchen/.conda/envs/LAVA/bin/python",
+    "diffusers_python": "/home/gchen/.conda/envs/ycwang_diffusers/bin/python",
+    "pusa_python": "/home/gchen/.conda/envs/ycwang_pusa/bin/python",
+    "mevg_python": "/home/gchen/.conda/envs/ycwang_mevg/bin/python",
+    "ditctrl_python": "/home/gchen/.conda/envs/ycwang_ditctrl/bin/python",
+    "wan_t2v_ckpt": "/home/gchen/Wan2.2-T2V-A14B",
+    "wan_i2v_ckpt": "/home/gchen/Wan2.2-I2V-A14B",
+    "h3_model": "/home/gchen/MiniMax-H3",
+    "wan22_t2v_diffusers_dir": "/home/gchen/Wan2.2-T2V-A14B-Diffusers",
+    "wan21_t2v_ckpt": "/home/gchen/Wan2.1-T2V-14B",
+    "wan21_i2v_480p_diffusers_dir": "/home/gchen/Wan2.1-I2V-14B-480P-Diffusers",
+    "pusa_lora_dir": "/home/gchen/Pusa-Wan2.2-V1",
+    "lvdm_t2v_ckpt": "~/ycwang/weights/LVDM/lvdm_short/t2v.ckpt",
+    "clip_l14_dir": "~/ycwang/weights/clip-vit-large-patch14",
+    "cogvideox_2b_sat_dir": "~/ycwang/weights/CogVideoX-2b-sat",
+    "switchcraft_code_dir": "baselines/SwitchCraft"
+  },
+  "settings": {
+    "seed": 48216,
+    "wan_size": "832*480",
+    "wan_frame_num": 129,
+    "wan_i2v_sample_shift": 3,
+    "wan_offload_model": "True",
+    "h3_frame_num": 192,
+    "h3_height": 480,
+    "h3_width": 832,
+    "h3_steps": 50
+  },
+  "methods": {
+    "wan2.2_t2v": {
+      "enabled": true,
+      "about": "Wan 2.2 T2V-A14B, plain: global and local prompts joined into one prompt",
+      "runs_on": "text", "timeline": "wan", "batch": true, "parallel": "wan",
+      "python": "{wan_python}", "code_dir": "src/Wan2.2", "script": "{drivers}/wan_batch.py",
+      "args": ["--task", "t2v-A14B", "--ckpt_dir", "{wan_t2v_ckpt}", "--size", "{wan_size}",
+               "--frame_num", "{wan_frame_num}", "--offload_model", "{wan_offload_model}", "--jobs", "{job_files}"]
+    },
+    "wan2.2_t2v_prompt_relay": {
+      "enabled": true,
+      "about": "Prompt Relay on Wan 2.2 T2V-A14B (the prompt's timing, or Prompt Relay's default split)",
+      "runs_on": "text", "timeline": "wan", "batch": true, "parallel": "wan",
+      "python": "{wan_python}", "code_dir": "src/Wan2.2", "script": "{drivers}/wan_batch.py",
+      "args": ["--task", "t2v-A14B", "--ckpt_dir", "{wan_t2v_ckpt}", "--size", "{wan_size}",
+               "--frame_num", "{wan_frame_num}", "--offload_model", "{wan_offload_model}", "--prompt_relay",
+               "--jobs", "{job_files}"]
+    },
+    "wan2.2_i2v": {
+      "enabled": true,
+      "about": "Wan 2.2 I2V-A14B, plain: image 1 as the first frame, global and local prompts joined into one",
+      "runs_on": "first_image", "timeline": "image_latents", "batch": true, "parallel": "wan",
+      "python": "{wan_python}", "code_dir": "src/Wan2.2", "script": "{drivers}/wan_batch.py",
+      "args": ["--task", "i2v-A14B", "--ckpt_dir", "{wan_i2v_ckpt}", "--size", "{wan_size}",
+               "--frame_num", "{wan_frame_num}", "--sample_shift", "{wan_i2v_sample_shift}",
+               "--offload_model", "{wan_offload_model}", "--jobs", "{job_files}"]
+    },
+    "wan2.2_i2v_visual_relay": {
+      "enabled": true,
+      "about": "Visual Relay on Wan 2.2 I2V-A14B: image 1 at the start, image 2 at its latent. The code on GitHub takes exactly 2 images",
+      "runs_on": "two_images", "timeline": "image_latents", "parallel": "wan",
+      "python": "{wan_python}", "code_dir": "src/Visual-Relay/Wan2.2", "script": "generate.py",
+      "args": ["--task", "i2v-A14B", "--size", "{wan_size}", "--frame_num", "{wan_frame_num}",
+               "--ckpt_dir", "{wan_i2v_ckpt}", "--base_seed", "{seed}", "--sample_shift", "{wan_i2v_sample_shift}",
+               "--prompt", "{global_prompt}",
+               "--image", "{image_1}", "--image_latent_index", "0", "--image_prompt", "{local_1}",
+               "--image", "{image_2}", "--image_latent_index", "{image_latent_2}", "--image_prompt", "{local_2}",
+               "--image_condition_joint_img2_guidance",
+               "--image_condition_joint_img2_guidance_shifted_anchor",
+               "--image_condition_joint_img2_guidance_align_b1",
+               "--image_condition_joint_img2_guidance_anchor_rope_offset", "0.5",
+               "--image_condition_joint_img2_guidance_single_frame_anchor",
+               "--image_condition_joint_img2_guidance_single_frame_anchor_four_history",
+               "--save_file", "{output}"]
+    },
+    "minimax_h3": {
+      "enabled": true,
+      "about": "MiniMax H3, plain: global and local prompts joined into one prompt",
+      "runs_on": "text", "timeline": "h3", "batch": true, "parallel": "none",
+      "python": "{h3_python}", "code_dir": "src/MiniMax-H3", "script": "{drivers}/h3_batch.py",
+      "args": ["--model_path", "{h3_model}", "--frame_num", "{h3_frame_num}", "--height", "{h3_height}",
+               "--width", "{h3_width}", "--steps", "{h3_steps}", "--jobs", "{job_files}"]
+    },
+    "minimax_h3_prompt_relay": {
+      "enabled": true,
+      "about": "Prompt Relay on MiniMax H3 (the prompt's timing moved onto H3's latents, or its default split)",
+      "runs_on": "text", "timeline": "h3", "batch": true, "parallel": "none",
+      "python": "{h3_python}", "code_dir": "src/MiniMax-H3", "script": "{drivers}/h3_batch.py",
+      "args": ["--model_path", "{h3_model}", "--frame_num", "{h3_frame_num}", "--height", "{h3_height}",
+               "--width", "{h3_width}", "--steps", "{h3_steps}", "--prompt_relay", "--jobs", "{job_files}"]
+    },
+    "minimax_h3_switchcraft": {
+      "enabled": true,
+      "about": "SwitchCraft (CVPR 2026) ported to MiniMax H3: the authors' query edit, acting only on the video-query x text-key logits of H3's joint attention; blocks 0-24 of 50, steps 0-19 of H3's 49 (their 20 of 40 blocks, 20 of 50 steps)",
+      "runs_on": "text", "timeline": "h3", "batch": true, "parallel": "none",
+      "python": "{h3_python}", "code_dir": "src/MiniMax-H3", "script": "{drivers}/h3_batch.py",
+      "args": ["--model_path", "{h3_model}", "--frame_num", "{h3_frame_num}", "--height", "{h3_height}",
+               "--width", "{h3_width}", "--steps", "{h3_steps}", "--edit", "switchcraft",
+               "--switchcraft_dir", "{switchcraft_code_dir}", "--jobs", "{job_files}"]
+    },
+    "minimax_h3_ts_attn": {
+      "enabled": true,
+      "about": "TS-Attn (ICLR 2026) ported to MiniMax H3: the authors' soft mask on the video-query x text-key logits of H3's joint attention; odd blocks, steps 0-8 of H3's 49 (their odd blocks, int(0.2 x steps))",
+      "runs_on": "text", "timeline": "h3", "batch": true, "parallel": "none",
+      "python": "{h3_python}", "code_dir": "src/MiniMax-H3", "script": "{drivers}/h3_batch.py",
+      "args": ["--model_path", "{h3_model}", "--frame_num", "{h3_frame_num}", "--height", "{h3_height}",
+               "--width", "{h3_width}", "--steps", "{h3_steps}", "--edit", "ts_attn", "--jobs", "{job_files}"]
+    },
+    "ts_attn": {
+      "enabled": true,
+      "about": "TS-Attn (ICLR 2026) on Wan 2.2 T2V-A14B Diffusers weights; events and their lengths from the prompt",
+      "runs_on": "text", "timeline": "wan", "batch": true, "parallel": "none",
+      "python": "{diffusers_python}", "code_dir": "baselines/TS-Attn", "script": "{drivers}/ts_attn.py",
+      "args": ["--weights_path", "{wan22_t2v_diffusers_dir}", "--frame_num", "{wan_frame_num}", "--jobs", "{job_files}"]
+    },
+    "switchcraft": {
+      "enabled": false,
+      "about": "SwitchCraft (CVPR 2026) as released, on Wan 2.1 T2V-14B. Off: replaced by switchcraft_wan22",
+      "runs_on": "text", "timeline": "wan", "batch": true, "parallel": "none",
+      "python": "{switchcraft_python}", "code_dir": "baselines/SwitchCraft", "script": "{drivers}/switchcraft.py",
+      "args": ["--ckpt_dir", "{wan21_t2v_ckpt}", "--frame_num", "{wan_frame_num}", "--jobs", "{job_files}"]
+    },
+    "switchcraft_wan22": {
+      "enabled": true,
+      "about": "SwitchCraft (CVPR 2026) ported to Wan 2.2 T2V-A14B: the authors' cross-attention edit in both experts, Wan 2.2's own sampling; one GPU per video",
+      "runs_on": "text", "timeline": "wan", "batch": true, "parallel": "none",
+      "python": "{wan_python}", "code_dir": "baselines/Wan2.2-official", "script": "{drivers}/switchcraft_wan22.py",
+      "args": ["--ckpt_dir", "{wan_t2v_ckpt}", "--switchcraft_dir", "{switchcraft_code_dir}", "--size", "{wan_size}",
+               "--frame_num", "{wan_frame_num}", "--offload_model", "{wan_offload_model}", "--jobs", "{job_files}"]
+    },
+    "pusa": {
+      "enabled": true,
+      "about": "Pusa V1.0 on Wan 2.2 T2V-A14B: each image placed at its latent (like Visual Relay)",
+      "runs_on": "images", "timeline": "image_latents", "batch": true, "parallel": "none",
+      "python": "{pusa_python}", "code_dir": "baselines/Pusa-VidGen/PusaV1", "script": "{drivers}/pusa.py",
+      "args": ["--base_dir", "{wan_t2v_ckpt}", "--lora_dir", "{pusa_lora_dir}", "--frame_num", "{wan_frame_num}", "--jobs", "{job_files}"]
+    },
+    "frame_guidance": {
+      "enabled": true,
+      "about": "Frame Guidance (ICLR 2026), keyframe-guided, on Wan 2.1 I2V-14B-480P: image 1 first, later images guided at their frames",
+      "runs_on": "images", "timeline": "image_latents", "batch": true, "parallel": "none",
+      "python": "{diffusers_python}", "code_dir": "baselines/frame-guidance", "script": "{drivers}/frame_guidance.py",
+      "args": ["--model_path", "{wan21_i2v_480p_diffusers_dir}", "--frame_num", "{wan_frame_num}", "--jobs", "{job_files}"]
+    },
+    "mevg": {
+      "enabled": false,
+      "about": "MEVG (ECCV 2024) on LVDM, 256x256, 16 frames per event. Off: not on Wan 2.2, cited only",
+      "runs_on": "text", "timeline": "own", "batch": true, "batch_size": 25, "parallel": "none",
+      "python": "{mevg_python}", "code_dir": "baselines/MEVG", "script": "{drivers}/mevg.py",
+      "args": ["--ckpt_path", "{lvdm_t2v_ckpt}", "--clip_path", "{clip_l14_dir}", "--jobs", "{job_files}"]
+    },
+    "ditctrl": {
+      "enabled": false,
+      "about": "DiTCtrl (CVPR 2025) on CogVideoX-2B, overlap 9, 2 transition blocks",
+      "runs_on": "text", "timeline": "own", "batch": true, "parallel": "none",
+      "python": "{ditctrl_python}", "code_dir": "baselines/DiTCtrl/sat", "script": "{drivers}/ditctrl.py",
+      "args": ["--weights_dir", "{cogvideox_2b_sat_dir}", "--jobs", "{job_files}"]
+    }
+  }
+}

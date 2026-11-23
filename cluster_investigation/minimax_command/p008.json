@@ -1,0 +1,77 @@
+{
+  "method": "minimax_h3_prompt_relay",
+  "id": "p008",
+  "output": "/home/gchen/ycwang/Prompt-Relay/outputs/eval15s/minimax_h3_prompt_relay/p008.mp4",
+  "seed": 48216,
+  "global_prompt": "A photorealistic cinematic Formula 1 racing sequence at a modern Grand Prix circuit during daylight. g the red car's front-right tire. The entire sequence unfolds through smooth, continuous camera movements and visually seamless transitions without abrupt cuts.",
+  "local_prompts": [
+    "The camera pulls backward from a close-up inside a Formula 1 driver's helmet, revealing the driver gripping the steering wheel of a red racing car.",
+    "The camera zooms out of the driver's cockpit, revealing a red and a blue Formula 1 car racing side by side.",
+    "The red and blue Formula 1 cars collide, damaging both vehicles and puncturing the red car's front-right tire.",
+    "The camera pulls back to reveal the racing footage playing on a television surrounded by red-uniformed pit crew members inside a Formula 1 garage.",
+    "The red pit crew jumps up, grabs replacement tires and wheel guns, and rushes out of the garage as the camera follows them."
+  ],
+  "prompt_joined": "A photorealistic cinematic Formula 1 racing sequence at a modern Grand Prix circuit during daylight. g the red car's front-right tire. The entire sequence unfolds through smooth, continuous camera movements and visually seamless transitions without abrupt cuts. The camera pulls backward from a close-up inside a Formula 1 driver's helmet, revealing the driver gripping the steering wheel of a red racing car. The camera zooms out of the driver's cockpit, revealing a red and a blue Formula 1 car racing side by side. The red and blue Formula 1 cars collide, damaging both vehicles and puncturing the red car's front-right tire. The camera pulls back to reveal the racing footage playing on a television surrounded by red-uniformed pit crew members inside a Formula 1 garage. The red pit crew jumps up, grabs replacement tires and wheel guns, and rushes out of the garage as the camera follows them.",
+  "images": [],
+  "image_latents": [],
+  "subject": [
+    "red car"
+  ],
+  "event_words": null,
+  "timing": {},
+  "event_frames": [
+    [
+      0,
+      71
+    ],
+    [
+      71,
+      142
+    ],
+    [
+      142,
+      213
+    ],
+    [
+      213,
+      284
+    ],
+    [
+      284,
+      345
+    ]
+  ],
+  "uses_images": false,
+  "prompt_relay": {
+    "global_prompt": "A photorealistic cinematic Formula 1 racing sequence at a modern Grand Prix circuit during daylight. g the red car's front-right tire. The entire sequence unfolds through smooth, continuous camera movements and visually seamless transitions without abrupt cuts.",
+    "local_prompts": [
+      "The camera pulls backward from a close-up inside a Formula 1 driver's helmet, revealing the driver gripping the steering wheel of a red racing car.",
+      "The camera zooms out of the driver's cockpit, revealing a red and a blue Formula 1 car racing side by side.",
+      "The red and blue Formula 1 cars collide, damaging both vehicles and puncturing the red car's front-right tire.",
+      "The camera pulls back to reveal the racing footage playing on a television surrounded by red-uniformed pit crew members inside a Formula 1 garage.",
+      "The red pit crew jumps up, grabs replacement tires and wheel guns, and rushes out of the garage as the camera follows them."
+    ]
+  },
+  "latent_intervals": [
+    [
+      0,
+      21
+    ],
+    [
+      21,
+      42
+    ],
+    [
+      42,
+      63
+    ],
+    [
+      63,
+      84
+    ],
+    [
+      84,
+      102
+    ]
+  ]
+}

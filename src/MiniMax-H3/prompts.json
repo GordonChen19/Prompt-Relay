@@ -1,13 +1,14 @@
 {
-  "global_prompt": "A shot of two stationary warriors in a moonlit Japanese temple courtyard: a samurai wearing bright red armor and a ninja wearing black clothing. The two warriors stand facing each other throughout the shot.",
   "mode": "gaussian",
-  "sigma": 0.932,
+  "global_prompt": "A photorealistic cinematic sequence featuring seamless camera. The camera movement is fluid and continuous, using smooth zooms, tracking shots, and perspective transitions without abrupt cuts.",
   "local_prompts": [
-    "The camera begins behind the red-armored samurai, looking over his shoulder toward the black-clad ninja. The camera rapidly moves forward rapidly toward the ninja, sweeps around his side, and ends behind the black-clad ninja, looking over his shoulder toward the red-armored samurai facing him.",
-    "The camera is behind black-clad ninja, looking over his shoulder toward the red-armored samurai facing him."
-  ],
-  "frame_intervals": [
-    [0, 24],
-    [24, 37]
+      "A large eagle soars high through the sky, flapping its wings as the camera follows its flight.",
+      "The camera zooms into the eagle's eye, where a reflected cyberpunk city expands to fill the frame, seamlessly revealing the neon-lit metropolis.",
+      "The camera flies through a neon-lit cyberpunk city with moving cars, wet streets, and towering skyscrapers.",
+      "The camera approaches and tracks a moving car, sliding alongside it to reveal a man wearing dark sunglasses behind the driver's window.",
+      "The camera pulls back to reveal that the cyberpunk city scene is playing on the screen of an old television.",
+      "The camera zooms out to reveal a cozy vintage living room with warm lighting, old furniture, and people watching the television."
   ]
 }
+
+

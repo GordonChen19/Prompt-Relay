@@ -1,0 +1,87 @@
+{
+  "method": "minimax_h3_prompt_relay",
+  "id": "p003",
+  "output": "/home/gchen/ycwang/Prompt-Relay/outputs/eval15s/minimax_h3_prompt_relay/p003.mp4",
+  "seed": 48216,
+  "global_prompt": "A photorealistic cinematic sequence featuring seamless camera. The camera movement is fluid and continuous, using smooth zooms, tracking shots, and perspective transitions without abrupt cuts.",
+  "local_prompts": [
+    "A large eagle soars high through the sky, flapping its wings as the camera follows its flight.",
+    "The camera zooms into the eagle's eye, where a reflected cyberpunk city expands to fill the frame, seamlessly revealing the neon-lit metropolis.",
+    "The camera flies through a neon-lit cyberpunk city with moving cars, wet streets, and towering skyscrapers.",
+    "The camera approaches and tracks a moving car, sliding alongside it to reveal a man wearing dark sunglasses behind the driver's window.",
+    "The camera pulls back to reveal that the cyberpunk city scene is playing on the screen of an old television.",
+    "The camera zooms out to reveal a cozy vintage living room with warm lighting, old furniture, and people watching the television."
+  ],
+  "prompt_joined": "A photorealistic cinematic sequence featuring seamless camera. The camera movement is fluid and continuous, using smooth zooms, tracking shots, and perspective transitions without abrupt cuts. A large eagle soars high through the sky, flapping its wings as the camera follows its flight. The camera zooms into the eagle's eye, where a reflected cyberpunk city expands to fill the frame, seamlessly revealing the neon-lit metropolis. The camera flies through a neon-lit cyberpunk city with moving cars, wet streets, and towering skyscrapers. The camera approaches and tracks a moving car, sliding alongside it to reveal a man wearing dark sunglasses behind the driver's window. The camera pulls back to reveal that the cyberpunk city scene is playing on the screen of an old television. The camera zooms out to reveal a cozy vintage living room with warm lighting, old furniture, and people watching the television.",
+  "images": [],
+  "image_latents": [],
+  "subject": [
+    "eagle"
+  ],
+  "event_words": null,
+  "timing": {},
+  "event_frames": [
+    [
+      0,
+      58
+    ],
+    [
+      58,
+      115
+    ],
+    [
+      115,
+      172
+    ],
+    [
+      172,
+      230
+    ],
+    [
+      230,
+      288
+    ],
+    [
+      288,
+      345
+    ]
+  ],
+  "uses_images": false,
+  "prompt_relay": {
+    "global_prompt": "A photorealistic cinematic sequence featuring seamless camera. The camera movement is fluid and continuous, using smooth zooms, tracking shots, and perspective transitions without abrupt cuts.",
+    "local_prompts": [
+      "A large eagle soars high through the sky, flapping its wings as the camera follows its flight.",
+      "The camera zooms into the eagle's eye, where a reflected cyberpunk city expands to fill the frame, seamlessly revealing the neon-lit metropolis.",
+      "The camera flies through a neon-lit cyberpunk city with moving cars, wet streets, and towering skyscrapers.",
+      "The camera approaches and tracks a moving car, sliding alongside it to reveal a man wearing dark sunglasses behind the driver's window.",
+      "The camera pulls back to reveal that the cyberpunk city scene is playing on the screen of an old television.",
+      "The camera zooms out to reveal a cozy vintage living room with warm lighting, old furniture, and people watching the television."
+    ]
+  },
+  "latent_intervals": [
+    [
+      0,
+      17
+    ],
+    [
+      17,
+      34
+    ],
+    [
+      34,
+      51
+    ],
+    [
+      51,
+      68
+    ],
+    [
+      68,
+      85
+    ],
+    [
+      85,
+      102
+    ]
+  ]
+}

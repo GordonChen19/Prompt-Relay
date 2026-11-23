@@ -126,6 +126,7 @@ class PromptRelayConfigTests(unittest.TestCase):
                 "global_prompt": "g",
                 "local_prompts": ["a", "b"],
                 "frame_intervals": [[0, 3], [2, 5]],
+                "interval_expansion": 0,
             }
         )
         segments, full_prompt = build_prompt_relay_segments(
@@ -157,6 +158,7 @@ class PromptRelayConfigTests(unittest.TestCase):
             "segment_lengths": [2, 3],
             "mode": "GAUSSIAN",
             "sigma": 0.5,
+            "interval_expansion": 0,
         }
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "prompts.json"
@@ -198,6 +200,7 @@ class PromptRelayConfigTests(unittest.TestCase):
             {
                 "global_prompt": "Global",
                 "local_prompts": ["one", "two", "three", "four"],
+                "interval_expansion": 0,
             }
         )
         self.assertEqual(
@@ -243,12 +246,51 @@ class PromptRelayConfigTests(unittest.TestCase):
                 "global_prompt": "Global",
                 "local_prompts": ["one", "two", "three"],
                 "frame_intervals": [[0, 7], [3, 8], [8, 21]],
+                "interval_expansion": 0,
             }
         )
         self.assertEqual(
             config.frame_intervals(21),
             ((0, 7), (3, 8), (8, 21)),
         )
+
+    def test_interval_expansion_defaults_to_two_and_clamps_boundaries(self):
+        config = PromptRelayConfig.from_mapping(
+            {
+                "global_prompt": "Global",
+                "local_prompts": ["one", "two", "three"],
+                "frame_intervals": [[0, 8], [8, 14], [14, 21]],
+            }
+        )
+        self.assertEqual(config.interval_expansion, 2)
+        self.assertEqual(
+            config.frame_intervals(21),
+            ((0, 10), (6, 16), (12, 21)),
+        )
+
+    def test_interval_expansion_is_configurable(self):
+        config = PromptRelayConfig.from_mapping(
+            {
+                "global_prompt": "Global",
+                "local_prompts": ["one", "two"],
+                "frame_intervals": [[0, 8], [8, 16]],
+                "interval_expansion": 3,
+            }
+        )
+        self.assertEqual(config.frame_intervals(16), ((0, 11), (5, 16)))
+
+    def test_rejects_invalid_interval_expansion(self):
+        for value in (-1, 1.5, True):
+            with self.subTest(value=value), self.assertRaisesRegex(
+                ValueError, "interval_expansion"
+            ):
+                PromptRelayConfig.from_mapping(
+                    {
+                        "global_prompt": "Global",
+                        "local_prompts": ["one"],
+                        "interval_expansion": value,
+                    }
+                )
 
     def test_rejects_intervals_beyond_latent_timeline(self):
         config = PromptRelayConfig.from_mapping(

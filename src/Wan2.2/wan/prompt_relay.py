@@ -28,6 +28,7 @@ class PromptRelayConfig:
     image_indices: tuple[int, ...] = ()
     mode: str = "gaussian"
     sigma: float = 0.932
+    interval_expansion: int = 2
 
     @classmethod
     def from_json(cls, path: str | Path) -> "PromptRelayConfig":
@@ -58,6 +59,7 @@ class PromptRelayConfig:
         image_indices = data.get("image_index", ())
         mode = data.get("mode", "gaussian")
         sigma = data.get("sigma", 0.932)
+        interval_expansion = data.get("interval_expansion", 2)
 
         if not isinstance(global_prompt, str) or not global_prompt.strip():
             raise ValueError("global_prompt must be a non-empty string")
@@ -202,6 +204,12 @@ class PromptRelayConfig:
             raise ValueError("sigma must be a positive number")
         if not math.isfinite(float(sigma)) or float(sigma) <= 0:
             raise ValueError("sigma must be a positive finite number")
+        if (
+            isinstance(interval_expansion, bool)
+            or not isinstance(interval_expansion, int)
+            or interval_expansion < 0
+        ):
+            raise ValueError("interval_expansion must be a non-negative integer")
 
         return cls(
             global_prompt=global_prompt.strip(),
@@ -214,6 +222,7 @@ class PromptRelayConfig:
             image_indices=normalized_image_indices,
             mode=mode.lower(),
             sigma=float(sigma),
+            interval_expansion=interval_expansion,
         )
 
     @property
@@ -233,7 +242,7 @@ class PromptRelayConfig:
         return self.global_prompt + "".join(self.prefixed_local_prompts)
 
     def frame_intervals(self, latent_frames: int) -> tuple[tuple[int, int], ...]:
-        """Resolve local prompts to half-open latent-frame intervals."""
+        """Resolve and symmetrically expand half-open latent-frame intervals."""
 
         if latent_frames <= 0:
             raise ValueError("latent_frames must be positive")
@@ -247,9 +256,9 @@ class PromptRelayConfig:
                     "frame_intervals cannot extend beyond the number of latent "
                     f"frames ({latent_frames})"
                 )
-            return self.explicit_frame_intervals
+            intervals = self.explicit_frame_intervals
 
-        if self.segment_lengths:
+        elif self.segment_lengths:
             if sum(self.segment_lengths) != latent_frames:
                 raise ValueError(
                     "segment_lengths must sum to the number of latent frames "
@@ -258,18 +267,24 @@ class PromptRelayConfig:
             boundaries = [0]
             for length in self.segment_lengths:
                 boundaries.append(boundaries[-1] + length)
-            return tuple(zip(boundaries, boundaries[1:]))
+            intervals = tuple(zip(boundaries, boundaries[1:]))
+        else:
+            if len(self.local_prompts) > latent_frames:
+                raise ValueError(
+                    "There cannot be more local prompts than latent frames "
+                    f"({len(self.local_prompts)} prompts, {latent_frames} frames)"
+                )
 
-        if len(self.local_prompts) > latent_frames:
-            raise ValueError(
-                "There cannot be more local prompts than latent frames "
-                f"({len(self.local_prompts)} prompts, {latent_frames} frames)"
+            step = math.ceil(latent_frames / len(self.local_prompts))
+            intervals = tuple(
+                (step * index, min(step * (index + 1), latent_frames))
+                for index in range(len(self.local_prompts))
             )
 
-        step = math.ceil(latent_frames / len(self.local_prompts))
+        expansion = self.interval_expansion
         return tuple(
-            (step * index, min(step * (index + 1), latent_frames))
-            for index in range(len(self.local_prompts))
+            (max(0, start - expansion), min(latent_frames, end + expansion))
+            for start, end in intervals
         )
 
 

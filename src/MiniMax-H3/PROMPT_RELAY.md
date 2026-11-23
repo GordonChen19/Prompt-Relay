@@ -85,12 +85,15 @@ from the boundary image; provide both to request an explicit canvas.
 | `local_prompts` | yes | One local event description per schedule entry. |
 | `mode` | no | `gaussian` (default) or `hard`. |
 | `sigma` | no | Gaussian falloff, default `0.932`. |
+| `interval_expansion` | no | Expand every resolved interval by this many internal frames on both sides, clamped to the timeline; default `2`. |
 | `segment_lengths` | no | Consecutive internal-frame lengths; must cover the complete timeline. |
 | `frame_intervals` | no | Independent half-open `[start, end)` internal-frame intervals. Overlap and gaps are allowed. |
 
 `segment_lengths` and `frame_intervals` are mutually exclusive. If neither is
 provided, the implementation uses the same ceil-based consecutive allocation as
-the Wan port.
+the Wan port. After resolving those base intervals, an indicated `[x, y)` is
+expanded to `[max(0, x-h), min(internal_frames, y+h))`, where `h` is
+`interval_expansion`. Set it to `0` to recover the unexpanded schedule.
 
 In Gaussian mode, each interval uses the Wan definitions:
 
