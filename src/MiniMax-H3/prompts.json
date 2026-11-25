@@ -1,14 +1,13 @@
 {
   "mode": "gaussian",
-  "global_prompt": "A photorealistic cinematic sequence featuring seamless camera. The camera movement is fluid and continuous, using smooth zooms, tracking shots, and perspective transitions without abrupt cuts.",
+  "global_prompt": "A photorealistic scene in a vast field of tall green grass at sunset, filmed as a continuous low-angle handheld tracking shot.",
   "local_prompts": [
-      "A large eagle soars high through the sky, flapping its wings as the camera follows its flight.",
-      "The camera zooms into the eagle's eye, where a reflected cyberpunk city expands to fill the frame, seamlessly revealing the neon-lit metropolis.",
-      "The camera flies through a neon-lit cyberpunk city with moving cars, wet streets, and towering skyscrapers.",
-      "The camera approaches and tracks a moving car, sliding alongside it to reveal a man wearing dark sunglasses behind the driver's window.",
-      "The camera pulls back to reveal that the cyberpunk city scene is playing on the screen of an old television.",
-      "The camera zooms out to reveal a cozy vintage living room with warm lighting, old furniture, and people watching the television."
-  ]
+    "A rugged caveman wearing animal furs walks through tall green grass at sunset while the camera tracks alongside him.",
+    "The camera rapidly pans downward past the caveman's hairy legs until motion-blurred green grass completely fills the frame.",
+    "The camera rapidly pans upward from the grass, revealing a Spartan soldier wearing bronze greaves, a red tunic, and carrying a large round shield.",
+    "The camera rapidly pans downward past the Spartan's shield and armored legs until motion-blurred green grass completely fills the frame.",
+    "The camera rapidly pans upward from the grass, revealing a medieval knight in shining plate armor riding a horse."
+  ],
+  "interval_expansion": 6
 }
-
 
