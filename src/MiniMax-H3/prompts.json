@@ -1,13 +1,13 @@
 {
   "mode": "gaussian",
-  "global_prompt": "A photorealistic scene in a vast field of tall green grass at sunset, filmed as a continuous low-angle handheld tracking shot.",
-  "local_prompts": [
-    "A rugged caveman wearing animal furs walks through tall green grass at sunset while the camera tracks alongside him.",
-    "The camera rapidly pans downward past the caveman's hairy legs until motion-blurred green grass completely fills the frame.",
-    "The camera rapidly pans upward from the grass, revealing a Spartan soldier wearing bronze greaves, a red tunic, and carrying a large round shield.",
-    "The camera rapidly pans downward past the Spartan's shield and armored legs until motion-blurred green grass completely fills the frame.",
-    "The camera rapidly pans upward from the grass, revealing a medieval knight in shining plate armor riding a horse."
-  ],
-  "interval_expansion": 6
+   "global_prompt": "A photorealistic cinematic family scene set in a cozy suburban home on a sunny morning, captured in one continuous handheld tracking shot without cuts.",
+    "local_prompts": [
+      "The camera follows a golden retriever approaching a busy breakfast table.",
+      "The dog stands on its hind legs, placing its front paws against the edge of the table next to a young schoolboy.",
+      "The boy gets up from the breakfast table, and the camera follows him as he picks up his school backpack.",
+      "The camera tracks the boy as he runs toward a waiting yellow school bus.",
+      "The camera turns around to reveal the golden retriever standing sadly in the front doorway, watching the school bus drive away."
+    ],
+  "interval_expansion": 8
 }
 
