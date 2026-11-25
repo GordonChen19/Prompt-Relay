@@ -1,0 +1,401 @@
+[
+  {
+  "id": "p021",
+  "file_name": "p021.mp4",
+  "global_prompt": "A photorealistic cinematic comedy set in a dimly lit modern apartment kitchen at midnight, captured in one continuous shot without cuts.",
+  "local_prompts": [
+    "The camera tracks a sleepy man in pajamas as he shuffles into a dark kitchen at midnight and walks toward a stainless steel refrigerator.",
+    "The man opens the refrigerator door, and the interior is a vast snowy Antarctic landscape with icy wind blowing out and snowflakes drifting into the dark kitchen.",
+    "A penguin waddles up from inside the fridge and hands the man a fresh silver fish, and the man accepts it with a stunned expression.",
+    "The man slowly shuts the refrigerator door and stares at it for a moment, then opens it again.",
+    "The refrigerator now looks completely normal, with shelves of milk, eggs, and leftovers, and the same silver fish resting on the middle shelf, while the man blinks in confusion."
+  ]
+},
+{
+  "id": "p022",
+  "file_name": "p022.mp4",
+  "global_prompt": "A vibrant cinematic anime-style comedy with expressive characters, bold colors, dynamic speed lines, and smooth continuous camera movement, captured in one continuous tracking shot without cuts.",
+  "local_prompts": [
+    "The camera tracks a schoolgirl in a sailor uniform sprinting down a quiet suburban street at sunrise with a slice of toast in her mouth, while a panicked sweat drop flies off her forehead.",
+    "A wave of pink cherry blossom petals sweeps across the lens, and when it clears, the same girl is running along a rooftop of a futuristic city as giant mecha robots battle in the background.",
+    "Another wave of petals sweeps across the lens, and when it clears, the girl is running across a medieval fantasy meadow, leaping over a slime monster while a knight waves at her from a hill.",
+    "A final wave of petals sweeps across the lens, and when it clears, the girl is back on the suburban street, sprinting toward a school gate with the toast still in her mouth.",
+    "The camera swings in front of the school gate, where a stern teacher with glasses taps his wristwatch, and the girl skids to a stop with comically exaggerated motion lines."
+  ]
+},
+{
+  "id": "p022",
+  "file_name": "p022.mp4",
+  "global_prompt": "A photorealistic cinematic close-up sequence inside a quiet, warmly lit sushi bar with a polished wooden counter, filmed in one continuous shot without cuts, with smooth macro tracking and natural reframing that follows the hands and the food.",
+  "local_prompts": [
+    "A sushi chef's hands hold a long knife and slice a pink slab of fresh salmon on a wooden cutting board, producing one clean, thin slice, then carry it across the counter toward a bowl of steaming white sushi rice.",
+    "The chef's hands scoop a small portion of rice and gently press it into a compact oval mound on the counter.",
+    "The chef lays the salmon slice over the rice mound and presses lightly to join them into a single piece of nigiri.",
+    "The chef dips a small brush into a dish of dark soy sauce and strokes it across the top of the salmon, leaving a glossy shine, then lifts the nigiri as the camera tracks it rising toward a customer's face.",
+    "The customer opens his mouth, takes the whole piece of nigiri in one bite, and chews with a satisfied expression."
+  ]
+},
+{
+  "id": "p023",
+  "file_name": "p023.mp4",
+  "global_prompt": "A photorealistic cinematic comedy filmed in one continuous shot without cuts from a fixed, steady camera inside a modern elevator, looking straight out through the doors. The same bored man in a grey suit holding a briefcase stands in the center of the frame throughout, staring ahead, while each time the doors open they reveal a completely different natural biome.",
+  "local_prompts": [
+    "The elevator doors slide open to reveal a dense tropical rainforest with thick green foliage, hanging vines, and mist, while colorful parrots call from the trees and the man glances out without expression.",
+    "The doors slide shut, and after a soft chime they open again to reveal a vast sandy desert with towering dunes under a blazing sun, as heat shimmers off the sand and a lone camel walks past.",
+    "The doors slide shut, and when they open again they reveal a frozen arctic tundra with blowing snow and ice shelves, and the man pulls his suit jacket tighter as a polar bear wanders by in the distance.",
+    "The doors slide shut, and when they open again they reveal a lush African savanna at golden hour with tall grass and a herd of giraffes, while the man checks his wristwatch.",
+    "The doors slide shut, and when they open again they reveal a normal office lobby, and the man steps out calmly as the camera holds on the closing doors behind him."
+  ]
+},
+{
+  "id": "p024",
+  "file_name": "p024.mp4",
+  "global_prompt": "A photorealistic cinematic heartwarming comedy outside a grand royal palace with iron gates and a red-and-white striped sentry box, on a bright afternoon with tourists in the background, captured in one continuous shot without cuts, with smooth camera movement and natural reframing.",
+  "local_prompts": [
+    "The camera slowly pushes in on a royal guard in a red tunic, black bearskin hat, and white gloves, standing perfectly rigid beside his sentry box, staring straight ahead without blinking.",
+    "A snarling dog barks at his boots, a street performer in a scary monster mask jumps in front of him and roars, and a motorcycle revs loudly behind him, while the guard stays frozen with his eyes fixed forward.",
+    "A little girl in a yellow raincoat accidentally lets go of a bright red balloon next to him, and the camera tilts upward as the balloon drifts higher into the sky.",
+    "The guard's eyes snap toward the balloon and he breaks his stance, leaps forward, stretches one arm up, and catches the dangling string just before it floats out of reach.",
+    "The guard kneels and gently hands the string to the little girl, who smiles up at him, and then he stands, returns to his rigid pose beside the sentry box, and the camera pushes in on his face as he stares forward again."
+  ]
+},
+  {
+    "id": "p025",
+    "file_name": "p025.mp4",
+    "global_prompt": "A photorealistic cinematic action-comedy filmed in one continuous low-angle tracking shot without cuts, following a scruffy brown terrier at ground level as it runs through a sprawling outdoor sports park in warm afternoon light.",
+    "local_prompts": [
+      "The camera tracks a scruffy terrier bolting across a soccer pitch with a red frisbee in its mouth, dodging the legs of players in blue and white jerseys who spin around in confusion.",
+      "The dog dashes under a tennis net in the middle of a rally, and the camera follows as the two players freeze with their rackets raised and their heads turning in unison.",
+      "The dog leaps over a row of track hurdles one by one beside a line of sprinters, and the camera tilts up briefly as a sprinter stumbles and watches it pass.",
+      "The dog sprints along the edge of an Olympic swimming pool, and the camera tracks beside it as it skids at the end of the lane and drops the frisbee into the water with a splash.",
+      "The camera pulls up to reveal a swimmer surfacing with the frisbee in hand, and the terrier sits at the pool's edge wagging its tail while the swimmer hands it back."
+    ]
+  },
+
+  {
+  "id": "p026",
+  "file_name": "p026.mp4",
+  "global_prompt": "A photorealistic cinematic war-drama sequence captured in one continuous shot without cuts, beginning in a quiet, warmly lit family living room and moving through a framed photograph into a World War II battlefield, with a smooth push-in camera, fluid pans, and seamless transitions from black-and-white to color.",
+  "local_prompts": [
+    "The camera slowly pushes through a cozy family living room with a worn sofa, a ticking mantel clock, and soft lamplight, toward a framed black-and-white photograph on the wall of a World War II soldier in a helmet holding a rifle.",
+    "The camera pushes into the photograph until the grainy black-and-white image fills the frame, then color floods in and the soldier comes alive, crouching in a muddy trench with smoke drifting across the ground as he raises his rifle and fires.",
+    "The camera pans left past the soldier to reveal a massive tank rolling across the battlefield, its turret rotating as it fires a shell with a bright muzzle flash and a shockwave that ripples the mud.",
+    "The camera pans rapidly upward from the tank into a gray, smoke-filled sky, revealing a formation of fighter planes roaring overhead and strafing the ground with streams of tracer fire.",
+    "Massive explosions erupt across the battlefield below, sending fireballs and debris into the air as the planes bank through the smoke, and the camera holds on the burning sky."
+  ]
+},
+{
+  "id": "p027",
+  "file_name": "p027.mp4",
+  "global_prompt": "A photorealistic cinematic action-comedy set on a busy city street and inside a bright fast-food burger restaurant, captured in one continuous shot without cuts, with fast tracking, natural reframing, and an exaggerated, over-the-top comedic tone.",
+  "local_prompts": [
+    "The camera tracks backward in front of a wild-eyed man in a black beanie and dark jacket as he sprints down a crowded sidewalk toward a glowing burger restaurant, with pedestrians leaping out of his way.",
+    "The man kicks the glass door open with a loud crash and bursts inside, and the camera follows him as startled customers freeze with fries halfway to their mouths.",
+    "He raises a pistol and fires once into the ceiling, sending a ceiling tile and a puff of dust falling, while the customers duck behind their trays and a bored cashier behind the counter slowly lifts her eyes.",
+    "The cashier calmly slides a wrapped cheeseburger across the counter, and the man snatches it, peels back the wrapper, and takes a huge bite as the camera pushes in on his face.",
+    "In a tight close-up, his eyes widen and turn into glowing, sparkling stars as he chews with blissful joy, while melted cheese stretches from his mouth and the dust from the ceiling tile settles on his shoulders."
+  ]
+},
+{
+  "id": "p028",
+  "file_name": "p028.mp4",
+  "global_prompt": "A photorealistic cinematic action-comedy set on a busy city street and inside a bright fast-food burger restaurant, captured in one continuous shot without cuts, with fast tracking, natural reframing, and an exaggerated, over-the-top comedic tone.",
+  "local_prompts": [
+    "The camera tracks backward in front of a wild-eyed man in a black beanie and dark jacket as he sprints down a crowded sidewalk toward a glowing burger restaurant, with pedestrians leaping out of his way.",
+    "The man kicks the glass door open with a loud crash and bursts inside, and the camera follows him as startled customers freeze with fries halfway to their mouths.",
+    "He raises a pistol and fires once into the ceiling, sending a ceiling tile and a puff of dust falling, while the customers duck behind their trays and a bored cashier behind the counter slowly lifts her eyes.",
+    "The cashier calmly slides a wrapped cheeseburger across the counter, and the man snatches it, peels back the wrapper, and takes a huge bite as the camera pushes in on his face.",
+    "In a tight close-up, his eyes widen and turn into glowing, sparkling stars as he chews with blissful joy, while melted cheese stretches from his mouth and the dust from the ceiling tile settles on his shoulders."
+  ]
+},
+
+{
+  "id": "p029",
+  "file_name": "p029.mp4",
+  "global_prompt": "A photorealistic cinematic comedy filmed in one continuous static medium shot of a man's face in a quiet museum hall, with a white marble statue standing behind him. The camera never moves.",
+  "local_prompts": [
+    "The man looks calmly at the camera while the white statue behind him slowly tiptoes toward him, then freezes mid-step.",
+    "The man turns around to look at the statue, which stays frozen, then turns back to face the camera.",
+    "The white statue tiptoes even closer behind him, then freezes mid-step with one foot raised.",
+    "The man turns around again to look at the frozen statue, then turns back to face the camera.",
+    "The man stares at the camera with a puzzled look as the statue stands motionless right behind his shoulder."
+  ]
+},
+{
+  "id": "p030",
+  "file_name": "p030.mp4",
+  "global_prompt": "A photorealistic cinematic sequence in a sunny suburban backyard garden in the afternoon, filmed in one continuous shot without cuts, with a constant smooth zoom-in that never stops.",
+  "local_prompts": [
+    "The camera starts wide above a backyard garden with a green lawn and flower beds, and slowly zooms in toward the lawn.",
+    "A golden retriever sprints across the lawn from left to right as the camera keeps zooming in.",
+    "A man in a straw hat pushes a lawn mower across the grass, leaving a neat stripe behind him, as the camera keeps zooming in.",
+    "The zoom continues past the mower toward a tall sunflower at the edge of the garden until its yellow petals fill the frame.",
+    "The camera zooms into the center of the sunflower to reveal a bee crawling across the pollen."
+  ]
+},
+
+{
+  "id": "p031",
+  "file_name": "p031.mp4",
+  "global_prompt": "A photorealistic cinematic driving sequence on a sunny coastal highway in the afternoon, filmed in one continuous shot without cuts, with smooth camera movement that glides between several angles around a moving car.",
+  "local_prompts": [
+    "A low-angle close-up shows the front wheel of a moving silver car, with the tire spinning fast and the road blurring beneath it.",
+    "The camera glides upward along the car door toward the driver's window as the car keeps moving.",
+    "The camera passes through the window to reveal a man in sunglasses gripping the steering wheel, and then zooms into his face as he glances at the road.",
+    "The man smiles slightly and the camera pans past him through the windshield to reveal the winding coastal highway ahead, with the ocean on one side and cliffs on the other.",
+    "The camera rises up into the sky and tracks the silver car from high above as it drives along the coastal highway."
+  ]
+},
+
+{
+    "id": "p032",
+    "file_name": "p032.mp4",
+    "global_prompt": "A photorealistic cinematic skatepark sequence at golden hour, filmed in one continuous shot without cuts, with a constantly moving camera rig that glides, orbits, and rises around a skateboarder.",
+    "local_prompts": [
+      "A low-angle close-up shows a skateboard wheel grinding along a concrete rail, throwing off sparks and dust.",
+      "The camera glides up past the board to the skater's sneakers as he lands a flip and rolls forward.",
+      "The camera orbits around to his face as he grins, with his hair whipping in the wind.",
+      "The camera swings behind him as he launches off a large ramp, revealing the whole park below.",
+      "The camera rises into the sky and tracks him from above as he lands and rolls toward the sunset."
+    ]
+  },
+
+  {
+    "id": "p033",
+    "file_name": "p033.mp4",
+    "global_prompt": "A photorealistic cinematic restaurant sequence during a busy dinner rush, filmed in one continuous shot without cuts, with a constantly moving camera rig that glides through the kitchen and into the dining room.",
+    "local_prompts": [
+      "A close-up shows a steak sizzling in a hot pan as flames leap up around it.",
+      "The camera glides up the chef's arm to his focused face as he tosses the pan and catches it.",
+      "The camera swings around him to follow a waiter grabbing the plate and rushing through the kitchen doors.",
+      "The camera tracks the waiter across a candlelit dining room, weaving between tables.",
+      "The camera rises over a couple's table as the waiter sets the steak down, and the woman smiles."
+    ]
+  },
+
+  {
+    "id": "p034",
+    "file_name": "p034.mp4",
+    "global_prompt": "A photorealistic cinematic horse-racing sequence on a sunny track, filmed in one continuous shot without cuts, with a constantly moving camera rig that tracks alongside, above, and ahead of a racehorse.",
+    "local_prompts": [
+      "A low-angle close-up shows a galloping horse's hooves tearing through the dirt track and kicking up dust.",
+      "The camera sweeps up along the horse's flank to the jockey crouched low on its back.",
+      "The camera swings ahead of the horse to show the jockey's goggled face and the horse's flaring nostrils.",
+      "The camera pans past them to reveal the packed grandstand roaring as other horses chase behind.",
+      "The camera rises high above the track and follows the horse as it crosses the finish line."
+    ]
+  },
+  {
+    "id": "p035",
+    "file_name": "p035.mp4",
+    "global_prompt": "A photorealistic cinematic surfing sequence on a bright tropical beach in the morning, filmed in one continuous shot without cuts, with a constantly moving camera rig that glides above and alongside the water.",
+    "local_prompts": [
+      "A close-up shows the fin of a surfboard slicing through clear turquoise water.",
+      "The camera glides up the board to the surfer's feet and rises to his face as he crouches inside a curling wave.",
+      "The camera swings around to show the wave rising behind him as he carves along its face.",
+      "The camera pans left to reveal the long white beach with palm trees and sunbathers.",
+      "The camera rises into the sky and tracks the surfer from above as he rides the wave toward the shore."
+    ]
+  },
+
+  {
+  "id": "p036",
+  "file_name": "p036.mp4",
+  "global_prompt": "A photorealistic cinematic GT3 race on a sunlit circuit in the afternoon, filmed in one continuous shot without cuts, with a constantly moving camera rig that glides in front of, between, and inside two racing cars. One car is red and one is blue, and both keep the same liveries throughout.",
+  "local_prompts": [
+    "The camera tracks backward in front of a red GT3 car and a blue GT3 car racing side by side at high speed, their headlights flashing and tires screaming.",
+    "The two cars drift toward each other and bump together with a crunch of carbon fiber, sending sparks and bits of debris flying.",
+    "The camera pushes in through the red car's windshield to reveal the driver in a white helmet and visor, gripping the wheel with a tense, focused expression.",
+    "The camera pans right through the gap between the cars, passing through the blue car's windshield to reveal its driver in a black helmet, glancing sideways.",
+    "The camera settles between the two cockpits, showing both drivers turn their helmets toward each other as the cars keep racing side by side."
+  ]
+},
+
+{
+  "id": "p037",
+  "file_name": "p037.mp4",
+  "global_prompt": "A photorealistic cinematic sequence in one continuous zoom-out shot without cuts, with a smooth camera that pulls steadily backward from a tiny wooden house in a snowy scene until it is revealed to be inside a snow globe in a cozy living room.",
+  "local_prompts": [
+    "The camera starts on a lit window of a small wooden house, with warm yellow light and frost on the glass, and begins to zoom out.",
+    "The zoom continues to reveal the whole wooden house with a snow-covered roof, pine trees, and snow falling softly around it.",
+    "The zoom continues until the glass dome of a snow globe curves around the village, with a wooden base beneath it.",
+    "The camera pulls back further to show the snow globe sitting on a wooden table in a warm living room with a fireplace.",
+    "A golden retriever jumps up and rests its front paws on the table edge, and looks curiously at the snow globe."
+  ]
+},
+
+{
+    "id": "p038",
+    "file_name": "p038.mp4",
+    "global_prompt": "A photorealistic cinematic sequence filmed in one continuous shot without cuts, with a low-angle tracking camera on a long dirt road through green hills. Each fast pan down to the road and back up reveals a more advanced mode of transport on the same road.",
+    "local_prompts": [
+      "The camera tracks a barefoot traveler in a simple cloak walking along the dirt road with a wooden staff.",
+      "The camera pans down to the road and back up to reveal a man riding a brown horse along the same road.",
+      "The camera pans down and back up to reveal a wooden horse-drawn carriage rolling along the now-paved road.",
+      "The camera pans down and back up to reveal a vintage red car driving along the road.",
+      "The camera pans down and back up to reveal a sleek silver hover car gliding above the glowing road."
+    ]
+  },
+  {
+    "id": "p039",
+    "file_name": "p039.mp4",
+    "global_prompt": "A photorealistic cinematic sequence filmed in one continuous shot without cuts, with a low-angle camera on the edge of a shallow river at sunrise. Each tilt up and back down reveals the next stage in the evolution of life.",
+    "local_prompts": [
+      "A small silver fish swims in clear shallow water as the camera tracks beside it.",
+      "The camera tilts up and back down to reveal a green amphibian crawling out of the water onto the muddy bank.",
+      "The camera tilts up and back down to reveal a scaly lizard scurrying across the rocks.",
+      "The camera tilts up and back down to reveal a furry ape-like creature walking on all fours along the bank.",
+      "The camera tilts up and back down to reveal an early human standing upright and holding a burning torch."
+    ]
+  },
+  {
+    "id": "p040",
+    "file_name": "p040.mp4",
+    "global_prompt": "A photorealistic cinematic sequence filmed in one continuous shot without cuts, with a fixed camera on a hilltop at golden hour. Each tilt up into the sky and back down reveals a larger, more advanced dwelling on the same spot.",
+    "local_prompts": [
+      "The camera shows a small animal-skin tent on a bare hilltop with a campfire in front, then tilts up into the sky.",
+      "The camera tilts down to reveal a wooden hut with a thatched roof in the same spot, then tilts up.",
+      "The camera tilts down to reveal a stone castle with flags on its towers, then tilts up.",
+      "The camera tilts down to reveal a brick townhouse with a street lamp and a garden, then tilts up.",
+      "The camera tilts down to reveal a glass skyscraper with a lit lobby and a city skyline behind it."
+    ]
+  },
+  {
+    "id": "p041",
+    "file_name": "p041.mp4",
+    "global_prompt": "A photorealistic cinematic sequence filmed in one continuous shot without cuts, with a camera at water level on a calm ocean at sunset. Each pan to the waves and back up reveals a more advanced ship in the same spot.",
+    "local_prompts": [
+      "The camera shows a small wooden raft with one man paddling across the calm water.",
+      "The camera pans down to the waves and back up to reveal a wooden sailing ship with white sails.",
+      "The camera pans down and back up to reveal a black steamship with smoke pouring from its funnels.",
+      "The camera pans down and back up to reveal a huge white cruise liner with glowing windows.",
+      "The camera pans down and back up to reveal a silver spaceship rising out of the water into the sky."
+    ]
+  },
+  {
+    "id": "p042",
+    "file_name": "p042.mp4",
+    "global_prompt": "A photorealistic cinematic sequence filmed in one continuous shot without cuts, with a fixed camera at the front of a quiet suburban house. Each tilt up into the sky and back down reveals the same boy and his bicycle as he grows older.",
+    "local_prompts": [
+      "The camera shows a small boy in shorts riding a tricycle on the sidewalk, then tilts up into the sky.",
+      "The camera tilts down to reveal him as a ten-year-old on a small red bicycle, then tilts up.",
+      "The camera tilts down to reveal him as a teenager in a hoodie on a mountain bike, then tilts up.",
+      "The camera tilts down to reveal him as a young man in a suit on a motorcycle, then tilts up.",
+      "The camera tilts down to reveal him as a grey-haired man in a car, waving to a small boy on a tricycle on the sidewalk."
+    ]
+  },
+
+  {
+    "id": "p043",
+    "file_name": "p043.mp4",
+    "global_prompt": "A photorealistic cinematic scene in a cozy apartment living room in the evening, filmed in one continuous static wide shot without cuts. The camera never moves.",
+    "local_prompts": [
+      "A man in a long beige coat walks in through the front door and takes off his coat.",
+      "He hangs the coat on a wooden hook by the door and kicks off his shoes.",
+      "He walks to the coffee table and picks up a white ceramic cup.",
+      "He takes a sip, then carries the cup to the window and looks out at the city lights.",
+      "He sits down on the sofa and picks up a book from the armrest."
+    ]
+  },
+  {
+    "id": "p044",
+    "file_name": "p044.mp4",
+    "global_prompt": "A photorealistic cinematic scene in a bright home office on a sunny morning, filmed in one continuous static medium shot from the front of the desk without cuts. The camera never moves.",
+    "local_prompts": [
+      "A woman in a grey sweater sits down at a wooden desk and opens her laptop.",
+      "She gathers her long hair and ties it into a ponytail.",
+      "She puts on a pair of round glasses and types on the keyboard.",
+      "Her phone buzzes on the desk, and she picks it up and answers with a smile.",
+      "She hangs up, takes a pen from a mug, and writes a note on a yellow sticky pad."
+    ]
+  },
+  {
+    "id": "p045",
+    "file_name": "p045.mp4",
+    "global_prompt": "A photorealistic cinematic scene in a clean modern home kitchen in the morning, filmed in one continuous static medium shot facing the counter without cuts. The camera never moves.",
+    "local_prompts": [
+      "A man in a white t-shirt walks to the counter and ties a blue apron around his waist.",
+      "He washes his hands at the sink and dries them on a towel over his shoulder.",
+      "He cracks two eggs into a glass bowl and tosses the shells in the bin.",
+      "He whisks the eggs with a fork and pours them into a hot pan on the stove.",
+      "He slides the omelette onto a plate and carries it to the table."
+    ]
+  },
+  {
+    "id": "p046",
+    "file_name": "p046.mp4",
+    "global_prompt": "A photorealistic cinematic scene in a tidy wooden workshop with tools on the wall and warm afternoon light, filmed in one continuous static wide shot without cuts. The camera never moves.",
+    "local_prompts": [
+      "A man in overalls walks to a workbench and pulls on a pair of leather work gloves.",
+      "He picks up a wooden plank and a pencil, and marks a line across the plank.",
+      "He clamps the plank to the bench and saws along the pencil line.",
+      "He takes off his gloves, wipes his forehead with his sleeve, and drinks from a metal water bottle.",
+      "He holds up the two cut pieces, nods in approval, and sets them side by side on the bench."
+    ]
+  },
+  {
+    "id": "p047",
+    "file_name": "p047.mp4",
+    "global_prompt": "A photorealistic cinematic scene in a small child's bedroom on a school morning, filmed in one continuous static wide shot facing the bed without cuts. The camera never moves.",
+    "local_prompts": [
+      "A boy in pajamas sits up in bed and stretches his arms with a big yawn.",
+      "He puts on a pair of glasses from the nightstand and swings his legs off the bed.",
+      "He walks to the window and pulls open the curtains as sunlight floods the room.",
+      "He pulls a school uniform from the closet and puts the shirt on over his pajama top.",
+      "He picks up a backpack from the floor, slings it over one shoulder, and walks out the door."
+    ]
+  },
+
+  {
+    "id": "p048",
+    "file_name": "p048.mp4",
+    "global_prompt": "A vibrant cinematic anime-style sequence with bold ink outlines, saturated colors, and dynamic speed lines, filmed in one continuous tracking shot without cuts, with a smooth camera that follows a schoolgirl in a sailor uniform and a backpack as she rushes through a city in the morning.",
+    "local_prompts": [
+      "The camera tracks backward in front of the girl as she dashes out of a metro train just before the doors close, with a sweat drop flying off her forehead.",
+      "The camera follows from behind as she sprints up a long concrete staircase, with speed lines streaking behind her.",
+      "She bursts through the station gate into sunlight, and cherry blossom petals swirl across the lens.",
+      "She runs to a row of rental bikes, taps her phone on the lock with a chime, and swings onto the seat.",
+      "The camera tracks beside her as she pedals down a tree-lined street, then rises above the rooftops as the school bell tower appears in the distance."
+    ]
+  },
+  {
+    "id": "p049",
+    "file_name": "p049.mp4",
+    "global_prompt": "A vibrant cinematic anime-style action-comedy with bold outlines, exaggerated expressions, and dramatic speed lines, filmed in one continuous tracking shot without cuts, with a smooth camera that follows a salaryman in a rumpled suit as he races through an airport.",
+    "local_prompts": [
+      "The camera tracks backward in front of the salaryman as he sprints through a crowded terminal, his tie flying over his shoulder and his eyes wide in panic.",
+      "He leaps over a luggage cart in a dramatic arc, and the camera slows for a beat as his briefcase spins through the air.",
+      "He lands on a moving walkway and runs along it, passing calm passengers who watch him with deadpan faces.",
+      "He slides down an escalator rail with a cartoonish grin and bursts through the sliding doors into the sun.",
+      "He dives into a waiting taxi, and the camera pulls back as it speeds away with his briefcase hanging out of the window."
+    ]
+  },
+  {
+    "id": "p050",
+    "file_name": "p050.mp4",
+    "global_prompt": "A vibrant cinematic anime-style adventure with soft painterly backgrounds, glowing light, and fluid motion, filmed in one continuous handheld tracking shot without cuts, with a camera that follows a boy in a yellow raincoat as he runs from his village home into a magical forest.",
+    "local_prompts": [
+      "The camera follows the boy as he bursts out of his front door and jumps off the porch into a puddle, sending up a ring of sparkling droplets.",
+      "He runs along a winding path through a rice field, with golden stalks swaying and dragonflies darting past the lens.",
+      "He leaps across a stream on stepping stones, and glowing fireflies drift up from the water.",
+      "He crawls through a hollow log into the forest, where giant luminous mushrooms light the dark.",
+      "The camera follows him out into a clearing, where he stops in front of a huge ancient tree with a glowing doorway in its trunk."
+    ]
+  },
+  {
+    "id": "p051",
+    "file_name": "p051.mp4",
+    "global_prompt": "A vibrant cinematic anime-style sequence with neon colors, bold outlines, and dynamic speed lines, filmed in one continuous tracking shot without cuts, with a smooth camera that follows a ninja delivery girl in a red scarf as she rushes a package across a lantern-lit night city.",
+    "local_prompts": [
+      "The camera follows the ninja girl as she grabs a wrapped package from a ramen vendor's counter and leaps onto a rooftop.",
+      "The camera tracks beside her as she runs along tiled roofs, flipping over chimneys and hanging laundry lines.",
+      "She vaults across a wide gap between buildings, and the camera slows as her scarf streams behind her against the full moon.",
+      "She lands in a narrow alley and wall-runs up a vertical wall to an apartment balcony.",
+      "She knocks on the window, and the camera pushes in as a sleepy man opens it and takes the package with a yawn."
+    ]
+  }
+
+
+
+
+]

@@ -223,7 +223,7 @@
   "file_name": "p019.mp4",
   "global_prompt": "A photorealistic cinematic superhero comedy sequence set in a bustling modern city during daylight, captured in one continuous shot without cuts.",
   "local_prompts": [
-    "A massive explosion erupts between distant city skyscrapers, sending a large cloud of black smoke into the sky.",
+    "A massive explosion erupts in new york city, sending a large cloud of black smoke into the sky.",
     "The camera pans toward a nearby building, revealing Superman walking out in his blue suit and red cape.",
     "Superman stops beside the road and raises his arm to hail a taxi.",
     "A yellow taxi pulls over and stops beside Superman.",
@@ -242,5 +242,5 @@
     "The camera continues pulling back, revealing that the entire family home is contained inside a large glass zoo enclosure.",
     "The camera pulls farther back to reveal bears and penguins standing outside the enclosure, staring at the human family like zoo visitors."
   ]
-}
+},
 ]
