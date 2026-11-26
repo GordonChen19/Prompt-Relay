@@ -1,0 +1,202 @@
+[
+  {
+    "id": "p001",
+    "file_name": "p001.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. The scene is set in a modern office building.",
+    "local_prompts": [
+      "A professional woman wearing a coat walks out of the elevator into the office.",
+      "The woman approaches a coat rack, stops beside it, takes off her outer coat and hangs it on the coat rack.",
+      "A man wearing a navy business suit walks past the woman in the opposite direction, and the camera smoothly shifts to follow him from behind."
+    ]
+  },
+  {
+    "id": "p002",
+    "file_name": "p002.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. A video filmed entirely from a handheld, front-facing selfie perspective. A young man holds the camera at arm's length.",
+    "local_prompts": [
+      "A man films himself on a busy Hong Kong street at night, with neon signs, skyscrapers, and pedestrians behind him.",
+      "The man raises his hand toward the camera and covers the lens with his palm, completely blocking the Hong Kong street from view.",
+      "The man pulls his hand away, revealing the Grand Canyon with vast red rock cliffs and deep valleys behind him as he continues filming himself."
+    ]
+  },
+  {
+    "id": "p003",
+    "file_name": "p003.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions.",
+    "local_prompts": [
+      "A large eagle soars high through the sky, flapping its wings as the camera follows its flight.",
+      "The camera zooms into the eagle's eye, where a reflected cyberpunk city expands to fill the frame, seamlessly revealing the neon-lit metropolis.",
+      "The camera flies through a neon-lit cyberpunk city with moving cars, wet streets, and towering skyscrapers."
+    ]
+  },
+  {
+    "id": "p004",
+    "file_name": "p004.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. A vast field of tall green grass stretches across the landscape at sunset, captured in a low-angle handheld tracking shot.",
+    "local_prompts": [
+      "A rugged caveman wearing animal furs walks through tall green grass at sunset while the camera tracks alongside him.",
+      "The camera rapidly pans downward past the caveman's hairy legs until motion-blurred green grass completely fills the frame.",
+      "The camera rapidly pans upward from the grass, revealing a Spartan soldier wearing bronze greaves, a red tunic, and carrying a large round shield."
+    ]
+  },
+  {
+    "id": "p005",
+    "file_name": "p005.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. A cinematic golf scene set on a lush green course during golden hour.",
+    "local_prompts": [
+      "A close-up shows a male golfer's face as he looks downward with a focused expression on a sunlit golf course.",
+      "The camera tilts downward from the golfer's face to reveal his shoes, golf club, and a white golf ball resting on the grass.",
+      "The golfer lightly taps the white golf ball with his club, causing it to begin rolling across the green."
+    ]
+  },
+  {
+    "id": "p006",
+    "file_name": "p006.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. The scene is set in a cozy suburban home on a sunny morning.",
+    "local_prompts": [
+      "The camera follows a golden retriever approaching a busy breakfast table.",
+      "The dog stands on its hind legs, placing its front paws against the edge of the table next to a young schoolboy.",
+      "The boy gets up from the breakfast table, and the camera follows him as he picks up his school backpack."
+    ]
+  },
+  {
+    "id": "p007",
+    "file_name": "p007.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. An anime-style scene set in a quiet, cozy library, featuring towering bookshelves and neatly arranged wooden tables.",
+    "local_prompts": [
+      "The camera zooms out from a large NO FOOD ALLOWED sign on the wall of a quiet library.",
+      "The camera continues zooming out, revealing a side view of a young girl sitting at a library table.",
+      "The girl reaches into her backpack and pulls out a bag of potato chips."
+    ]
+  },
+  {
+    "id": "p008",
+    "file_name": "p008.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions.",
+    "local_prompts": [
+      "The camera pulls backward from a close-up of a Formula 1 driver's helmet, revealing the driver gripping the steering wheel of a red racing car.",
+      "The camera zooms out of the driver's cockpit, revealing a red and a blue Formula 1 car racing side by side.",
+      "The red and blue Formula 1 cars collide, damaging both vehicles."
+    ]
+  },
+  {
+    "id": "p009",
+    "file_name": "p009.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. The scene is set on a crowded city street in daylight, with tall buildings, pedestrians, and traffic.",
+    "local_prompts": [
+      "The camera turns toward a building as a masked robber bursts outside carrying a duffel bag full of stolen money, with money flying out.",
+      "The robber runs toward a parked black car, opens the driver's door, and climbs inside with the stolen money.",
+      "The robber drives away from the curb."
+    ]
+  },
+  {
+    "id": "p010",
+    "file_name": "p010.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions.",
+    "local_prompts": [
+      "The camera passes through red curtains into a dressing room, revealing a female singer standing before an illuminated mirror.",
+      "The singer adjusts her earpiece, turns toward the camera, and walks out of the dressing room.",
+      "The camera tracks the singer walking through a backstage corridor toward the concert stage."
+    ]
+  },
+  {
+    "id": "p011",
+    "file_name": "p011.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. The scene is set on a peaceful farm during golden hour.",
+    "local_prompts": [
+      "The camera tracks a black crow flying over golden wheat fields.",
+      "The crow descends and approaches the scarecrow.",
+      "The startled scarecrow runs frantically through the wheat field, flailing its arms as the camera tracks backward in front of it, with the crow in pursuit behind."
+    ]
+  },
+  {
+    "id": "p012",
+    "file_name": "p012.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. The scene is set at a busy airport security checkpoint.",
+    "local_prompts": [
+      "The camera follows a colorful clown walking through airport security before a stern officer stops him.",
+      "The clown raises his arms while the security officer begins patting down his jacket and pockets.",
+      "The officer pulls a bright red juggling ball from one of the clown's pockets and drops it on the ground."
+    ]
+  },
+  {
+    "id": "p013",
+    "file_name": "p013.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. The scene is set at an art gallery.",
+    "local_prompts": [
+      "The camera tracks a visitor walking through an elegant art gallery filled with classical paintings.",
+      "The camera pans away from the visitor and locks onto a large portrait of a man wearing a Victorian suit.",
+      "The man in the painting reaches out of the canvas, grips the frame, and begins climbing out of the painting."
+    ]
+  },
+  {
+    "id": "p014",
+    "file_name": "p014.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions.",
+    "local_prompts": [
+      "The camera tracks a young boy and girl running together in a sunny park.",
+      "The camera tilts upward from the children until the sky and white clouds completely fill the frame.",
+      "The camera tilts downward to reveal the boy and girl as teenagers walking together with school backpacks."
+    ]
+  },
+  {
+    "id": "p015",
+    "file_name": "p015.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. The scene takes place along a winding dirt path through a medieval countryside surrounded by lush green fields and distant stone castles.",
+    "local_prompts": [
+      "The camera tracks alongside a tiny brown mouse running rapidly along the dirt path.",
+      "The camera gradually tracks backward relative to the mouse, revealing a knight in shining armor chasing it.",
+      "The camera continues tracking backward, revealing a massive lion chasing the knight."
+    ]
+  },
+  {
+    "id": "p016",
+    "file_name": "p016.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. The scene is set in a bustling modern city during daylight.",
+    "local_prompts": [
+      "A massive explosion erupts in New York City, sending a large cloud of black smoke into the sky.",
+      "The camera pans toward a nearby building, revealing Superman walking out in his blue suit and red cape.",
+      "Superman stops beside the road and raises his arm to hail a taxi."
+    ]
+  },
+  {
+    "id": "p017",
+    "file_name": "p017.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions.",
+    "local_prompts": [
+      "A father sits on a sofa watching television inside a cozy family living room.",
+      "The camera tracks the son running around the living room while playing with a toy airplane.",
+      "The camera pans toward the mother cooking dinner at the kitchen stove."
+    ]
+  },
+  {
+    "id": "p018",
+    "file_name": "p018.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. The scene is set in a modern apartment kitchen.",
+    "local_prompts": [
+      "The camera tracks a sleepy man in pajamas as he shuffles into a dark kitchen at midnight and walks toward a refrigerator.",
+      "The man opens the refrigerator door, and the interior is a vast snowy Antarctic landscape with icy wind blowing out and snowflakes drifting into the dark kitchen.",
+      "A penguin slowly appears from inside the fridge and hands the man a fresh silver fish, which he accepts with a stunned expression."
+    ]
+  },
+  {
+    "id": "p019",
+    "file_name": "p019.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. The scene is set inside a modern elevator behind the shoulder of a man facing the elevator doors.",
+    "local_prompts": [
+      "The elevator doors slide open to reveal a dense tropical rainforest with thick green foliage, hanging vines, and mist, while colorful parrots fly in the background.",
+      "The man reaches for the button and presses it, causing the doors to slide shut. The tropical rainforest disappears from sight.",
+      "The doors of the elevator open again to reveal a vast sandy desert with towering dunes under a blazing sun, and a lone camel walks past."
+    ]
+  },
+  {
+    "id": "p020",
+    "file_name": "p020.mp4",
+    "global_prompt": "A cinematic sequence filmed in a single continuous shot, with fluid camera movement and no cuts or abrupt transitions. The camera smoothly tracks the hands and food in macro close-up, naturally reframing as they move.",
+    "local_prompts": [
+      "A sushi chef's hands hold a long knife and slice a pink slab of fresh salmon on a wooden cutting board, producing one clean, thin slice.",
+      "The chef drops the knife on the cutting board and scoops a small portion of rice from a bowl.",
+      "The chef lays the salmon slice over the rice mound and presses lightly to join them into a single piece of nigiri."
+    ]
+  }
+]
