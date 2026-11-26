@@ -1,52 +1,4 @@
 [
-  {
-  "id": "p021",
-  "file_name": "p021.mp4",
-  "global_prompt": "A photorealistic cinematic comedy set in a dimly lit modern apartment kitchen at midnight, captured in one continuous shot without cuts.",
-  "local_prompts": [
-    "The camera tracks a sleepy man in pajamas as he shuffles into a dark kitchen at midnight and walks toward a stainless steel refrigerator.",
-    "The man opens the refrigerator door, and the interior is a vast snowy Antarctic landscape with icy wind blowing out and snowflakes drifting into the dark kitchen.",
-    "A penguin waddles up from inside the fridge and hands the man a fresh silver fish, and the man accepts it with a stunned expression.",
-    "The man slowly shuts the refrigerator door and stares at it for a moment, then opens it again.",
-    "The refrigerator now looks completely normal, with shelves of milk, eggs, and leftovers, and the same silver fish resting on the middle shelf, while the man blinks in confusion."
-  ]
-},
-{
-  "id": "p022",
-  "file_name": "p022.mp4",
-  "global_prompt": "A vibrant cinematic anime-style comedy with expressive characters, bold colors, dynamic speed lines, and smooth continuous camera movement, captured in one continuous tracking shot without cuts.",
-  "local_prompts": [
-    "The camera tracks a schoolgirl in a sailor uniform sprinting down a quiet suburban street at sunrise with a slice of toast in her mouth, while a panicked sweat drop flies off her forehead.",
-    "A wave of pink cherry blossom petals sweeps across the lens, and when it clears, the same girl is running along a rooftop of a futuristic city as giant mecha robots battle in the background.",
-    "Another wave of petals sweeps across the lens, and when it clears, the girl is running across a medieval fantasy meadow, leaping over a slime monster while a knight waves at her from a hill.",
-    "A final wave of petals sweeps across the lens, and when it clears, the girl is back on the suburban street, sprinting toward a school gate with the toast still in her mouth.",
-    "The camera swings in front of the school gate, where a stern teacher with glasses taps his wristwatch, and the girl skids to a stop with comically exaggerated motion lines."
-  ]
-},
-{
-  "id": "p022",
-  "file_name": "p022.mp4",
-  "global_prompt": "A photorealistic cinematic close-up sequence inside a quiet, warmly lit sushi bar with a polished wooden counter, filmed in one continuous shot without cuts, with smooth macro tracking and natural reframing that follows the hands and the food.",
-  "local_prompts": [
-    "A sushi chef's hands hold a long knife and slice a pink slab of fresh salmon on a wooden cutting board, producing one clean, thin slice, then carry it across the counter toward a bowl of steaming white sushi rice.",
-    "The chef's hands scoop a small portion of rice and gently press it into a compact oval mound on the counter.",
-    "The chef lays the salmon slice over the rice mound and presses lightly to join them into a single piece of nigiri.",
-    "The chef dips a small brush into a dish of dark soy sauce and strokes it across the top of the salmon, leaving a glossy shine, then lifts the nigiri as the camera tracks it rising toward a customer's face.",
-    "The customer opens his mouth, takes the whole piece of nigiri in one bite, and chews with a satisfied expression."
-  ]
-},
-{
-  "id": "p023",
-  "file_name": "p023.mp4",
-  "global_prompt": "A photorealistic cinematic comedy filmed in one continuous shot without cuts from a fixed, steady camera inside a modern elevator, looking straight out through the doors. The same bored man in a grey suit holding a briefcase stands in the center of the frame throughout, staring ahead, while each time the doors open they reveal a completely different natural biome.",
-  "local_prompts": [
-    "The elevator doors slide open to reveal a dense tropical rainforest with thick green foliage, hanging vines, and mist, while colorful parrots call from the trees and the man glances out without expression.",
-    "The doors slide shut, and after a soft chime they open again to reveal a vast sandy desert with towering dunes under a blazing sun, as heat shimmers off the sand and a lone camel walks past.",
-    "The doors slide shut, and when they open again they reveal a frozen arctic tundra with blowing snow and ice shelves, and the man pulls his suit jacket tighter as a polar bear wanders by in the distance.",
-    "The doors slide shut, and when they open again they reveal a lush African savanna at golden hour with tall grass and a herd of giraffes, while the man checks his wristwatch.",
-    "The doors slide shut, and when they open again they reveal a normal office lobby, and the man steps out calmly as the camera holds on the closing doors behind him."
-  ]
-},
 {
   "id": "p024",
   "file_name": "p024.mp4",
@@ -394,8 +346,4 @@
       "She knocks on the window, and the camera pushes in as a sleepy man opens it and takes the package with a yawn."
     ]
   }
-
-
-
-
 ]
